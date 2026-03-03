@@ -158,7 +158,7 @@
       </div>
     </div>
     <h1>INN 图像隐写系统 · 原型界面全览</h1>
-    <p>基于可逆神经网络（Invertible Neural Network）的图像信息隐写系统高保真UI原型，共 6 个页面，亮色系设计，可直接用于开发参考</p>
+    <p>基于可逆神经网络（Invertible Neural Network）的图像信息隐写系统高保真UI原型，共 7 个页面，亮色系设计，可直接用于开发参考</p>
     <div style="display:flex;gap:12px;justify-content:center;margin-top:18px;flex-wrap:wrap;">
       <span style="background:rgba(255,255,255,0.15);padding:5px 14px;border-radius:9999px;font-size:0.78rem;font-weight:600;">
         <i class="fa-solid fa-palette" style="margin-right:5px;"></i>亮色系 · 适合论文打印
@@ -167,7 +167,7 @@
         <i class="fa-brands fa-css3-alt" style="margin-right:5px;"></i>Tailwind CSS + FontAwesome
       </span>
       <span style="background:rgba(255,255,255,0.15);padding:5px 14px;border-radius:9999px;font-size:0.78rem;font-weight:600;">
-        <i class="fa-solid fa-file-code" style="margin-right:5px;"></i>6 个独立 HTML 文件
+        <i class="fa-solid fa-file-code" style="margin-right:5px;"></i>7 个独立 HTML 文件
       </span>
       <span style="background:rgba(255,255,255,0.15);padding:5px 14px;border-radius:9999px;font-size:0.78rem;font-weight:600;">
         <i class="fa-solid fa-layer-group" style="margin-right:5px;"></i>iframe 平铺展示
@@ -179,6 +179,7 @@
   <nav class="page-nav">
     <span class="label">快速跳转：</span>
     <a href="#page-home"><i class="fa-solid fa-house" style="margin-right:5px;"></i>首页</a>
+    <a href="#page-encrypt"><i class="fa-solid fa-dice-d6" style="margin-right:5px;"></i>混沌加密</a>
     <a href="#page-encode"><i class="fa-solid fa-file-image" style="margin-right:5px;"></i>隐写编码</a>
     <a href="#page-decode"><i class="fa-solid fa-key" style="margin-right:5px;"></i>隐写解码</a>
     <a href="#page-results"><i class="fa-solid fa-chart-bar" style="margin-right:5px;"></i>结果分析</a>
@@ -189,7 +190,7 @@
   <!-- ========== PAGE 1: HOME ========== -->
   <div class="section-divider">
     <div class="line"></div>
-    <div class="label">页面 1 / 6</div>
+    <div class="label">页面 1 / 7</div>
     <div class="line"></div>
   </div>
 
@@ -213,10 +214,38 @@
       onload="this.style.height=(this.contentDocument.body.scrollHeight+40)+'px'"></iframe>
   </div>
 
-  <!-- ========== PAGE 2: ENCODE ========== -->
+  <!-- ========== PAGE 2: ENCRYPT ========== -->
   <div class="section-divider">
     <div class="line"></div>
-    <div class="label">页面 2 / 6</div>
+    <div class="label">页面 2 / 7</div>
+    <div class="line"></div>
+  </div>
+
+  <div id="page-encrypt" class="page-block">
+    <div class="page-block-header">
+      <div class="page-title">
+        <div class="icon-wrap" style="background:#fffbeb;">
+          <i class="fa-solid fa-dice-d6" style="color:#d97706;"></i>
+        </div>
+        <div>
+          <h2>Logistic 混沌加密（Encrypt）</h2>
+          <p>功能1：对秘密图像进行Logistic混沌映射加密（置乱+扩散），使其呈噪声外观后再送入隐写</p>
+        </div>
+      </div>
+      <div class="meta">
+        <span class="badge" style="background:#fffbeb;color:#d97706;">encrypt.html</span>
+        <span class="badge" style="background:#fef3c7;color:#92400e;"><i class="fa-solid fa-lock-open" style="margin-right:3px;"></i> 功能1·新增</span>
+        <span class="badge" style="background:#ecfdf5;color:#065f46;"><i class="fa-solid fa-circle-check"></i> 完成</span>
+      </div>
+    </div>
+    <iframe src="encrypt.html" class="page-iframe" id="iframe-encrypt" style="min-height:1300px;"
+      onload="this.style.height=(this.contentDocument.body.scrollHeight+40)+'px'"></iframe>
+  </div>
+
+  <!-- ========== PAGE 3: ENCODE ========== -->
+  <div class="section-divider">
+    <div class="line"></div>
+    <div class="label">页面 3 / 7</div>
     <div class="line"></div>
   </div>
 
@@ -227,23 +256,24 @@
           <i class="fa-solid fa-file-image" style="color:#6366f1;"></i>
         </div>
         <div>
-          <h2>隐写编码（Encode）</h2>
-          <p>上传载体图像与秘密图像，配置编码参数，执行INN前向传播生成隐写图像</p>
+          <h2>INN 隐写编码（Encode）</h2>
+          <p>功能2：将Logistic混沌加密后的秘密图像嵌入载体图像，INN前向传播生成隐写图像</p>
         </div>
       </div>
       <div class="meta">
         <span class="badge" style="background:#eef2ff;color:#6366f1;">encode.html</span>
+        <span class="badge" style="background:#e0e7ff;color:#3730a3;"><i class="fa-solid fa-shield-halved" style="margin-right:3px;"></i> 功能2·更新</span>
         <span class="badge" style="background:#ecfdf5;color:#065f46;"><i class="fa-solid fa-circle-check"></i> 完成</span>
       </div>
     </div>
-    <iframe src="encode.html" class="page-iframe" id="iframe-encode" style="min-height:1100px;"
+    <iframe src="encode.html" class="page-iframe" id="iframe-encode" style="min-height:1200px;"
       onload="this.style.height=(this.contentDocument.body.scrollHeight+40)+'px'"></iframe>
   </div>
 
-  <!-- ========== PAGE 3: DECODE ========== -->
+  <!-- ========== PAGE 4: DECODE ========== -->
   <div class="section-divider">
     <div class="line"></div>
-    <div class="label">页面 3 / 6</div>
+    <div class="label">页面 4 / 7</div>
     <div class="line"></div>
   </div>
 
@@ -267,10 +297,10 @@
       onload="this.style.height=(this.contentDocument.body.scrollHeight+40)+'px'"></iframe>
   </div>
 
-  <!-- ========== PAGE 4: RESULTS ========== -->
+  <!-- ========== PAGE 5: RESULTS ========== -->
   <div class="section-divider">
     <div class="line"></div>
-    <div class="label">页面 4 / 6</div>
+    <div class="label">页面 5 / 7</div>
     <div class="line"></div>
   </div>
 
@@ -294,10 +324,10 @@
       onload="this.style.height=(this.contentDocument.body.scrollHeight+40)+'px'"></iframe>
   </div>
 
-  <!-- ========== PAGE 5: GALLERY ========== -->
+  <!-- ========== PAGE 6: GALLERY ========== -->
   <div class="section-divider">
     <div class="line"></div>
-    <div class="label">页面 5 / 6</div>
+    <div class="label">页面 6 / 7</div>
     <div class="line"></div>
   </div>
 
@@ -321,10 +351,10 @@
       onload="this.style.height=(this.contentDocument.body.scrollHeight+40)+'px'"></iframe>
   </div>
 
-  <!-- ========== PAGE 6: SETTINGS ========== -->
+  <!-- ========== PAGE 7: SETTINGS ========== -->
   <div class="section-divider">
     <div class="line"></div>
-    <div class="label">页面 6 / 6</div>
+    <div class="label">页面 7 / 7</div>
     <div class="line"></div>
   </div>
 
@@ -355,7 +385,7 @@
       <span style="font-size:0.75rem;">使用 Tailwind CSS + FontAwesome · 亮色系设计 · 适合学术论文展示与系统开发参考</span>
     </p>
     <div style="display:flex;gap:24px;justify-content:center;margin-top:12px;font-size:0.75rem;">
-      <span><i class="fa-solid fa-file-code" style="margin-right:4px;"></i>6 个页面文件</span>
+      <span><i class="fa-solid fa-file-code" style="margin-right:4px;"></i>7 个页面文件</span>
       <span><i class="fa-solid fa-eye-slash" style="margin-right:4px;"></i>隐写编码 / 解码 / 分析</span>
       <span><i class="fa-solid fa-palette" style="margin-right:4px;"></i>亮色系 · 清晰打印</span>
     </div>

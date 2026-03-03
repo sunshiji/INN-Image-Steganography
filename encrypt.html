@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>混沌加密 - INN图像隐写系统</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    body { font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+    .upload-zone { border: 2px dashed #fde68a; transition: all 0.2s; }
+    .upload-zone:hover { border-color: #f59e0b; background: #fffbeb; }
+    .upload-zone.has-image { border-style: solid; border-color: #f59e0b; }
+    .chaos-pixel { display: inline-block; width: 6px; height: 6px; border-radius: 1px; }
+    .logistic-curve { stroke: #f59e0b; fill: none; stroke-width: 2; }
+    .tag { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
+    .progress-bar { transition: width 0.5s ease; }
+    .step-active { background: #f59e0b; color: white; }
+    .step-done { background: #10b981; color: white; }
+    .step-pending { background: #e2e8f0; color: #94a3b8; }
+    .param-highlight { border-color: #f59e0b !important; background: #fffbeb !important; }
+    .formula-box {
+      background: #fffbeb;
+      border: 1.5px solid #fde68a;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.92rem;
+      color: #92400e;
+      font-weight: 600;
+    }
+    .chaos-map-cell {
+      width: 9px; height: 9px;
+      display: inline-block;
+      border-radius: 1px;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
+          <i class="fa-solid fa-eye-slash text-white text-sm"></i>
+        </div>
+        <div>
+          <span class="text-lg font-bold text-indigo-700">INN</span>
+          <span class="text-lg font-semibold text-slate-700"> 图像隐写系统</span>
+        </div>
+      </div>
+      <nav class="flex items-center gap-6 text-sm font-medium text-slate-600">
+        <a href="#" class="hover:text-indigo-600 transition-colors">首页</a>
+        <a href="#" class="text-amber-600 font-semibold">混沌加密</a>
+        <a href="#" class="hover:text-indigo-600 transition-colors">隐写编码</a>
+        <a href="#" class="hover:text-indigo-600 transition-colors">隐写解码</a>
+        <a href="#" class="hover:text-indigo-600 transition-colors">图库示例</a>
+        <a href="#" class="hover:text-indigo-600 transition-colors">系统设置</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Pipeline Banner -->
+  <div class="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
+    <div class="max-w-7xl mx-auto px-6 py-4">
+      <div class="flex items-center justify-center gap-3 flex-wrap">
+        <!-- Step 1 (current) -->
+        <div class="flex items-center gap-2 bg-amber-500 text-white px-4 py-2 rounded-xl font-semibold text-sm shadow-sm shadow-amber-200">
+          <div class="w-6 h-6 bg-white bg-opacity-25 rounded-lg flex items-center justify-center text-xs font-bold">1</div>
+          <i class="fa-solid fa-lock-open text-xs"></i>
+          Logistic混沌加密
+        </div>
+        <div class="text-amber-300 text-lg font-bold">→</div>
+        <!-- Step 2 -->
+        <div class="flex items-center gap-2 bg-white border border-slate-200 text-slate-500 px-4 py-2 rounded-xl text-sm">
+          <div class="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center text-xs font-bold text-slate-400">2</div>
+          <i class="fa-solid fa-file-image text-xs"></i>
+          INN隐写编码
+        </div>
+        <div class="text-slate-300 text-lg font-bold">→</div>
+        <!-- Step 3 -->
+        <div class="flex items-center gap-2 bg-white border border-slate-200 text-slate-500 px-4 py-2 rounded-xl text-sm">
+          <div class="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center text-xs font-bold text-slate-400">3</div>
+          <i class="fa-solid fa-key text-xs"></i>
+          INN隐写解码
+        </div>
+        <div class="text-slate-300 text-lg font-bold">→</div>
+        <!-- Step 4 -->
+        <div class="flex items-center gap-2 bg-white border border-slate-200 text-slate-500 px-4 py-2 rounded-xl text-sm">
+          <div class="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center text-xs font-bold text-slate-400">4</div>
+          <i class="fa-solid fa-lock text-xs"></i>
+          混沌解密还原
+        </div>
+        <div class="ml-4 px-3 py-1.5 bg-amber-100 border border-amber-200 rounded-xl">
+          <p class="text-xs text-amber-700 font-semibold">
+            <i class="fa-solid fa-shield-halved mr-1"></i>双重安全：加密 + 隐写
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Page Title -->
+    <div class="mb-8">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+          <i class="fa-solid fa-dice-d6 text-amber-600"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-800">Logistic 混沌加密</h1>
+        <span class="tag bg-amber-100 text-amber-700">CHAOS ENCRYPT</span>
+        <span class="tag bg-slate-100 text-slate-600">步骤 1 / 4</span>
+      </div>
+      <p class="text-slate-500 text-sm">
+        基于 Logistic 混沌映射对秘密图像进行像素置乱与扩散加密，使加密后图像呈现随机噪声特征，再送入INN隐写系统
+      </p>
+    </div>
+
+    <div class="grid grid-cols-3 gap-6">
+      <!-- Left: Upload + Params -->
+      <div class="col-span-2 space-y-6">
+
+        <!-- Progress Steps -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <div class="flex items-center justify-between">
+            <div class="flex-1 flex items-center">
+              <div class="flex flex-col items-center">
+                <div class="w-9 h-9 rounded-full step-active flex items-center justify-center text-sm font-bold shadow">1</div>
+                <span class="text-xs mt-2 font-medium text-amber-600">上传图像</span>
+              </div>
+              <div class="flex-1 h-0.5 bg-amber-200 mx-3"></div>
+            </div>
+            <div class="flex-1 flex items-center">
+              <div class="flex flex-col items-center">
+                <div class="w-9 h-9 rounded-full step-pending flex items-center justify-center text-sm font-bold">2</div>
+                <span class="text-xs mt-2 font-medium text-slate-400">密钥配置</span>
+              </div>
+              <div class="flex-1 h-0.5 bg-slate-200 mx-3"></div>
+            </div>
+            <div class="flex-1 flex items-center">
+              <div class="flex flex-col items-center">
+                <div class="w-9 h-9 rounded-full step-pending flex items-center justify-center text-sm font-bold">3</div>
+                <span class="text-xs mt-2 font-medium text-slate-400">执行加密</span>
+              </div>
+              <div class="flex-1 h-0.5 bg-slate-200 mx-3"></div>
+            </div>
+            <div class="flex flex-col items-center">
+              <div class="w-9 h-9 rounded-full step-done flex items-center justify-center text-sm font-bold">✓</div>
+              <span class="text-xs mt-2 font-medium text-emerald-600">送入隐写</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <h2 class="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
+            <i class="fa-solid fa-upload text-amber-500"></i> 上传待加密图像（秘密图像）
+          </h2>
+          <div class="grid grid-cols-2 gap-5">
+            <!-- Input: Secret Image -->
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-3">
+                原始秘密图像 <span class="text-red-400">*</span>
+              </label>
+              <div class="upload-zone has-image rounded-xl p-4 text-center cursor-pointer">
+                <div class="w-full h-44 rounded-lg flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-100 border border-amber-200">
+                  <!-- Simulated original image (structured) -->
+                  <div class="grid gap-1" style="grid-template-columns:repeat(6,1fr)">
+                    <div class="w-8 h-8 bg-rose-300 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-orange-200 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-amber-300 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-rose-200 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-orange-300 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-amber-200 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-amber-400 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-rose-300 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-orange-200 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-amber-300 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-rose-400 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-orange-300 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-orange-300 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-amber-200 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-rose-300 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-orange-400 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-amber-200 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-rose-300 rounded-sm"></div>
+                  </div>
+                  <div class="absolute top-2 right-2 bg-emerald-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
+                    <i class="fa-solid fa-check text-xs"></i>
+                  </div>
+                  <div class="absolute top-2 left-2 bg-amber-600 text-white text-xs px-2 py-0.5 rounded-lg font-medium">原始</div>
+                </div>
+                <div class="mt-3 flex items-center justify-between">
+                  <div class="text-left">
+                    <p class="text-sm font-medium text-slate-700">secret_image.png</p>
+                    <p class="text-xs text-slate-400">512×512 · 0.8 MB · PNG</p>
+                  </div>
+                  <button class="text-xs text-amber-500 hover:text-amber-700 font-medium">重新上传</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Output Preview: Encrypted Image -->
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-3">
+                加密后图像（预览）
+                <span class="ml-2 text-xs font-normal text-slate-400">执行加密后生成</span>
+              </label>
+              <div class="rounded-xl p-4 border-2 border-dashed border-emerald-300 bg-emerald-50">
+                <div class="w-full h-44 rounded-lg flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-slate-800 to-gray-900 border border-slate-700">
+                  <!-- Simulated encrypted image: random noise appearance -->
+                  <div class="absolute inset-0 p-1">
+                    <div class="grid gap-0" style="grid-template-columns:repeat(32,1fr); height:100%;">
+                      <!-- 32x20 noise simulation -->
+                      <div class="chaos-map-cell bg-gray-600"></div><div class="chaos-map-cell bg-white opacity-20"></div><div class="chaos-map-cell bg-gray-800"></div><div class="chaos-map-cell bg-slate-400 opacity-50"></div>
+                      <div class="chaos-map-cell bg-white opacity-30"></div><div class="chaos-map-cell bg-gray-700"></div><div class="chaos-map-cell bg-slate-300 opacity-40"></div><div class="chaos-map-cell bg-gray-900"></div>
+                      <div class="chaos-map-cell bg-slate-500 opacity-60"></div><div class="chaos-map-cell bg-gray-600"></div><div class="chaos-map-cell bg-white opacity-10"></div><div class="chaos-map-cell bg-gray-800"></div>
+                      <div class="chaos-map-cell bg-gray-700"></div><div class="chaos-map-cell bg-slate-400 opacity-70"></div><div class="chaos-map-cell bg-gray-900"></div><div class="chaos-map-cell bg-white opacity-25"></div>
+                      <div class="chaos-map-cell bg-gray-600"></div><div class="chaos-map-cell bg-slate-300 opacity-50"></div><div class="chaos-map-cell bg-gray-800"></div><div class="chaos-map-cell bg-gray-700"></div>
+                      <div class="chaos-map-cell bg-white opacity-15"></div><div class="chaos-map-cell bg-slate-500 opacity-60"></div><div class="chaos-map-cell bg-gray-900"></div><div class="chaos-map-cell bg-gray-600"></div>
+                      <div class="chaos-map-cell bg-slate-400 opacity-40"></div><div class="chaos-map-cell bg-gray-800"></div><div class="chaos-map-cell bg-white opacity-35"></div><div class="chaos-map-cell bg-gray-700"></div>
+                      <div class="chaos-map-cell bg-gray-900"></div><div class="chaos-map-cell bg-slate-300 opacity-55"></div><div class="chaos-map-cell bg-gray-600"></div><div class="chaos-map-cell bg-white opacity-20"></div>
+                    </div>
+                  </div>
+                  <div class="absolute top-2 left-2 bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-lg font-medium">加密</div>
+                  <div class="absolute bottom-2 right-2 text-xs text-slate-400 bg-black bg-opacity-50 px-2 py-0.5 rounded-lg">随机噪声外观</div>
+                </div>
+                <div class="mt-3 flex items-center justify-between">
+                  <div class="text-left">
+                    <p class="text-sm font-medium text-slate-700">secret_encrypted.png</p>
+                    <p class="text-xs text-slate-400">512×512 · 已加密 · PNG</p>
+                  </div>
+                  <button class="text-xs text-emerald-600 font-semibold bg-emerald-100 px-3 py-1 rounded-lg">
+                    <i class="fa-solid fa-download mr-1"></i>下载
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Logistic Map Parameter Configuration -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <h2 class="text-base font-bold text-slate-800 mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-key text-amber-500"></i> Logistic 混沌密钥配置
+          </h2>
+          <p class="text-sm text-slate-500 mb-5">
+            Logistic 映射：
+            <span class="formula-box inline-block ml-2">x<sub>n+1</sub> = r · x<sub>n</sub> · (1 − x<sub>n</sub>)</span>
+            <span class="ml-2 text-xs text-slate-400">当 r ∈ (3.57, 4] 时系统呈完全混沌状态</span>
+          </p>
+
+          <div class="grid grid-cols-2 gap-6">
+            <!-- Left: Key Parameters -->
+            <div class="space-y-5">
+              <!-- r parameter -->
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <label class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    混沌参数 <code class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-xs">r</code>
+                    <span class="tag bg-amber-100 text-amber-700">混沌控制参数</span>
+                  </label>
+                  <span class="text-sm font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-lg font-mono">3.9991</span>
+                </div>
+                <input type="range" min="3.57" max="4.0" step="0.0001" value="3.9991"
+                  class="w-full h-2.5 rounded-lg appearance-none bg-amber-100 accent-amber-500 cursor-pointer" />
+                <div class="flex justify-between text-xs text-slate-400 mt-1">
+                  <span>3.57（混沌临界）</span>
+                  <span>4.0（完全混沌）</span>
+                </div>
+              </div>
+
+              <!-- x0 parameter -->
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <label class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    初始值 <code class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-xs">x₀</code>
+                    <span class="tag bg-slate-100 text-slate-600">密钥种子</span>
+                  </label>
+                  <span class="text-sm font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-lg font-mono">0.37291</span>
+                </div>
+                <input type="range" min="0.001" max="0.999" step="0.00001" value="0.37291"
+                  class="w-full h-2.5 rounded-lg appearance-none bg-amber-100 accent-amber-500 cursor-pointer" />
+                <div class="flex justify-between text-xs text-slate-400 mt-1">
+                  <span>0.001</span>
+                  <span>0.999</span>
+                </div>
+              </div>
+
+              <!-- Iterations -->
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <label class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    预迭代次数 <code class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-xs">N₀</code>
+                    <span class="tag bg-slate-100 text-slate-600">丢弃前N₀个值</span>
+                  </label>
+                  <span class="text-sm font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-lg font-mono">500</span>
+                </div>
+                <input type="range" min="100" max="2000" step="100" value="500"
+                  class="w-full h-2.5 rounded-lg appearance-none bg-amber-100 accent-amber-500 cursor-pointer" />
+                <div class="flex justify-between text-xs text-slate-400 mt-1">
+                  <span>100（最少）</span>
+                  <span>2000（最安全）</span>
+                </div>
+              </div>
+
+              <!-- Encryption Rounds -->
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">
+                  加密轮数
+                  <span class="ml-2 text-xs font-normal text-slate-400">（置乱+扩散循环次数）</span>
+                </label>
+                <div class="flex gap-3">
+                  <label class="flex-1 flex items-center gap-2 border-2 border-slate-200 rounded-xl px-3 py-2.5 cursor-pointer hover:border-amber-300">
+                    <input type="radio" name="rounds" class="accent-amber-500" />
+                    <span class="text-sm text-slate-600">1轮（快速）</span>
+                  </label>
+                  <label class="flex-1 flex items-center gap-2 border-2 border-amber-400 bg-amber-50 rounded-xl px-3 py-2.5 cursor-pointer">
+                    <input type="radio" name="rounds" checked class="accent-amber-500" />
+                    <span class="text-sm font-medium text-amber-700">2轮（推荐）</span>
+                  </label>
+                  <label class="flex-1 flex items-center gap-2 border-2 border-slate-200 rounded-xl px-3 py-2.5 cursor-pointer hover:border-amber-300">
+                    <input type="radio" name="rounds" class="accent-amber-500" />
+                    <span class="text-sm text-slate-600">3轮（高安全）</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Encryption Method & Key Display -->
+            <div class="space-y-5">
+              <!-- Encryption Method -->
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-3">加密模式</label>
+                <div class="space-y-3">
+                  <label class="flex items-start gap-3 p-4 border-2 border-amber-400 bg-amber-50 rounded-xl cursor-pointer">
+                    <input type="radio" name="method" checked class="accent-amber-500 mt-0.5" />
+                    <div>
+                      <p class="text-sm font-bold text-amber-800">置乱 + 扩散（双层加密）</p>
+                      <p class="text-xs text-amber-700 mt-1">先用混沌序列置乱像素位置，再用另一混沌序列对像素值进行异或扩散。安全性最高。</p>
+                    </div>
+                  </label>
+                  <label class="flex items-start gap-3 p-3 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-amber-200">
+                    <input type="radio" name="method" class="accent-amber-500 mt-0.5" />
+                    <div>
+                      <p class="text-sm font-bold text-slate-600">仅扩散（XOR异或）</p>
+                      <p class="text-xs text-slate-500 mt-1">仅用混沌序列对像素值进行异或运算，速度更快，安全性适中。</p>
+                    </div>
+                  </label>
+                  <label class="flex items-start gap-3 p-3 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-amber-200">
+                    <input type="radio" name="method" class="accent-amber-500 mt-0.5" />
+                    <div>
+                      <p class="text-sm font-bold text-slate-600">仅置乱（位置混淆）</p>
+                      <p class="text-xs text-slate-500 mt-1">仅打乱像素位置顺序，不改变像素值，适合对视觉混淆要求较高的场景。</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Auto-generated Key Preview -->
+              <div class="bg-slate-900 rounded-xl p-4">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+                  <i class="fa-solid fa-terminal text-green-400"></i> 生成的密钥序列（前20位）
+                </p>
+                <div class="font-mono text-xs text-green-400 leading-relaxed break-all">
+                  0.37291 → 0.93412 → 0.24538 → 0.73891<br/>
+                  0.77241 → 0.69032 → 0.85218 → 0.50523<br/>
+                  0.99741 → 0.01037 → 0.04102 → 0.15739<br/>
+                  0.53081 → 0.99571 → 0.01701 → 0.06700<br/>
+                  0.24962 → 0.74862 → 0.75328 → 0.74239
+                </div>
+                <div class="mt-3 border-t border-slate-700 pt-3 grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span class="text-slate-500">密钥长度</span>
+                    <span class="text-green-400 font-mono ml-2">262144 值</span>
+                  </div>
+                  <div>
+                    <span class="text-slate-500">密钥空间</span>
+                    <span class="text-green-400 font-mono ml-2">2¹²⁸ bits</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Key Save Options -->
+              <div class="bg-amber-50 rounded-xl border border-amber-200 p-4">
+                <p class="text-sm font-bold text-amber-800 mb-3 flex items-center gap-2">
+                  <i class="fa-solid fa-floppy-disk text-amber-600"></i> 密钥保存
+                </p>
+                <div class="space-y-2">
+                  <label class="flex items-center gap-2 text-sm text-amber-700 cursor-pointer">
+                    <input type="checkbox" checked class="accent-amber-500" />
+                    保存密钥文件（解密时需要）
+                  </label>
+                  <label class="flex items-center gap-2 text-sm text-amber-700 cursor-pointer">
+                    <input type="checkbox" class="accent-amber-500" />
+                    同时保存密钥的SHA-256校验值
+                  </label>
+                </div>
+                <div class="mt-3 flex gap-2">
+                  <button class="flex-1 py-2 bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold hover:bg-amber-200 transition-colors">
+                    <i class="fa-solid fa-rotate mr-1"></i>随机生成密钥
+                  </button>
+                  <button class="flex-1 py-2 bg-white text-amber-700 border border-amber-200 rounded-lg text-xs font-semibold hover:bg-amber-50 transition-colors">
+                    <i class="fa-solid fa-folder-open mr-1"></i>导入密钥文件
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-4">
+          <button class="flex-1 py-3.5 bg-amber-500 text-white rounded-xl font-semibold text-base hover:bg-amber-600 transition-colors shadow-md shadow-amber-200 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-bolt"></i>
+            开始 Logistic 混沌加密
+          </button>
+          <button class="px-6 py-3.5 bg-white text-slate-600 border border-slate-200 rounded-xl font-medium hover:bg-slate-50 transition-colors">
+            <i class="fa-solid fa-rotate-left mr-2"></i>重置
+          </button>
+        </div>
+
+        <!-- Encryption Result / Processing -->
+        <div class="bg-white rounded-2xl border border-emerald-100 shadow-sm p-6">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-circle-check text-emerald-500"></i>
+              加密完成
+            </h2>
+            <div class="flex items-center gap-2">
+              <span class="tag bg-emerald-100 text-emerald-700"><i class="fa-solid fa-check mr-1"></i>成功</span>
+              <span class="text-xs text-slate-400">耗时 0.43 秒</span>
+            </div>
+          </div>
+
+          <!-- Before / After Comparison -->
+          <div class="grid grid-cols-2 gap-6 mb-5">
+            <div>
+              <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">原始图像（加密前）</p>
+              <div class="bg-gradient-to-br from-amber-50 to-orange-100 rounded-xl h-36 flex items-center justify-center border border-amber-100 relative overflow-hidden">
+                <!-- Structured appearance -->
+                <div class="grid gap-1" style="grid-template-columns:repeat(5,1fr)">
+                  <div class="w-9 h-9 bg-rose-300 rounded-sm"></div><div class="w-9 h-9 bg-orange-200 rounded-sm"></div><div class="w-9 h-9 bg-amber-300 rounded-sm"></div><div class="w-9 h-9 bg-rose-200 rounded-sm"></div><div class="w-9 h-9 bg-orange-300 rounded-sm"></div>
+                  <div class="w-9 h-9 bg-amber-400 rounded-sm"></div><div class="w-9 h-9 bg-rose-300 rounded-sm"></div><div class="w-9 h-9 bg-orange-200 rounded-sm"></div><div class="w-9 h-9 bg-amber-300 rounded-sm"></div><div class="w-9 h-9 bg-rose-400 rounded-sm"></div>
+                  <div class="w-9 h-9 bg-orange-300 rounded-sm"></div><div class="w-9 h-9 bg-amber-200 rounded-sm"></div><div class="w-9 h-9 bg-rose-300 rounded-sm"></div><div class="w-9 h-9 bg-orange-400 rounded-sm"></div><div class="w-9 h-9 bg-amber-200 rounded-sm"></div>
+                </div>
+                <div class="absolute top-2 left-2 bg-amber-600 text-white text-xs px-2 py-0.5 rounded font-medium">原始</div>
+              </div>
+              <p class="text-xs text-slate-400 mt-2 text-center">像素有规律、可辨识内容</p>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">加密图像（混沌噪声）</p>
+              <div class="bg-slate-900 rounded-xl h-36 flex items-center justify-center relative overflow-hidden border border-slate-700">
+                <!-- Noise appearance -->
+                <div class="absolute inset-0 p-1 flex flex-wrap gap-px content-start">
+                  <div class="chaos-map-cell bg-white opacity-60"></div><div class="chaos-map-cell bg-gray-700"></div><div class="chaos-map-cell bg-white opacity-20"></div><div class="chaos-map-cell bg-slate-400 opacity-70"></div><div class="chaos-map-cell bg-gray-900"></div><div class="chaos-map-cell bg-white opacity-40"></div>
+                  <div class="chaos-map-cell bg-gray-600"></div><div class="chaos-map-cell bg-white opacity-10"></div><div class="chaos-map-cell bg-slate-500 opacity-80"></div><div class="chaos-map-cell bg-gray-800"></div><div class="chaos-map-cell bg-white opacity-30"></div><div class="chaos-map-cell bg-gray-700"></div>
+                  <div class="chaos-map-cell bg-slate-300 opacity-50"></div><div class="chaos-map-cell bg-gray-900"></div><div class="chaos-map-cell bg-white opacity-65"></div><div class="chaos-map-cell bg-gray-600"></div><div class="chaos-map-cell bg-slate-400 opacity-45"></div><div class="chaos-map-cell bg-gray-800"></div>
+                  <div class="chaos-map-cell bg-white opacity-25"></div><div class="chaos-map-cell bg-gray-700"></div><div class="chaos-map-cell bg-slate-500 opacity-75"></div><div class="chaos-map-cell bg-gray-900"></div><div class="chaos-map-cell bg-white opacity-15"></div><div class="chaos-map-cell bg-gray-600"></div>
+                  <div class="chaos-map-cell bg-slate-300 opacity-60"></div><div class="chaos-map-cell bg-gray-800"></div><div class="chaos-map-cell bg-white opacity-35"></div><div class="chaos-map-cell bg-slate-400 opacity-55"></div><div class="chaos-map-cell bg-gray-700"></div><div class="chaos-map-cell bg-white opacity-45"></div>
+                  <div class="chaos-map-cell bg-gray-900"></div><div class="chaos-map-cell bg-slate-500 opacity-30"></div><div class="chaos-map-cell bg-white opacity-70"></div><div class="chaos-map-cell bg-gray-600"></div><div class="chaos-map-cell bg-slate-300 opacity-40"></div><div class="chaos-map-cell bg-gray-800"></div>
+                </div>
+                <div class="absolute top-2 left-2 bg-emerald-500 text-white text-xs px-2 py-0.5 rounded font-medium">加密</div>
+              </div>
+              <p class="text-xs text-slate-400 mt-2 text-center">视觉上无法辨识原始内容</p>
+            </div>
+          </div>
+
+          <!-- Security Metrics -->
+          <div class="grid grid-cols-4 gap-3 mb-5">
+            <div class="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100">
+              <p class="text-xs text-emerald-600 mb-1">信息熵</p>
+              <p class="text-base font-extrabold text-emerald-700">7.9973</p>
+              <p class="text-xs text-emerald-500">接近最大值8</p>
+            </div>
+            <div class="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100">
+              <p class="text-xs text-emerald-600 mb-1">相关系数</p>
+              <p class="text-base font-extrabold text-emerald-700">0.0023</p>
+              <p class="text-xs text-emerald-500">邻像素无相关</p>
+            </div>
+            <div class="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100">
+              <p class="text-xs text-emerald-600 mb-1">NPCR</p>
+              <p class="text-base font-extrabold text-emerald-700">99.61%</p>
+              <p class="text-xs text-emerald-500">像素变化率</p>
+            </div>
+            <div class="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100">
+              <p class="text-xs text-emerald-600 mb-1">UACI</p>
+              <p class="text-base font-extrabold text-emerald-700">33.46%</p>
+              <p class="text-xs text-emerald-500">均一变化强度</p>
+            </div>
+          </div>
+
+          <!-- Next Step: Go to Steganography -->
+          <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                <i class="fa-solid fa-arrow-right text-indigo-600"></i>
+              </div>
+              <div>
+                <p class="font-semibold text-indigo-800 text-sm">加密完成，下一步：INN 隐写编码</p>
+                <p class="text-xs text-indigo-600 mt-0.5">加密后的图像已自动传入隐写编码模块作为秘密图像输入</p>
+              </div>
+            </div>
+            <button class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200">
+              <i class="fa-solid fa-file-image mr-2"></i>进入隐写编码 →
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Sidebar -->
+      <div class="space-y-6">
+
+        <!-- Logistic Map Principle -->
+        <div class="bg-amber-50 rounded-2xl border border-amber-100 p-5">
+          <h3 class="font-bold text-amber-800 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-circle-info text-amber-500"></i> Logistic 映射原理
+          </h3>
+          <div class="formula-box mb-4 text-center text-base">
+            x<sub>n+1</sub> = r · x<sub>n</sub> · (1 − x<sub>n</sub>)
+          </div>
+          <!-- Bifurcation diagram hint -->
+          <div class="bg-white rounded-xl p-3 mb-4 border border-amber-100">
+            <p class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">分叉图（r 取值影响）</p>
+            <div class="flex items-end gap-0.5 h-16 justify-center">
+              <div class="w-1 bg-amber-200 rounded-t" style="height:20%"></div>
+              <div class="w-1 bg-amber-200 rounded-t" style="height:20%"></div>
+              <div class="w-1 bg-amber-300 rounded-t" style="height:30%"></div>
+              <div class="w-1 bg-amber-300 rounded-t" style="height:45%"></div>
+              <div class="w-2 bg-amber-400 rounded-t" style="height:55%"></div>
+              <div class="w-2 bg-amber-400 rounded-t" style="height:70%"></div>
+              <div class="w-3 bg-amber-500 rounded-t" style="height:85%"></div>
+              <div class="w-4 bg-amber-600 rounded-t" style="height:100%"></div>
+              <div class="w-4 bg-amber-600 rounded-t" style="height:95%"></div>
+              <div class="w-4 bg-orange-600 rounded-t" style="height:100%"></div>
+            </div>
+            <div class="flex justify-between text-xs text-slate-400 mt-1">
+              <span>r=1</span><span>r=3</span><span>r=3.57</span><span>r=4</span>
+            </div>
+            <p class="text-xs text-amber-600 mt-2 text-center font-medium">r>3.57 时进入混沌区域</p>
+          </div>
+          <ul class="space-y-2 text-xs text-amber-800">
+            <li class="flex items-start gap-2">
+              <i class="fa-solid fa-circle-dot text-amber-500 mt-0.5"></i>
+              <span><strong>初值敏感性：</strong>x₀ 极微小变化导致序列完全不同</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <i class="fa-solid fa-circle-dot text-amber-500 mt-0.5"></i>
+              <span><strong>伪随机性：</strong>生成序列统计特性接近真随机</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <i class="fa-solid fa-circle-dot text-amber-500 mt-0.5"></i>
+              <span><strong>遍历性：</strong>序列遍历 (0,1) 内所有状态</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <i class="fa-solid fa-circle-dot text-amber-500 mt-0.5"></i>
+              <span><strong>不可预测性：</strong>无密钥无法推算后续序列</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Encryption Process Flow -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-diagram-project text-amber-500"></i> 加密流程
+          </h3>
+          <div class="space-y-3">
+            <div class="flex items-start gap-3">
+              <div class="w-7 h-7 bg-amber-500 text-white rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
+              <div>
+                <p class="text-sm font-semibold text-slate-700">生成混沌序列</p>
+                <p class="text-xs text-slate-500">以 (r, x₀) 为密钥迭代 Logistic 映射生成长序列，丢弃前 N₀ 个值</p>
+              </div>
+            </div>
+            <div class="ml-3.5 w-0.5 h-3 bg-amber-200"></div>
+            <div class="flex items-start gap-3">
+              <div class="w-7 h-7 bg-amber-400 text-white rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
+              <div>
+                <p class="text-sm font-semibold text-slate-700">像素位置置乱</p>
+                <p class="text-xs text-slate-500">按混沌序列排序索引，对原图像素矩阵进行行列置换</p>
+              </div>
+            </div>
+            <div class="ml-3.5 w-0.5 h-3 bg-amber-200"></div>
+            <div class="flex items-start gap-3">
+              <div class="w-7 h-7 bg-orange-500 text-white rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
+              <div>
+                <p class="text-sm font-semibold text-slate-700">像素值扩散</p>
+                <p class="text-xs text-slate-500">将混沌值量化为 [0,255]，与置乱后像素逐点异或（XOR）</p>
+              </div>
+            </div>
+            <div class="ml-3.5 w-0.5 h-3 bg-amber-200"></div>
+            <div class="flex items-start gap-3">
+              <div class="w-7 h-7 bg-emerald-500 text-white rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0">✓</div>
+              <div>
+                <p class="text-sm font-semibold text-emerald-700">输出加密图像</p>
+                <p class="text-xs text-slate-500">得到外观类似随机噪声的加密图像，送入 INN 隐写</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security Level Indicator -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-shield-halved text-emerald-500"></i> 当前安全评估
+          </h3>
+          <div class="mb-4 text-center">
+            <div class="relative w-24 h-24 mx-auto mb-2">
+              <svg viewBox="0 0 36 36" class="w-24 h-24 -rotate-90">
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e2e8f0" stroke-width="3"></circle>
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#10b981" stroke-width="3"
+                  stroke-dasharray="87 100" stroke-linecap="round"></circle>
+              </svg>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-lg font-extrabold text-emerald-700">87</span>
+              </div>
+            </div>
+            <p class="font-bold text-emerald-700">安全评分</p>
+          </div>
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-500">密钥空间</span>
+              <span class="text-emerald-600 font-semibold">极大 ✓</span>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-500">信息熵</span>
+              <span class="text-emerald-600 font-semibold">7.997/8.0 ✓</span>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-500">抗暴力破解</span>
+              <span class="text-emerald-600 font-semibold">强 ✓</span>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-500">抗统计分析</span>
+              <span class="text-emerald-600 font-semibold">强 ✓</span>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-500">抗差分攻击</span>
+              <span class="text-emerald-600 font-semibold">强 ✓</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
