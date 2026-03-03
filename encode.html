@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>隐写编码 - INN图像隐写系统</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    body { font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+    .upload-zone { border: 2px dashed #c7d2fe; transition: all 0.2s; }
+    .upload-zone:hover { border-color: #6366f1; background: #eef2ff; }
+    .upload-zone.has-image { border-style: solid; border-color: #6366f1; }
+    .progress-bar { transition: width 0.5s ease; }
+    .step-active { background: #6366f1; color: white; }
+    .step-done { background: #10b981; color: white; }
+    .step-pending { background: #e2e8f0; color: #94a3b8; }
+    .param-slider::-webkit-slider-thumb { background: #6366f1; }
+    .tag { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
+          <i class="fa-solid fa-eye-slash text-white text-sm"></i>
+        </div>
+        <div>
+          <span class="text-lg font-bold text-indigo-700">INN</span>
+          <span class="text-lg font-semibold text-slate-700"> 图像隐写系统</span>
+        </div>
+      </div>
+      <nav class="flex items-center gap-6 text-sm font-medium text-slate-600">
+        <a href="#" class="hover:text-indigo-600 transition-colors">首页</a>
+        <a href="#" class="text-indigo-600 font-semibold">隐写编码</a>
+        <a href="#" class="hover:text-indigo-600 transition-colors">隐写解码</a>
+        <a href="#" class="hover:text-indigo-600 transition-colors">图库示例</a>
+        <a href="#" class="hover:text-indigo-600 transition-colors">系统设置</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Page Title -->
+    <div class="mb-8">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+          <i class="fa-solid fa-file-image text-indigo-600"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-800">隐写编码</h1>
+        <span class="tag bg-indigo-100 text-indigo-700">ENCODE</span>
+      </div>
+      <p class="text-slate-500 text-sm ml-13">将秘密图像嵌入载体图像，生成携带隐藏信息的隐写图像</p>
+    </div>
+
+    <!-- Progress Steps -->
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-8">
+      <div class="flex items-center justify-between">
+        <div class="flex-1 flex items-center">
+          <div class="flex flex-col items-center">
+            <div class="w-9 h-9 rounded-full step-active flex items-center justify-center text-sm font-bold shadow-md">1</div>
+            <span class="text-xs mt-2 font-medium text-indigo-600">上传图像</span>
+          </div>
+          <div class="flex-1 h-0.5 bg-indigo-200 mx-3"></div>
+        </div>
+        <div class="flex-1 flex items-center">
+          <div class="flex flex-col items-center">
+            <div class="w-9 h-9 rounded-full step-pending flex items-center justify-center text-sm font-bold">2</div>
+            <span class="text-xs mt-2 font-medium text-slate-400">参数配置</span>
+          </div>
+          <div class="flex-1 h-0.5 bg-slate-200 mx-3"></div>
+        </div>
+        <div class="flex-1 flex items-center">
+          <div class="flex flex-col items-center">
+            <div class="w-9 h-9 rounded-full step-pending flex items-center justify-center text-sm font-bold">3</div>
+            <span class="text-xs mt-2 font-medium text-slate-400">执行编码</span>
+          </div>
+          <div class="flex-1 h-0.5 bg-slate-200 mx-3"></div>
+        </div>
+        <div class="flex flex-col items-center">
+          <div class="w-9 h-9 rounded-full step-pending flex items-center justify-center text-sm font-bold">4</div>
+          <span class="text-xs mt-2 font-medium text-slate-400">查看结果</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-6">
+      <!-- Left Column: Upload -->
+      <div class="col-span-2 space-y-6">
+
+        <!-- Upload Area -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <h2 class="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
+            <i class="fa-solid fa-upload text-indigo-500"></i> 上传图像
+          </h2>
+          <div class="grid grid-cols-2 gap-5">
+            <!-- Cover Image Upload -->
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-3">
+                载体图像 <span class="text-red-400">*</span>
+                <span class="ml-2 text-xs font-normal text-slate-400">（用于承载隐写信息的图像）</span>
+              </label>
+              <div class="upload-zone has-image rounded-xl p-4 text-center cursor-pointer relative">
+                <div class="w-full h-44 bg-gradient-to-br from-sky-50 to-blue-100 rounded-lg flex items-center justify-center relative overflow-hidden">
+                  <!-- Simulated uploaded image -->
+                  <div class="absolute inset-0 bg-gradient-to-br from-sky-100 to-blue-200 flex items-center justify-center">
+                    <div class="text-center">
+                      <div class="grid grid-cols-4 gap-1 mb-2">
+                        <div class="w-8 h-8 bg-blue-300 rounded"></div>
+                        <div class="w-8 h-8 bg-sky-200 rounded"></div>
+                        <div class="w-8 h-8 bg-indigo-200 rounded"></div>
+                        <div class="w-8 h-8 bg-blue-400 rounded"></div>
+                      </div>
+                      <i class="fa-solid fa-image text-blue-500 text-3xl"></i>
+                      <p class="text-xs text-blue-600 mt-1 font-medium">cover_image.jpg</p>
+                    </div>
+                  </div>
+                  <div class="absolute top-2 right-2 bg-emerald-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
+                    <i class="fa-solid fa-check text-xs"></i>
+                  </div>
+                </div>
+                <div class="mt-3 flex items-center justify-between">
+                  <div class="text-left">
+                    <p class="text-sm font-medium text-slate-700">cover_image.jpg</p>
+                    <p class="text-xs text-slate-400">512×512 · 1.2 MB · JPEG</p>
+                  </div>
+                  <button class="text-xs text-indigo-500 hover:text-indigo-700 font-medium">重新上传</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Secret Image Upload -->
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-3">
+                秘密图像 <span class="text-red-400">*</span>
+                <span class="ml-2 text-xs font-normal text-slate-400">（需要被隐藏的图像）</span>
+              </label>
+              <div class="upload-zone rounded-xl p-4 text-center cursor-pointer">
+                <div class="w-full h-44 flex flex-col items-center justify-center text-slate-400 bg-slate-50 rounded-lg">
+                  <div class="w-14 h-14 bg-white rounded-xl shadow-sm flex items-center justify-center mb-3">
+                    <i class="fa-solid fa-cloud-arrow-up text-slate-400 text-2xl"></i>
+                  </div>
+                  <p class="text-sm font-medium text-slate-500">点击上传或拖拽至此</p>
+                  <p class="text-xs text-slate-400 mt-1">支持 JPG、PNG、BMP 格式</p>
+                  <p class="text-xs text-slate-400">建议与载体图像同尺寸</p>
+                </div>
+                <div class="mt-3 text-xs text-slate-400 text-left">尚未上传</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Image Size Warning -->
+          <div class="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+            <i class="fa-solid fa-triangle-exclamation text-amber-500 mt-0.5"></i>
+            <div>
+              <p class="text-sm font-semibold text-amber-700">尺寸建议</p>
+              <p class="text-xs text-amber-600 mt-1">秘密图像应与载体图像保持相同尺寸（当前载体：512×512），不同尺寸将自动缩放，可能影响恢复质量。</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Parameters -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <h2 class="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
+            <i class="fa-solid fa-sliders text-indigo-500"></i> 编码参数设置
+          </h2>
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-3">隐藏强度</label>
+              <div class="flex items-center gap-4">
+                <input type="range" min="1" max="10" value="7" class="flex-1 h-2 rounded-lg appearance-none bg-indigo-100 accent-indigo-600" />
+                <span class="w-10 text-center text-sm font-bold text-indigo-600 bg-indigo-50 rounded-lg py-1">7</span>
+              </div>
+              <div class="flex justify-between text-xs text-slate-400 mt-1">
+                <span>低（更安全）</span><span>高（更隐蔽）</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-3">网络深度</label>
+              <select class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 bg-white focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none">
+                <option>标准（8层耦合）</option>
+                <option>轻量（4层耦合）</option>
+                <option>深度（16层耦合）</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-3">量化精度</label>
+              <div class="flex gap-3">
+                <label class="flex-1 flex items-center gap-2 bg-indigo-50 border-2 border-indigo-400 rounded-xl px-4 py-3 cursor-pointer">
+                  <input type="radio" name="quant" checked class="accent-indigo-600" />
+                  <span class="text-sm font-medium text-indigo-700">8-bit</span>
+                </label>
+                <label class="flex-1 flex items-center gap-2 border-2 border-slate-200 rounded-xl px-4 py-3 cursor-pointer hover:border-indigo-300">
+                  <input type="radio" name="quant" class="accent-indigo-600" />
+                  <span class="text-sm font-medium text-slate-600">16-bit</span>
+                </label>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-3">输出格式</label>
+              <select class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 bg-white focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none">
+                <option>PNG（无损）</option>
+                <option>JPEG（高质量95）</option>
+                <option>BMP（原始）</option>
+              </select>
+            </div>
+          </div>
+          <div class="mt-5 pt-5 border-t border-slate-100">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <div class="relative inline-flex items-center">
+                    <input type="checkbox" class="sr-only" checked />
+                    <div class="w-11 h-6 bg-indigo-600 rounded-full"></div>
+                    <div class="absolute right-1 w-4 h-4 bg-white rounded-full shadow"></div>
+                  </div>
+                  <span class="text-sm font-medium text-slate-700">启用GPU加速</span>
+                </label>
+                <span class="tag bg-emerald-100 text-emerald-700">推荐</span>
+              </div>
+              <button class="text-sm text-slate-500 hover:text-indigo-600">恢复默认设置</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-4">
+          <button class="flex-1 py-3.5 bg-indigo-600 text-white rounded-xl font-semibold text-base hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-bolt"></i>
+            开始隐写编码
+          </button>
+          <button class="px-6 py-3.5 bg-white text-slate-600 border border-slate-200 rounded-xl font-medium text-base hover:bg-slate-50 transition-colors">
+            <i class="fa-solid fa-rotate-left mr-2"></i>重置
+          </button>
+        </div>
+
+        <!-- Processing State (hidden normally, shown when processing) -->
+        <div class="bg-white rounded-2xl border border-indigo-100 shadow-sm p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-slate-700 flex items-center gap-2">
+              <i class="fa-solid fa-spinner fa-spin text-indigo-500"></i>
+              正在处理...
+            </h3>
+            <span class="text-sm text-indigo-600 font-medium">73%</span>
+          </div>
+          <div class="w-full bg-indigo-100 rounded-full h-2.5">
+            <div class="progress-bar bg-indigo-600 h-2.5 rounded-full" style="width: 73%"></div>
+          </div>
+          <div class="mt-4 space-y-2">
+            <div class="flex items-center gap-2 text-sm text-slate-600">
+              <i class="fa-solid fa-circle-check text-emerald-500 text-xs"></i>
+              图像预处理与尺寸对齐完成
+            </div>
+            <div class="flex items-center gap-2 text-sm text-slate-600">
+              <i class="fa-solid fa-circle-check text-emerald-500 text-xs"></i>
+              Haar小波变换完成
+            </div>
+            <div class="flex items-center gap-2 text-sm text-indigo-600 font-medium">
+              <i class="fa-solid fa-spinner fa-spin text-indigo-500 text-xs"></i>
+              INN前向传播中（第6/8层）...
+            </div>
+            <div class="flex items-center gap-2 text-sm text-slate-400">
+              <i class="fa-regular fa-circle text-slate-300 text-xs"></i>
+              后处理与图像导出
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Info & Preview -->
+      <div class="space-y-6">
+
+        <!-- Quick Tips -->
+        <div class="bg-indigo-50 rounded-2xl border border-indigo-100 p-5">
+          <h3 class="font-bold text-indigo-800 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-lightbulb text-indigo-500"></i> 使用提示
+          </h3>
+          <ul class="space-y-3 text-sm text-indigo-700">
+            <li class="flex items-start gap-2">
+              <i class="fa-solid fa-circle-dot text-indigo-400 mt-0.5 text-xs"></i>
+              载体图像建议选择纹理丰富的自然图像，隐藏效果更佳
+            </li>
+            <li class="flex items-start gap-2">
+              <i class="fa-solid fa-circle-dot text-indigo-400 mt-0.5 text-xs"></i>
+              秘密图像与载体图像尺寸一致时恢复质量最优
+            </li>
+            <li class="flex items-start gap-2">
+              <i class="fa-solid fa-circle-dot text-indigo-400 mt-0.5 text-xs"></i>
+              隐藏强度越高，隐写图像可能引入轻微扰动
+            </li>
+            <li class="flex items-start gap-2">
+              <i class="fa-solid fa-circle-dot text-indigo-400 mt-0.5 text-xs"></i>
+              建议使用PNG格式输出以保证无损存储
+            </li>
+          </ul>
+        </div>
+
+        <!-- Model Info -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-brain text-violet-500"></i> 当前模型信息
+          </h3>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-500">模型版本</span>
+              <span class="font-semibold text-slate-700">INN-Stego v2.1</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-500">网络架构</span>
+              <span class="font-semibold text-slate-700">HaarWave + RRDB</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-500">支持分辨率</span>
+              <span class="font-semibold text-slate-700">最大 2048×2048</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-500">运行设备</span>
+              <div class="flex items-center gap-1">
+                <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                <span class="font-semibold text-emerald-700">GPU (CUDA)</span>
+              </div>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-500">预计用时</span>
+              <span class="font-semibold text-slate-700">~2.3 秒</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Tasks -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-slate-400"></i> 近期任务
+          </h3>
+          <div class="space-y-3">
+            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+              <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <i class="fa-solid fa-circle-check text-emerald-500"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-medium text-slate-700 truncate">lena.png → secret1.jpg</p>
+                <p class="text-xs text-slate-400">2分钟前 · PSNR 42.1dB</p>
+              </div>
+              <button class="text-xs text-indigo-500 whitespace-nowrap">查看</button>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+              <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <i class="fa-solid fa-circle-check text-emerald-500"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-medium text-slate-700 truncate">baboon.png → logo.png</p>
+                <p class="text-xs text-slate-400">15分钟前 · PSNR 40.8dB</p>
+              </div>
+              <button class="text-xs text-indigo-500 whitespace-nowrap">查看</button>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+              <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-medium text-slate-700 truncate">city.jpg → portrait.jpg</p>
+                <p class="text-xs text-slate-400">1小时前 · 尺寸不匹配</p>
+              </div>
+              <button class="text-xs text-indigo-500 whitespace-nowrap">重试</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
