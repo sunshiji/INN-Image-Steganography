@@ -450,5 +450,178 @@
     </div>
   </div>
 
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   Encode page — JS backend wiring
+   API: POST /api/encode  (or /api/pipeline/encrypt_encode)
+   ═══════════════════════════════════════════════════════════ */
+const API = 'http://localhost:5000';
+
+let coverFile   = null;
+let secretFile  = null;
+let lastStegoB64 = null;
+let lastStegoKey = null;
+
+// ── Upload zones ───────────────────────────────────────────
+const uploadZones = document.querySelectorAll('.upload-zone');
+const coverZone  = uploadZones[0];   // first  = cover
+const secretZone = uploadZones[1];   // second = secret
+
+function makeZoneClickable(zone, onFile) {
+  if (!zone) return;
+  zone.style.cursor = 'pointer';
+  zone.addEventListener('click', () => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*';
+    inp.onchange = e => { const f = e.target.files[0]; if(f) onFile(zone, f); };
+    inp.click();
+  });
+  zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('param-highlight'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('param-highlight'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('param-highlight');
+    const f = e.dataTransfer.files[0]; if(f) onFile(zone, f);
+  });
+}
+
+function previewInZone(zone, file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const thumb = zone.querySelector('.w-full.h-44') || zone.querySelector('div > div');
+    if (thumb) {
+      thumb.style.backgroundImage = `url(${ev.target.result})`;
+      thumb.style.backgroundSize  = 'cover';
+      thumb.style.backgroundPosition = 'center';
+    }
+    const nameEl = zone.querySelector('p.text-sm.font-medium');
+    const sizeEl = zone.querySelector('p.text-xs.text-slate-400');
+    if (nameEl) nameEl.textContent = file.name;
+    if (sizeEl) sizeEl.textContent = (file.size/1024).toFixed(1) + ' KB';
+  };
+  reader.readAsDataURL(file);
+}
+
+makeZoneClickable(coverZone,  (z, f) => { coverFile  = f; previewInZone(z, f); });
+makeZoneClickable(secretZone, (z, f) => { secretFile = f; previewInZone(z, f); });
+
+// Auto-load encrypted image from sessionStorage (passed from encrypt page)
+window.addEventListener('DOMContentLoaded', () => {
+  const encB64 = sessionStorage.getItem('encryptedImage');
+  if (encB64 && secretZone) {
+    // Convert base64 → Blob → File
+    const bytes = atob(encB64);
+    const arr   = new Uint8Array(bytes.length).map((_, i) => bytes.charCodeAt(i));
+    secretFile  = new File([arr], 'secret_encrypted.png', { type: 'image/png' });
+    previewInZone(secretZone, secretFile);
+    showToast('已自动载入混沌加密图像 ✓', 'success');
+  }
+});
+
+// ── Encode button ──────────────────────────────────────────
+const encodeBtn = document.querySelector('button.bg-indigo-600');
+if (encodeBtn && encodeBtn.textContent.includes('隐写')) {
+  encodeBtn.addEventListener('click', async () => {
+    if (!coverFile)  { alert('请先上传载体图像！'); return; }
+    if (!secretFile) { alert('请先上传秘密图像（或先完成混沌加密）！'); return; }
+
+    setLoading(encodeBtn, true, '编码中...');
+    try {
+      const fd = new FormData();
+      fd.append('cover',  coverFile);
+      fd.append('secret', secretFile);
+
+      const resp = await fetch(`${API}/api/encode`, { method: 'POST', body: fd });
+      if (!resp.ok) { const e = await resp.json(); throw new Error(e.error); }
+      const data = await resp.json();
+
+      lastStegoB64 = data.stego_image;
+      lastStegoKey = data.stego_key;
+
+      // Save to sessionStorage for decode page
+      sessionStorage.setItem('stegoImage', data.stego_image);
+      sessionStorage.setItem('stegoKey',   data.stego_key);
+
+      showEncodeResult(data);
+      showToast('INN隐写编码成功 ✓', 'success');
+    } catch (err) {
+      showToast('编码失败: ' + err.message, 'error');
+    } finally {
+      setLoading(encodeBtn, false, '开始隐写编码');
+    }
+  });
+}
+
+function showEncodeResult(data) {
+  // Update the "processing" section to show results
+  const processingBox = document.querySelector('.border-indigo-100');
+  if (!processingBox) return;
+
+  const m = data.metrics;
+  processingBox.innerHTML = `
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-slate-700 flex items-center gap-2">
+        <i class="fa-solid fa-circle-check text-emerald-500"></i>隐写编码完成
+      </h3>
+      <div class="flex items-center gap-3 text-sm">
+        <span class="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full font-semibold">
+          PSNR: ${m.psnr_cover_stego} dB
+        </span>
+        <span class="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full font-semibold">
+          SSIM: ${m.ssim_cover_stego}
+        </span>
+      </div>
+    </div>
+    <div class="flex gap-4 mb-4">
+      <div class="flex-1 text-center">
+        <img src="data:image/png;base64,${data.stego_image}"
+             class="w-full max-h-48 object-contain rounded-xl border border-slate-200 mb-2" />
+        <p class="text-xs font-semibold text-slate-600">隐写图像（Stego）</p>
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <button id="downloadStegoBtn" class="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold">
+        <i class="fa-solid fa-download mr-1"></i>下载隐写图像
+      </button>
+      <button id="downloadKeyBtn" class="flex-1 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold">
+        <i class="fa-solid fa-key mr-1"></i>下载解码密钥
+      </button>
+    </div>`;
+
+  document.getElementById('downloadStegoBtn')?.addEventListener('click', () => downloadStego());
+  document.getElementById('downloadKeyBtn')?.addEventListener('click', () => downloadStegoKey());
+}
+
+function downloadStego() {
+  if (!lastStegoB64) return;
+  const a = document.createElement('a');
+  a.href = 'data:image/png;base64,' + lastStegoB64;
+  a.download = 'stego_output.png'; a.click();
+}
+function downloadStegoKey() {
+  if (!lastStegoKey) return;
+  const a = document.createElement('a');
+  a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(lastStegoKey);
+  a.download = 'stego_key.txt'; a.click();
+}
+
+// ── Helpers ────────────────────────────────────────────────
+function setLoading(btn, loading, label) {
+  btn.disabled = loading;
+  btn.innerHTML = loading
+    ? '<i class="fa-solid fa-spinner fa-spin mr-2"></i>' + label
+    : '<i class="fa-solid fa-bolt mr-2"></i>' + label;
+}
+function showToast(msg, type) {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;
+    border-radius:12px;font-size:0.85rem;font-weight:600;color:white;
+    background:${type==='success'?'#10b981':'#ef4444'};
+    box-shadow:0 4px 16px rgba(0,0,0,0.15);transition:opacity 0.4s`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(), 400); }, 3000);
+}
+</script>
 </body>
 </html>

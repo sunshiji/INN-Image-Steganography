@@ -647,5 +647,161 @@
     </div>
   </div>
 
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   Encrypt page — JS backend wiring
+   API: POST /api/encrypt
+   ═══════════════════════════════════════════════════════════ */
+const API = 'http://localhost:5000';
+
+// ── Upload zone ────────────────────────────────────────────
+// Use the first upload-zone (the secret image input)
+const allZones = document.querySelectorAll('.upload-zone');
+const secretZone = allZones[0];   // first upload zone = secret image
+
+let selectedFile = null;
+let lastEncryptedB64 = null;
+let lastKey = null;
+
+// Make the upload zone clickable
+if (secretZone) {
+  secretZone.style.cursor = 'pointer';
+  secretZone.addEventListener('click', () => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*';
+    inp.onchange = e => {
+      selectedFile = e.target.files[0];
+      if (!selectedFile) return;
+      showUploadPreview(secretZone, selectedFile);
+    };
+    inp.click();
+  });
+
+  // Drag & drop
+  secretZone.addEventListener('dragover', e => { e.preventDefault(); secretZone.classList.add('param-highlight'); });
+  secretZone.addEventListener('dragleave', () => secretZone.classList.remove('param-highlight'));
+  secretZone.addEventListener('drop', e => {
+    e.preventDefault();
+    secretZone.classList.remove('param-highlight');
+    selectedFile = e.dataTransfer.files[0];
+    if (selectedFile) showUploadPreview(secretZone, selectedFile);
+  });
+}
+
+function showUploadPreview(zone, file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const inner = zone.querySelector('div');
+    if (inner) inner.style.backgroundImage = `url(${ev.target.result})`;
+    const label = zone.querySelector('p.text-sm');
+    if (label) { label.textContent = file.name; }
+    const sub = zone.querySelector('p.text-xs');
+    if (sub) { sub.textContent = `${(file.size/1024).toFixed(1)} KB`; }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Encrypt button ─────────────────────────────────────────
+const encryptBtn = document.querySelector('button.bg-amber-500');
+if (encryptBtn) {
+  encryptBtn.addEventListener('click', async () => {
+    if (!selectedFile) {
+      alert('请先上传秘密图像！');
+      return;
+    }
+    setLoading(encryptBtn, true, '加密中...');
+    try {
+      const fd = new FormData();
+      fd.append('image',  selectedFile);
+      fd.append('r',      document.querySelector('input[type=range]')?.value || '3.9991');
+      fd.append('x0',     document.querySelectorAll('input[type=range]')[1]?.value || '0.37291');
+      fd.append('n0',     document.querySelectorAll('input[type=range]')[2]?.value || '500');
+      const roundsEl = document.querySelector('input[name=rounds]:checked');
+      let rounds = '2';
+      if (roundsEl) {
+        const txt = roundsEl.parentElement.textContent;
+        if (txt.includes('1')) rounds = '1';
+        else if (txt.includes('3')) rounds = '3';
+      }
+      fd.append('rounds', rounds);
+
+      const resp = await fetch(`${API}/api/encrypt`, { method: 'POST', body: fd });
+      if (!resp.ok) { const e = await resp.json(); throw new Error(e.error); }
+      const data = await resp.json();
+
+      lastEncryptedB64 = data.encrypted_image;
+      lastKey = data.key;
+
+      // Show encrypted image in the right column
+      showEncryptedResult(data);
+      showToast('混沌加密成功 ✓', 'success');
+
+    } catch (err) {
+      showToast('加密失败: ' + err.message, 'error');
+    } finally {
+      setLoading(encryptBtn, false, '开始 Logistic 混沌加密');
+    }
+  });
+}
+
+function showEncryptedResult(data) {
+  // Update encrypted preview image (second column)
+  const previewImg = document.querySelector('.bg-slate-900');
+  if (previewImg) {
+    previewImg.style.backgroundImage = `url(data:image/png;base64,${data.encrypted_image})`;
+    previewImg.style.backgroundSize = 'cover';
+  }
+  // Update metrics
+  const m = data.metrics;
+  const metricEls = document.querySelectorAll('.bg-emerald-50 p.text-base');
+  if (metricEls[0]) metricEls[0].textContent = m.entropy_encrypted?.toFixed(4);
+  if (metricEls[1]) metricEls[1].textContent = m.npcr?.toFixed(2) + '%';
+  if (metricEls[2]) metricEls[2].textContent = m.uaci?.toFixed(2) + '%';
+
+  // Store key for download and passthrough to encode page
+  sessionStorage.setItem('encryptedImage', data.encrypted_image);
+  sessionStorage.setItem('chaosKey', JSON.stringify(data.key));
+}
+
+// ── Download encrypted image ───────────────────────────────
+document.querySelectorAll('button').forEach(btn => {
+  if (btn.textContent.includes('下载')) {
+    btn.addEventListener('click', () => {
+      if (!lastEncryptedB64) { alert('请先执行加密！'); return; }
+      const a = document.createElement('a');
+      a.href = 'data:image/png;base64,' + lastEncryptedB64;
+      a.download = 'secret_encrypted.png';
+      a.click();
+      if (lastKey) {
+        const kb = document.createElement('a');
+        kb.href = 'data:application/json;charset=utf-8,' +
+                  encodeURIComponent(JSON.stringify(lastKey, null, 2));
+        kb.download = 'chaos_key.json';
+        setTimeout(() => kb.click(), 300);
+      }
+    });
+  }
+});
+
+// ── Helpers ────────────────────────────────────────────────
+function setLoading(btn, loading, label) {
+  btn.disabled = loading;
+  btn.innerHTML = loading
+    ? '<i class="fa-solid fa-spinner fa-spin mr-2"></i>' + label
+    : '<i class="fa-solid fa-bolt mr-2"></i>' + label;
+}
+
+function showToast(msg, type) {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;
+    border-radius:12px;font-size:0.85rem;font-weight:600;color:white;
+    background:${type==='success'?'#10b981':'#ef4444'};
+    box-shadow:0 4px 16px rgba(0,0,0,0.15);transition:opacity 0.4s`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(), 400); }, 3000);
+}
+</script>
 </body>
 </html>
