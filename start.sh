@@ -1,23 +1,22 @@
 #!/usr/bin/env bash
 # ---------------------------------------------------------------------------
-# start.sh — 一键启动 INN 图像隐写系统（生产模式）
+# start.sh - Start INN Image Steganography System (production mode)
 #
-# 前提：已运行 bash setup.sh 完成安装。
+# Prerequisites: run 'bash setup.sh' once first.
 #
-# 用法:
+# Usage:
 #   bash start.sh
 #
-# 可选环境变量:
-#   PORT            监听端口（默认 5000）
-#   SECRET_KEY      Session 密钥（生产环境必须设置！）
-#   ADMIN_USERNAME  管理员用户名（默认 admin）
-#   ADMIN_PASSWORD  管理员密码（默认 admin123，强烈建议修改！）
-#   WORKERS         gunicorn worker 数量（默认 1）
+# Environment variables:
+#   PORT            Listening port (default: 5000)
+#   SECRET_KEY      Session secret key (must set in production!)
+#   ADMIN_USERNAME  Admin username (default: admin)
+#   ADMIN_PASSWORD  Admin password (default: admin123)
+#   WORKERS         Gunicorn worker count (default: 1)
 #
-# 示例 — 自定义端口和密码:
+# Example:
 #   PORT=8080 SECRET_KEY=my-secret ADMIN_PASSWORD=MyPass123 bash start.sh
 # ---------------------------------------------------------------------------
-
 set -e
 
 PROJ_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -26,27 +25,26 @@ BACKEND_DIR="${PROJ_DIR}/backend"
 
 : "${PORT:=5000}"
 
-# ── Activate virtual environment if present ──────────────────────────────────
-if [ -f "${VENV_DIR}/bin/activate" ]; then
-    # shellcheck source=/dev/null
-    source "${VENV_DIR}/bin/activate"
+# --- Resolve gunicorn path ---
+if [ -f "${VENV_DIR}/bin/gunicorn" ]; then
     GUNICORN="${VENV_DIR}/bin/gunicorn"
-else
-    # Fall back to system-wide gunicorn
+    source "${VENV_DIR}/bin/activate"
+elif command -v gunicorn >/dev/null 2>&1; then
+    # Covers: conda env, system install
     GUNICORN="$(command -v gunicorn)"
-    if [ -z "$GUNICORN" ]; then
-        echo "[ERROR] gunicorn not found. Run 'bash setup.sh' first." >&2
-        exit 1
-    fi
+else
+    echo "[ERROR] gunicorn not found. Run 'bash setup.sh' first." >&2
+    exit 1
 fi
 
+SERVER_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo '127.0.0.1')
 echo "=================================================="
-echo "  INN 图像隐写系统"
-echo "  服务地址: http://0.0.0.0:${PORT}"
-echo "  浏览器访问: http://$(hostname -I 2>/dev/null | awk '{print $1}' || echo '10.109.118.166'):${PORT}"
+echo "  INN Image Steganography System"
+echo "  Listen: http://0.0.0.0:${PORT}"
+echo "  Access: http://${SERVER_IP}:${PORT}"
 echo "=================================================="
 
 cd "${BACKEND_DIR}"
-exec "$GUNICORN" \
+exec "${GUNICORN}" \
     --config "${BACKEND_DIR}/gunicorn.conf.py" \
     app:app

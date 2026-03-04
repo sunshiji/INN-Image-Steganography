@@ -1,55 +1,64 @@
 #!/usr/bin/env bash
 # ---------------------------------------------------------------------------
-# setup.sh — 一次性环境安装脚本
+# setup.sh - yi ci xing huan jing an zhuang jiao ben
 #
-# 在项目目录下执行一次即可完成所有依赖安装。
-#
-# 用法:
+# Yong fa:
 #   cd /path/to/INN-Image-Steganography
 #   bash setup.sh
 #
-# 脚本会:
-#   1. 创建 Python 虚拟环境 (./venv)
-#   2. 自动检测 CUDA，安装对应版本 PyTorch
-#   3. 安装全部 Python 依赖
+# Zhi chi liang zhong mo shi:
+#   - Conda huan jing (CONDA_DEFAULT_ENV yi she zhi): zhi jie an zhuang dao dang qian conda huan jing
+#   - Fei conda huan jing: chuang jian ./venv/ bing an zhuang
 # ---------------------------------------------------------------------------
-
 set -e
 
 PROJ_DIR="$(cd "$(dirname "$0")" && pwd)"
 VENV_DIR="${PROJ_DIR}/venv"
 
 echo "============================================================"
-echo "  INN 图像隐写系统 — 环境安装"
-echo "  项目路径: ${PROJ_DIR}"
+echo "  INN Steganography System - Setup"
+echo "  Project: ${PROJ_DIR}"
 echo "============================================================"
 
-# ── 1. Python version check ──────────────────────────────────────────────────
-PYTHON="${PYTHON:-python3}"
-PY_VER=$("$PYTHON" -c "import sys; print('%d.%d' % sys.version_info[:2])")
-echo "[1/3] Python 版本: ${PY_VER}"
-
-# ── 2. Create virtual environment ────────────────────────────────────────────
-if [ -d "${VENV_DIR}" ]; then
-    echo "[2/3] 虚拟环境已存在: ${VENV_DIR}  (跳过创建)"
+# --- 1. Detect Python interpreter ---
+if [ -n "${CONDA_DEFAULT_ENV}" ] && [ "${CONDA_DEFAULT_ENV}" != "base" ]; then
+    echo "[1/3] Conda env detected: ${CONDA_DEFAULT_ENV}"
+    PYTHON="python"
+    PIP="pip"
+    USE_VENV=0
+elif [ -d "${VENV_DIR}" ]; then
+    echo "[1/3] Existing venv detected: ${VENV_DIR}"
+    source "${VENV_DIR}/bin/activate"
+    PYTHON="${VENV_DIR}/bin/python"
+    PIP="${VENV_DIR}/bin/pip"
+    USE_VENV=1
 else
-    echo "[2/3] 创建虚拟环境: ${VENV_DIR}"
-    "$PYTHON" -m venv "${VENV_DIR}"
+    PYTHON="${PYTHON:-python3}"
+    PY_VER=$("${PYTHON}" -c "import sys; print('%d.%d' % sys.version_info[:2])" 2>/dev/null || echo "unknown")
+    echo "[1/3] Python version: ${PY_VER} (will create venv)"
+    "${PYTHON}" -m venv "${VENV_DIR}"
+    source "${VENV_DIR}/bin/activate"
+    PYTHON="${VENV_DIR}/bin/python"
+    PIP="${VENV_DIR}/bin/pip"
+    USE_VENV=1
 fi
 
-PIP="${VENV_DIR}/bin/pip"
-"$PIP" install --upgrade pip --quiet
+# --- 2. Upgrade pip ---
+echo "[2/3] Upgrading pip..."
+"${PIP}" install --upgrade pip --quiet
 
-# ── 3. Install PyTorch (GPU if available, else CPU) ──────────────────────────
-echo "[3/3] 安装 Python 依赖 …"
+# --- 3. Install PyTorch (GPU if available, else CPU) ---
+echo "[3/3] Installing dependencies..."
 
-if command -v nvcc &>/dev/null || [ -d /usr/local/cuda ]; then
-    # Detect CUDA major version to pick the right torch index
+# Check if torch is already installed
+if "${PYTHON}" -c "import torch" 2>/dev/null; then
+    TORCH_VER=$("${PYTHON}" -c "import torch; print(torch.__version__)")
+    echo "  torch already installed: ${TORCH_VER} (skipping)"
+elif command -v nvcc >/dev/null 2>&1 || [ -d /usr/local/cuda ]; then
     CUDA_VER=$(nvcc --version 2>/dev/null | grep -oP 'release \K[\d.]+' | head -1)
-    CUDA_MAJOR=$(echo "$CUDA_VER" | cut -d. -f1)
-    CUDA_MINOR=$(echo "$CUDA_VER" | cut -d. -f2)
-    echo "    检测到 CUDA ${CUDA_VER}"
-
+    CUDA_MAJOR=$(echo "${CUDA_VER}" | cut -d. -f1)
+    CUDA_MINOR=$(echo "${CUDA_VER}" | cut -d. -f2)
+    echo "  CUDA ${CUDA_VER} detected"
     if [ "${CUDA_MAJOR}" -ge 12 ]; then
         TORCH_INDEX="https://download.pytorch.org/whl/cu121"
     elif [ "${CUDA_MAJOR}" -eq 11 ] && [ "${CUDA_MINOR}" -ge 8 ]; then
@@ -57,23 +66,26 @@ if command -v nvcc &>/dev/null || [ -d /usr/local/cuda ]; then
     else
         TORCH_INDEX="https://download.pytorch.org/whl/cu117"
     fi
-    echo "    PyTorch index: ${TORCH_INDEX}"
-    "$PIP" install torch torchvision --index-url "${TORCH_INDEX}" --quiet
+    echo "  PyTorch index: ${TORCH_INDEX}"
+    "${PIP}" install torch torchvision --index-url "${TORCH_INDEX}" --quiet
 else
-    echo "    未检测到 CUDA，安装 CPU 版 PyTorch"
-    "$PIP" install torch torchvision --index-url https://download.pytorch.org/whl/cpu --quiet
+    echo "  No CUDA detected, installing CPU PyTorch"
+    "${PIP}" install torch torchvision --index-url https://download.pytorch.org/whl/cpu --quiet
 fi
 
-# Install remaining dependencies from requirements.txt
-"$PIP" install -r "${PROJ_DIR}/backend/requirements.txt" --quiet
+# Install remaining dependencies
+"${PIP}" install -r "${PROJ_DIR}/backend/requirements.txt" --quiet
 
 echo ""
 echo "============================================================"
-echo "  安装完成！"
+echo "  Setup complete!"
+if [ "${USE_VENV}" -eq 1 ]; then
+    echo "  Venv: ${VENV_DIR}"
+fi
 echo ""
-echo "  启动服务:"
+echo "  Start the service:"
 echo "    bash ${PROJ_DIR}/start.sh"
 echo ""
-echo "  使用自定义密码启动:"
-echo "    ADMIN_PASSWORD=YourPassword bash ${PROJ_DIR}/start.sh"
+echo "  Browser access:"
+echo "    http://$(hostname -I 2>/dev/null | awk '{print $1}' || echo '127.0.0.1'):5000"
 echo "============================================================"

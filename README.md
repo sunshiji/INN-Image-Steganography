@@ -15,13 +15,23 @@ cd INN-Image-Steganography
 
 ### 第二步：安装环境（只需执行一次）
 
+**方式 A：使用 Conda 环境（推荐，适用于已有 conda 的服务器）**
+
 ```bash
-bash setup.sh
+conda activate pris        # 激活目标 conda 环境
+bash setup.sh              # 自动检测到 conda，直接安装到 pris 环境
 ```
 
-脚本自动完成：
-- 创建 Python 虚拟环境（`./venv/`）
-- 自动检测 CUDA，安装匹配的 GPU 或 CPU 版 PyTorch
+**方式 B：自动创建 venv（不使用 conda）**
+
+```bash
+bash setup.sh              # 自动创建 ./venv/ 并安装所有依赖
+```
+
+`setup.sh` 自动完成：
+- 检测当前 Conda 环境（若有），直接安装到已激活的 conda env
+- 否则创建 Python 虚拟环境（`./venv/`）
+- 自动检测 CUDA，安装匹配的 GPU 或 CPU 版 PyTorch（若未安装）
 - 安装所有其他 Python 依赖
 
 ### 第三步：配置账号
@@ -75,7 +85,7 @@ http://<服务器IP>:5000
 
 ---
 
-## 示例：在服务器 10.109.118.166 上部署
+## 示例：在服务器 10.109.118.166 上部署（conda pris 环境）
 
 ```bash
 # SSH 登录服务器
@@ -84,7 +94,11 @@ ssh sunshiji@10.109.118.166
 # 进入项目目录
 cd /home/sunshiji/sys/INN-Image-Steganography
 
-# 安装环境（首次）
+# 更新代码
+git pull
+
+# 激活已有 conda 环境，安装依赖（首次）
+conda activate pris
 bash setup.sh
 
 # 配置凭据
@@ -92,13 +106,11 @@ cp .env.example ~/.inn-stego.env
 nano ~/.inn-stego.env        # 修改 SECRET_KEY 和 ADMIN_PASSWORD
 chmod 600 ~/.inn-stego.env
 
-# 安装 systemd 服务
-mkdir -p ~/.config/systemd/user
-cp inn-stego.service ~/.config/systemd/user/
-systemctl --user daemon-reload
-systemctl --user enable inn-stego
-systemctl --user start inn-stego
-sudo loginctl enable-linger sunshiji
+# 方式一：直接启动（conda 环境下）
+bash start.sh
+
+# 方式二：后台运行
+nohup bash start.sh > ~/inn-stego.log 2>&1 &
 ```
 
 Windows 浏览器访问：**`http://10.109.118.166:5000`**
