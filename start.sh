@@ -23,6 +23,27 @@ PROJ_DIR="$(cd "$(dirname "$0")" && pwd)"
 VENV_DIR="${PROJ_DIR}/venv"
 BACKEND_DIR="${PROJ_DIR}/backend"
 
+# --- Load ~/.inn-stego.env (lower priority than env vars already in the shell) ---
+ENV_FILE="${HOME}/.inn-stego.env"
+if [ -f "${ENV_FILE}" ]; then
+    while read -r _line || [ -n "${_line}" ]; do
+        case "${_line}" in ''|'#'*) continue ;; esac   # skip blank lines and comments
+        case "${_line}" in *'='*) ;; *) continue ;; esac  # skip lines without '='
+        _key="${_line%%=*}"
+        _val="${_line#*=}"
+        _key="${_key%% *}"                              # trim trailing whitespace from key
+        [ -z "${_key}" ] && continue
+        if [ -z "${!_key+x}" ]; then                   # only set if not already exported
+            # Strip matching surrounding single or double quotes
+            case "${_val}" in
+                "'"*"'") _val="${_val#?}"; _val="${_val%?}" ;;
+                '"'*'"') _val="${_val#?}"; _val="${_val%?}" ;;
+            esac
+            export "${_key}=${_val}"
+        fi
+    done < "${ENV_FILE}"
+fi
+
 : "${PORT:=5000}"
 
 # --- Resolve gunicorn ---
@@ -70,6 +91,7 @@ echo "=================================================="
 echo "  INN Image Steganography System"
 echo "  Listen: http://0.0.0.0:${PORT}"
 echo "  Access: http://$(hostname -I 2>/dev/null | awk '{print $1}' || echo '127.0.0.1'):${PORT}"
+echo "  Admin:  ${ADMIN_USERNAME:-admin}"
 echo "=================================================="
 
 cd "${BACKEND_DIR}"
