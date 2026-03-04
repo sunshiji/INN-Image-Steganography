@@ -94,7 +94,32 @@ sudo loginctl enable-linger $USER
 
 ---
 
-### 第六步：访问系统
+### 第六步：开放防火墙端口（**必须**）
+
+服务监听 `0.0.0.0:5000`，但 Ubuntu UFW 防火墙默认会拦截所有外部连接。
+**每次部署后必须执行一次**：
+
+```bash
+# 方式一：允许所有来源访问 5000 端口（最简单）
+sudo ufw allow 5000/tcp
+sudo ufw reload
+
+# 方式二：仅允许特定客户端子网（更安全，将 <CLIENT_SUBNET> 替换为实际子网）
+sudo ufw allow from <CLIENT_SUBNET> to any port 5000 proto tcp
+sudo ufw reload
+
+# 确认规则已生效
+sudo ufw status numbered | grep 5000
+```
+
+> **验证服务是否可达（在服务器上运行）：**
+> ```bash
+> bash check.sh
+> ```
+
+---
+
+### 第七步：访问系统
 
 在浏览器中打开（将 `<server-ip>` 替换为实际服务器 IP）：
 
@@ -154,9 +179,69 @@ systemctl --user restart inn-stego
 journalctl --user -u inn-stego -f
 
 # 更新代码后重启
-cd /home/sunshiji/sys/INN-Image-Steganography
+cd /path/to/INN-Image-Steganography
 git pull
 systemctl --user restart inn-stego
+```
+
+---
+
+## 网络访问故障排查
+
+> 服务已启动（`Listening at: http://0.0.0.0:5000`）但从 Windows 浏览器无法访问？
+
+### 原因一：UFW 防火墙未开放端口（**最常见**）
+
+```bash
+# 在服务器上执行：
+sudo ufw status        # 查看当前防火墙状态
+
+# 如果是 "Status: active"，需要开放端口：
+sudo ufw allow 5000/tcp
+sudo ufw reload
+
+# 确认已开放：
+sudo ufw status | grep 5000
+```
+
+### 原因二：跨子网路由问题
+
+若服务器 IP（如 10.109.x.x）与客户端 IP（如 10.113.x.x）属于不同子网，
+需要网络管理员在交换机/路由器上开通两个子网之间的路由。
+
+**临时绕过方案（SSH 端口转发）：**
+
+```bash
+# 在 Windows 上打开 PowerShell 或 Git Bash，执行：
+ssh -L 5000:127.0.0.1:5000 <user>@<server-ip>
+
+# 然后在浏览器访问：
+http://localhost:5000
+```
+
+### 原因三：iptables 规则
+
+```bash
+# 检查是否有 iptables 规则拦截：
+sudo iptables -L INPUT -n --line-numbers | grep -E "DROP|REJECT|5000"
+
+# 如有必要，添加放行规则：
+sudo iptables -I INPUT 1 -p tcp --dport 5000 -j ACCEPT
+```
+
+### 自动诊断脚本
+
+```bash
+# 在服务器上运行，自动检查所有上述项目：
+bash check.sh
+```
+
+输出示例：
+```
+[OK]   Service is bound to 0.0.0.0:5000
+[OK]   Local request to http://127.0.0.1:5000/ returned HTTP 302
+[FAIL] UFW is active but port 5000 is NOT in the allow list
+         → FIX: sudo ufw allow 5000/tcp && sudo ufw reload
 ```
 
 ---
@@ -169,6 +254,7 @@ systemctl --user restart inn-stego
 ├── .env.example          # 环境变量模板（复制到 ~/.inn-stego.env 后修改）
 ├── setup.sh              # 安装脚本（安装 PyTorch，自动检测 CUDA）
 ├── start.sh              # 启动脚本（自动识别 conda/venv/系统 gunicorn）
+├── check.sh              # 网络诊断脚本（防火墙/绑定/路由检查）
 ├── inn-stego.service     # systemd 用户服务单元
 ├── login.html            # 登录页面
 ├── index.html            # 系统总览
