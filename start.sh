@@ -25,23 +25,26 @@ BACKEND_DIR="${PROJ_DIR}/backend"
 
 : "${PORT:=5000}"
 
-# --- Resolve gunicorn path ---
+# --- Resolve gunicorn ---
+# Priority: 1) project venv  2) CONDA_PREFIX env  3) PATH (conda activate / system)
 if [ -f "${VENV_DIR}/bin/gunicorn" ]; then
-    GUNICORN="${VENV_DIR}/bin/gunicorn"
     source "${VENV_DIR}/bin/activate"
+    GUNICORN="${VENV_DIR}/bin/gunicorn"
+elif [ -n "${CONDA_PREFIX}" ] && [ -f "${CONDA_PREFIX}/bin/gunicorn" ]; then
+    GUNICORN="${CONDA_PREFIX}/bin/gunicorn"
 elif command -v gunicorn >/dev/null 2>&1; then
-    # Covers: conda env, system install
     GUNICORN="$(command -v gunicorn)"
 else
-    echo "[ERROR] gunicorn not found. Run 'bash setup.sh' first." >&2
+    echo "[ERROR] gunicorn not found." >&2
+    echo "  Option A (conda): conda activate pris && bash setup.sh" >&2
+    echo "  Option B (venv):  bash setup.sh" >&2
     exit 1
 fi
 
-SERVER_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo '127.0.0.1')
 echo "=================================================="
 echo "  INN Image Steganography System"
 echo "  Listen: http://0.0.0.0:${PORT}"
-echo "  Access: http://${SERVER_IP}:${PORT}"
+echo "  Access: http://$(hostname -I 2>/dev/null | awk '{print $1}' || echo '127.0.0.1'):${PORT}"
 echo "=================================================="
 
 cd "${BACKEND_DIR}"

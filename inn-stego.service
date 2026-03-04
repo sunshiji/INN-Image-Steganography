@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------
 # inn-stego.service - systemd user service
 #
-# Uses %h (home directory) for portability across user accounts.
+# Uses %h (home directory) for portability.
 # Credentials loaded from EnvironmentFile (~/.inn-stego.env).
 #
 # Install:
@@ -14,11 +14,8 @@
 #   systemctl --user daemon-reload
 #   systemctl --user enable inn-stego
 #   systemctl --user start  inn-stego
+#   sudo loginctl enable-linger $USER   # survive SSH logout, run once as root
 #
-#   # Keep service running after SSH logout (run once as root):
-#   sudo loginctl enable-linger $USER
-#
-#   # View status / logs:
 #   systemctl --user status inn-stego
 #   journalctl --user -u inn-stego -f
 # ---------------------------------------------------------------------------
@@ -29,17 +26,21 @@ After=network.target
 
 [Service]
 Type=simple
-# %h expands to the user's home directory (e.g. /home/sunshiji)
 WorkingDirectory=%h/sys/INN-Image-Steganography/backend
 
-# Load credentials from a separate file (not stored in the service unit)
-# The leading '-' means: ignore silently if file is absent
+# Load credentials (SECRET_KEY, ADMIN_PASSWORD, PORT, etc.)
 EnvironmentFile=-%h/.inn-stego.env
 
-# Use the project venv's gunicorn; change to conda gunicorn path if preferred
-ExecStart=%h/sys/INN-Image-Steganography/venv/bin/gunicorn \
-    --config %h/sys/INN-Image-Steganography/backend/gunicorn.conf.py \
-    app:app
+# --- Conda env option (recommended if using conda pris) ---
+# Uncomment and set the correct conda env bin path:
+# Environment=CONDA_PREFIX=/home/sunshiji/anaconda3/envs/pris
+# ExecStart=/home/sunshiji/anaconda3/envs/pris/bin/gunicorn \
+#     --config %h/sys/INN-Image-Steganography/backend/gunicorn.conf.py \
+#     app:app
+
+# --- Venv option (default) ---
+# Use start.sh which auto-detects venv, CONDA_PREFIX, or system gunicorn
+ExecStart=/bin/bash %h/sys/INN-Image-Steganography/start.sh
 
 Restart=on-failure
 RestartSec=5
