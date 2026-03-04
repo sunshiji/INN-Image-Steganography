@@ -207,10 +207,10 @@
                 加密后图像（预览）
                 <span class="ml-2 text-xs font-normal text-slate-400">执行加密后生成</span>
               </label>
-              <div class="rounded-xl p-4 border-2 border-dashed border-emerald-300 bg-emerald-50">
-                <div class="w-full h-44 rounded-lg flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-slate-800 to-gray-900 border border-slate-700">
+              <div id="encryptedUploadPreviewWrap" class="rounded-xl p-4 border-2 border-dashed border-emerald-300 bg-emerald-50">
+                <div id="encryptedUploadPreviewDiv" class="w-full h-44 rounded-lg flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-slate-800 to-gray-900 border border-slate-700">
                   <!-- Simulated encrypted image: random noise appearance -->
-                  <div class="absolute inset-0 p-1">
+                  <div id="encryptedUploadNoise" class="absolute inset-0 p-1">
                     <div class="grid gap-0" style="grid-template-columns:repeat(32,1fr); height:100%;">
                       <!-- 32x20 noise simulation -->
                       <div class="chaos-map-cell bg-gray-600"></div><div class="chaos-map-cell bg-white opacity-20"></div><div class="chaos-map-cell bg-gray-800"></div><div class="chaos-map-cell bg-slate-400 opacity-50"></div>
@@ -223,16 +223,17 @@
                       <div class="chaos-map-cell bg-gray-900"></div><div class="chaos-map-cell bg-slate-300 opacity-55"></div><div class="chaos-map-cell bg-gray-600"></div><div class="chaos-map-cell bg-white opacity-20"></div>
                     </div>
                   </div>
+                  <img id="encryptedUploadImg" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg" alt="加密图像">
                   <div class="absolute top-2 left-2 bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-lg font-medium">加密</div>
-                  <div class="absolute bottom-2 right-2 text-xs text-slate-400 bg-black bg-opacity-50 px-2 py-0.5 rounded-lg">随机噪声外观</div>
+                  <div id="encryptedUploadNoiseLbl" class="absolute bottom-2 right-2 text-xs text-slate-400 bg-black bg-opacity-50 px-2 py-0.5 rounded-lg">随机噪声外观</div>
                 </div>
                 <div class="mt-3 flex items-center justify-between">
                   <div class="text-left">
-                    <p class="text-sm font-medium text-slate-700">secret_encrypted.png</p>
-                    <p class="text-xs text-slate-400">512×512 · 已加密 · PNG</p>
+                    <p id="encryptedUploadName" class="text-sm font-medium text-slate-700">secret_encrypted.png</p>
+                    <p id="encryptedUploadMeta" class="text-xs text-slate-400">512×512 · 已加密 · PNG</p>
                   </div>
-                  <button class="text-xs text-emerald-600 font-semibold bg-emerald-100 px-3 py-1 rounded-lg">
-                    <i class="fa-solid fa-download mr-1"></i>下载
+                  <button id="btnSaveEncrypted" class="text-xs text-emerald-600 font-semibold bg-emerald-100 px-3 py-1 rounded-lg">
+                    <i class="fa-solid fa-download mr-1"></i>保存加密图像
                   </button>
                 </div>
               </div>
@@ -449,7 +450,7 @@
         </div>
 
         <!-- Encryption Result / Processing -->
-        <div class="bg-white rounded-2xl border border-emerald-100 shadow-sm p-6">
+        <div id="encryptResult" class="hidden bg-white rounded-2xl border border-emerald-100 shadow-sm p-6">
           <div class="flex items-center justify-between mb-5">
             <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
               <i class="fa-solid fa-circle-check text-emerald-500"></i>
@@ -465,7 +466,7 @@
           <div class="grid grid-cols-2 gap-6 mb-5">
             <div>
               <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">原始图像（加密前）</p>
-              <div class="bg-gradient-to-br from-amber-50 to-orange-100 rounded-xl h-36 flex items-center justify-center border border-amber-100 relative overflow-hidden">
+              <div id="resultOrigDiv" class="bg-gradient-to-br from-amber-50 to-orange-100 rounded-xl h-36 flex items-center justify-center border border-amber-100 relative overflow-hidden">
                 <!-- Structured appearance -->
                 <div class="grid gap-1" style="grid-template-columns:repeat(5,1fr)">
                   <div class="w-9 h-9 bg-rose-300 rounded-sm"></div><div class="w-9 h-9 bg-orange-200 rounded-sm"></div><div class="w-9 h-9 bg-amber-300 rounded-sm"></div><div class="w-9 h-9 bg-rose-200 rounded-sm"></div><div class="w-9 h-9 bg-orange-300 rounded-sm"></div>
@@ -478,7 +479,7 @@
             </div>
             <div>
               <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">加密图像（混沌噪声）</p>
-              <div class="bg-slate-900 rounded-xl h-36 flex items-center justify-center relative overflow-hidden border border-slate-700">
+              <div id="encryptedAfterDiv" class="bg-slate-900 rounded-xl h-36 flex items-center justify-center relative overflow-hidden border border-slate-700">
                 <!-- Noise appearance -->
                 <div class="absolute inset-0 p-1 flex flex-wrap gap-px content-start">
                   <div class="chaos-map-cell bg-white opacity-60"></div><div class="chaos-map-cell bg-gray-700"></div><div class="chaos-map-cell bg-white opacity-20"></div><div class="chaos-map-cell bg-slate-400 opacity-70"></div><div class="chaos-map-cell bg-gray-900"></div><div class="chaos-map-cell bg-white opacity-40"></div>
@@ -539,94 +540,6 @@
 
       <!-- Right Sidebar -->
       <div class="space-y-6">
-
-        <!-- Logistic Map Principle -->
-        <div class="bg-amber-50 rounded-2xl border border-amber-100 p-5">
-          <h3 class="font-bold text-amber-800 mb-4 flex items-center gap-2">
-            <i class="fa-solid fa-circle-info text-amber-500"></i> Logistic 映射原理
-          </h3>
-          <div class="formula-box mb-4 text-center text-base">
-            x<sub>n+1</sub> = r · x<sub>n</sub> · (1 − x<sub>n</sub>)
-          </div>
-          <!-- Bifurcation diagram hint -->
-          <div class="bg-white rounded-xl p-3 mb-4 border border-amber-100">
-            <p class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">分叉图（r 取值影响）</p>
-            <div class="flex items-end gap-0.5 h-16 justify-center">
-              <div class="w-1 bg-amber-200 rounded-t" style="height:20%"></div>
-              <div class="w-1 bg-amber-200 rounded-t" style="height:20%"></div>
-              <div class="w-1 bg-amber-300 rounded-t" style="height:30%"></div>
-              <div class="w-1 bg-amber-300 rounded-t" style="height:45%"></div>
-              <div class="w-2 bg-amber-400 rounded-t" style="height:55%"></div>
-              <div class="w-2 bg-amber-400 rounded-t" style="height:70%"></div>
-              <div class="w-3 bg-amber-500 rounded-t" style="height:85%"></div>
-              <div class="w-4 bg-amber-600 rounded-t" style="height:100%"></div>
-              <div class="w-4 bg-amber-600 rounded-t" style="height:95%"></div>
-              <div class="w-4 bg-orange-600 rounded-t" style="height:100%"></div>
-            </div>
-            <div class="flex justify-between text-xs text-slate-400 mt-1">
-              <span>r=1</span><span>r=3</span><span>r=3.57</span><span>r=4</span>
-            </div>
-            <p class="text-xs text-amber-600 mt-2 text-center font-medium">r>3.57 时进入混沌区域</p>
-          </div>
-          <ul class="space-y-2 text-xs text-amber-800">
-            <li class="flex items-start gap-2">
-              <i class="fa-solid fa-circle-dot text-amber-500 mt-0.5"></i>
-              <span><strong>初值敏感性：</strong>x₀ 极微小变化导致序列完全不同</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <i class="fa-solid fa-circle-dot text-amber-500 mt-0.5"></i>
-              <span><strong>伪随机性：</strong>生成序列统计特性接近真随机</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <i class="fa-solid fa-circle-dot text-amber-500 mt-0.5"></i>
-              <span><strong>遍历性：</strong>序列遍历 (0,1) 内所有状态</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <i class="fa-solid fa-circle-dot text-amber-500 mt-0.5"></i>
-              <span><strong>不可预测性：</strong>无密钥无法推算后续序列</span>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Encryption Process Flow -->
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-          <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
-            <i class="fa-solid fa-diagram-project text-amber-500"></i> 加密流程
-          </h3>
-          <div class="space-y-3">
-            <div class="flex items-start gap-3">
-              <div class="w-7 h-7 bg-amber-500 text-white rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
-              <div>
-                <p class="text-sm font-semibold text-slate-700">生成混沌序列</p>
-                <p class="text-xs text-slate-500">以 (r, x₀) 为密钥迭代 Logistic 映射生成长序列，丢弃前 N₀ 个值</p>
-              </div>
-            </div>
-            <div class="ml-3.5 w-0.5 h-3 bg-amber-200"></div>
-            <div class="flex items-start gap-3">
-              <div class="w-7 h-7 bg-amber-400 text-white rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
-              <div>
-                <p class="text-sm font-semibold text-slate-700">像素位置置乱</p>
-                <p class="text-xs text-slate-500">按混沌序列排序索引，对原图像素矩阵进行行列置换</p>
-              </div>
-            </div>
-            <div class="ml-3.5 w-0.5 h-3 bg-amber-200"></div>
-            <div class="flex items-start gap-3">
-              <div class="w-7 h-7 bg-orange-500 text-white rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
-              <div>
-                <p class="text-sm font-semibold text-slate-700">像素值扩散</p>
-                <p class="text-xs text-slate-500">将混沌值量化为 [0,255]，与置乱后像素逐点异或（XOR）</p>
-              </div>
-            </div>
-            <div class="ml-3.5 w-0.5 h-3 bg-amber-200"></div>
-            <div class="flex items-start gap-3">
-              <div class="w-7 h-7 bg-emerald-500 text-white rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0">✓</div>
-              <div>
-                <p class="text-sm font-semibold text-emerald-700">输出加密图像</p>
-                <p class="text-xs text-slate-500">得到外观类似随机噪声的加密图像，送入 INN 隐写</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <!-- Security Level Indicator -->
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
@@ -921,20 +834,64 @@ if (encryptBtn) {
 }
 
 function showEncryptedResult(data) {
-  // Update encrypted preview image (second column)
-  const previewImg = document.querySelector('.bg-slate-900');
-  if (previewImg) {
-    previewImg.style.backgroundImage = `url(data:image/png;base64,${data.encrypted_image})`;
-    previewImg.style.backgroundSize = 'cover';
+  const dataUrl = `data:image/png;base64,${data.encrypted_image}`;
+
+  // ── Upload-section output preview: replace noise with real image ──
+  const uploadImg = document.getElementById('encryptedUploadImg');
+  const uploadNoise = document.getElementById('encryptedUploadNoise');
+  const uploadNoiseLbl = document.getElementById('encryptedUploadNoiseLbl');
+  if (uploadImg) { uploadImg.src = dataUrl; uploadImg.classList.remove('hidden'); }
+  if (uploadNoise) uploadNoise.classList.add('hidden');
+  if (uploadNoiseLbl) uploadNoiseLbl.classList.add('hidden');
+
+  // ── Result card: show it and populate images ──
+  const resultCard = document.getElementById('encryptResult');
+  if (resultCard) resultCard.classList.remove('hidden');
+
+  // Update "after" image in before/after comparison
+  const afterDiv = document.getElementById('encryptedAfterDiv');
+  if (afterDiv) {
+    afterDiv.style.backgroundImage = dataUrl ? `url('${dataUrl}')` : '';
+    afterDiv.style.backgroundSize = 'cover';
+    afterDiv.style.backgroundPosition = 'center';
+    // hide the simulated noise overlay
+    const noise = afterDiv.querySelector('.absolute.inset-0');
+    if (noise) noise.classList.add('hidden');
   }
+
+  // Update "before" original image in before/after comparison
+  if (selectedFile) {
+    const origDiv = document.getElementById('resultOrigDiv');
+    if (origDiv) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        origDiv.style.backgroundImage = `url('${ev.target.result}')`;
+        origDiv.style.backgroundSize = 'cover';
+        origDiv.style.backgroundPosition = 'center';
+        const placeholder = origDiv.querySelector('.grid');
+        if (placeholder) placeholder.classList.add('hidden');
+      };
+      reader.readAsDataURL(selectedFile);
+    }
+  }
+
   // Update metrics
   const m = data.metrics;
   const metricEls = document.querySelectorAll('.bg-emerald-50 p.text-base');
-  if (metricEls[0]) metricEls[0].textContent = m.entropy_encrypted?.toFixed(4);
-  if (metricEls[1]) metricEls[1].textContent = m.npcr?.toFixed(2) + '%';
-  if (metricEls[2]) metricEls[2].textContent = m.uaci?.toFixed(2) + '%';
+  if (metricEls[0]) metricEls[0].textContent = m.entropy_encrypted?.toFixed(4) ?? '--';
+  if (metricEls[1]) metricEls[1].textContent = (m.npcr?.toFixed(2) ?? '--') + '%';
+  if (metricEls[2]) metricEls[2].textContent = (m.uaci?.toFixed(2) ?? '--') + '%';
 
-  // Store key for download and passthrough to encode page (best-effort; may exceed quota for large images)
+  // Update upload-preview filename/meta
+  const nameEl = document.getElementById('encryptedUploadName');
+  const metaEl = document.getElementById('encryptedUploadMeta');
+  if (nameEl) nameEl.textContent = 'secret_encrypted.png';
+  if (metaEl && data.size_kb) metaEl.textContent = `已加密 · ${data.size_kb} KB · PNG`;
+
+  // Scroll result into view
+  if (resultCard) resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Store key for passthrough to encode page (best-effort; may exceed quota for large images)
   try {
     sessionStorage.setItem('encryptedImage', data.encrypted_image);
     sessionStorage.setItem('chaosKey', JSON.stringify(data.key));
@@ -943,25 +900,24 @@ function showEncryptedResult(data) {
   }
 }
 
-// ── Download encrypted image ───────────────────────────────
-document.querySelectorAll('button').forEach(btn => {
-  if (btn.textContent.includes('下载')) {
-    btn.addEventListener('click', () => {
-      if (!lastEncryptedB64) { alert('请先执行加密！'); return; }
-      const a = document.createElement('a');
-      a.href = 'data:image/png;base64,' + lastEncryptedB64;
-      a.download = 'secret_encrypted.png';
-      a.click();
-      if (lastKey) {
-        const kb = document.createElement('a');
-        kb.href = 'data:application/json;charset=utf-8,' +
-                  encodeURIComponent(JSON.stringify(lastKey, null, 2));
-        kb.download = 'chaos_key.json';
-        setTimeout(() => kb.click(), 300);
-      }
-    });
-  }
-});
+// ── Save encrypted image button ────────────────────────────
+const btnSaveEncrypted = document.getElementById('btnSaveEncrypted');
+if (btnSaveEncrypted) {
+  btnSaveEncrypted.addEventListener('click', () => {
+    if (!lastEncryptedB64) { alert('请先执行加密！'); return; }
+    const a = document.createElement('a');
+    a.href = 'data:image/png;base64,' + lastEncryptedB64;
+    a.download = 'secret_encrypted.png';
+    a.click();
+    if (lastKey) {
+      const kb = document.createElement('a');
+      kb.href = 'data:application/json;charset=utf-8,' +
+                encodeURIComponent(JSON.stringify(lastKey, null, 2));
+      kb.download = 'chaos_key.json';
+      setTimeout(() => kb.click(), 300);
+    }
+  });
+}
 
 // ── Navigate to encode page ────────────────────────────────
 const btnGoEncode = document.getElementById('btnGoEncode');
@@ -1023,6 +979,14 @@ document.querySelectorAll('button').forEach(btn => {
     if (btn.classList.contains('text-slate-600')) {
       btn.addEventListener('click', () => {
         selectedFile = null; lastEncryptedB64 = null; lastKey = null;
+        const resultCard = document.getElementById('encryptResult');
+        if (resultCard) resultCard.classList.add('hidden');
+        const uploadImg = document.getElementById('encryptedUploadImg');
+        const uploadNoise = document.getElementById('encryptedUploadNoise');
+        const uploadNoiseLbl = document.getElementById('encryptedUploadNoiseLbl');
+        if (uploadImg) { uploadImg.src = ''; uploadImg.classList.add('hidden'); }
+        if (uploadNoise) uploadNoise.classList.remove('hidden');
+        if (uploadNoiseLbl) uploadNoiseLbl.classList.remove('hidden');
         if (secretZone) {
           const inner = secretZone.querySelector('div');
           if (inner) inner.style.backgroundImage = '';
