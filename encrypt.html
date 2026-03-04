@@ -126,28 +126,28 @@
           <div class="flex items-center justify-between">
             <div class="flex-1 flex items-center">
               <div class="flex flex-col items-center">
-                <div class="w-9 h-9 rounded-full step-active flex items-center justify-center text-sm font-bold shadow">1</div>
-                <span class="text-xs mt-2 font-medium text-amber-600">上传图像</span>
+                <div id="step1" class="w-9 h-9 rounded-full step-active flex items-center justify-center text-sm font-bold shadow">1</div>
+                <span id="step1lbl" class="text-xs mt-2 font-medium text-amber-600">上传图像</span>
               </div>
-              <div class="flex-1 h-0.5 bg-amber-200 mx-3"></div>
+              <div id="line12" class="flex-1 h-0.5 bg-amber-200 mx-3"></div>
             </div>
             <div class="flex-1 flex items-center">
               <div class="flex flex-col items-center">
-                <div class="w-9 h-9 rounded-full step-pending flex items-center justify-center text-sm font-bold">2</div>
-                <span class="text-xs mt-2 font-medium text-slate-400">密钥配置</span>
+                <div id="step2" class="w-9 h-9 rounded-full step-pending flex items-center justify-center text-sm font-bold">2</div>
+                <span id="step2lbl" class="text-xs mt-2 font-medium text-slate-400">密钥配置</span>
               </div>
-              <div class="flex-1 h-0.5 bg-slate-200 mx-3"></div>
+              <div id="line23" class="flex-1 h-0.5 bg-slate-200 mx-3"></div>
             </div>
             <div class="flex-1 flex items-center">
               <div class="flex flex-col items-center">
-                <div class="w-9 h-9 rounded-full step-pending flex items-center justify-center text-sm font-bold">3</div>
-                <span class="text-xs mt-2 font-medium text-slate-400">执行加密</span>
+                <div id="step3" class="w-9 h-9 rounded-full step-pending flex items-center justify-center text-sm font-bold">3</div>
+                <span id="step3lbl" class="text-xs mt-2 font-medium text-slate-400">执行加密</span>
               </div>
-              <div class="flex-1 h-0.5 bg-slate-200 mx-3"></div>
+              <div id="line34" class="flex-1 h-0.5 bg-slate-200 mx-3"></div>
             </div>
             <div class="flex flex-col items-center">
-              <div class="w-9 h-9 rounded-full step-done flex items-center justify-center text-sm font-bold">✓</div>
-              <span class="text-xs mt-2 font-medium text-emerald-600">送入隐写</span>
+              <div id="step4" class="w-9 h-9 rounded-full step-pending flex items-center justify-center text-sm font-bold">4</div>
+              <span id="step4lbl" class="text-xs mt-2 font-medium text-slate-400">送入隐写</span>
             </div>
           </div>
         </div>
@@ -421,6 +421,33 @@
           </button>
         </div>
 
+        <!-- Encryption Progress Bar (shown during API call) -->
+        <div id="encryptProgressWrap" class="hidden bg-white rounded-2xl border border-amber-100 shadow-sm p-5">
+          <div class="flex items-center justify-between text-xs mb-2">
+            <span id="encryptProgressLabel" class="font-semibold text-amber-700">
+              <i class="fa-solid fa-spinner fa-spin mr-1"></i>正在执行 Logistic 混沌加密...
+            </span>
+            <span id="encryptProgressPct" class="font-bold text-amber-600">0%</span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-2.5 mb-3">
+            <div id="encryptProgressBar" class="progress-bar bg-amber-500 h-2.5 rounded-full" style="width:0%"></div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-xs text-center">
+            <div id="pstep1" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
+              <p id="pstep1lbl" class="font-semibold text-slate-500">生成混沌序列</p>
+              <p class="text-slate-400">Logistic 迭代</p>
+            </div>
+            <div id="pstep2" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
+              <p id="pstep2lbl" class="font-semibold text-slate-500">像素置乱</p>
+              <p class="text-slate-400">Arnold 置换</p>
+            </div>
+            <div id="pstep3" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
+              <p id="pstep3lbl" class="font-semibold text-slate-500">扩散加密</p>
+              <p class="text-slate-400">XOR 操作</p>
+            </div>
+          </div>
+        </div>
+
         <!-- Encryption Result / Processing -->
         <div class="bg-white rounded-2xl border border-emerald-100 shadow-sm p-6">
           <div class="flex items-center justify-between mb-5">
@@ -502,7 +529,7 @@
                 <p class="text-xs text-indigo-600 mt-0.5">加密后的图像已自动传入隐写编码模块作为秘密图像输入</p>
               </div>
             </div>
-            <button class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200">
+            <button id="btnGoEncode" class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200">
               <i class="fa-solid fa-file-image mr-2"></i>进入隐写编码 →
             </button>
           </div>
@@ -674,6 +701,7 @@ if (secretZone) {
       selectedFile = e.target.files[0];
       if (!selectedFile) return;
       showUploadPreview(secretZone, selectedFile);
+      advanceStep(1);   // file chosen → step 1 done, step 2 active
     };
     inp.click();
   });
@@ -685,7 +713,10 @@ if (secretZone) {
     e.preventDefault();
     secretZone.classList.remove('param-highlight');
     selectedFile = e.dataTransfer.files[0];
-    if (selectedFile) showUploadPreview(secretZone, selectedFile);
+    if (selectedFile) {
+      showUploadPreview(secretZone, selectedFile);
+      advanceStep(1);
+    }
   });
 }
 
@@ -702,6 +733,144 @@ function showUploadPreview(zone, file) {
   reader.readAsDataURL(file);
 }
 
+// ── Step indicator helpers ─────────────────────────────────
+function setStepClass(id, cls) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('step-active', 'step-done', 'step-pending');
+  el.classList.add(cls);
+}
+function setStepLabel(id, text, colorClass) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'text-xs mt-2 font-medium ' + colorClass;
+}
+function setLine(id, state) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const cls = state === 'done' ? 'bg-emerald-300' : state === 'active' ? 'bg-amber-200' : 'bg-slate-200';
+  el.className = 'flex-1 h-0.5 mx-3 ' + cls;
+}
+
+// advanceStep(n) marks steps 1..n as done, n+1 as active
+function advanceStep(n) {
+  const stepIds   = ['step1','step2','step3','step4'];
+  const labelIds  = ['step1lbl','step2lbl','step3lbl','step4lbl'];
+  const lineIds   = ['line12','line23','line34'];
+  const labels    = ['上传图像','密钥配置','执行加密','送入隐写'];
+
+  for (let i = 0; i < 4; i++) {
+    if (i < n) {
+      // done
+      setStepClass(stepIds[i], 'step-done');
+      document.getElementById(stepIds[i]).innerHTML = '✓';
+      setStepLabel(labelIds[i], labels[i], 'text-emerald-600');
+    } else if (i === n) {
+      // active
+      setStepClass(stepIds[i], 'step-active');
+      document.getElementById(stepIds[i]).textContent = String(i + 1);
+      setStepLabel(labelIds[i], labels[i], 'text-amber-600');
+    } else {
+      // pending
+      setStepClass(stepIds[i], 'step-pending');
+      document.getElementById(stepIds[i]).textContent = String(i + 1);
+      setStepLabel(labelIds[i], labels[i], 'text-slate-400');
+    }
+  }
+  // connector lines: line i connects step i+1 to step i+2
+  for (let i = 0; i < 3; i++) {
+    setLine(lineIds[i], i < n - 1 ? 'done' : i === n - 1 ? 'active' : 'pending');
+  }
+}
+
+// ── Progress bar animation ─────────────────────────────────
+let _progressTimer = null;
+
+function startProgress() {
+  const wrap  = document.getElementById('encryptProgressWrap');
+  const bar   = document.getElementById('encryptProgressBar');
+  const pct   = document.getElementById('encryptProgressPct');
+  const lbl   = document.getElementById('encryptProgressLabel');
+  if (!wrap) return;
+
+  wrap.classList.remove('hidden');
+  bar.style.width = '0%';
+  pct.textContent = '0%';
+
+  // Progress steps: 0-35% gen sequence, 35-70% scramble, 70-95% diffuse, 95-100% finalise
+  const phases = [
+    { target: 35, steplbl: 'pstep1lbl', phaseName: '生成混沌序列...', color: 'text-amber-700' },
+    { target: 70, steplbl: 'pstep2lbl', phaseName: '像素置乱中...',   color: 'text-amber-700' },
+    { target: 95, steplbl: 'pstep3lbl', phaseName: '扩散加密中...',   color: 'text-amber-700' },
+  ];
+  let current = 0;
+  let phaseIdx = 0;
+
+  // highlight first phase
+  _activateProgressPhase(0);
+
+  _progressTimer = setInterval(() => {
+    if (phaseIdx < phases.length) {
+      const phase = phases[phaseIdx];
+      current += (phase.target - (phaseIdx === 0 ? 0 : phases[phaseIdx-1].target)) * 0.04;
+      if (current >= phase.target) {
+        current = phase.target;
+        phaseIdx++;
+        if (phaseIdx < phases.length) _activateProgressPhase(phaseIdx);
+      }
+    } else {
+      current = Math.min(current + 0.3, 95);
+    }
+    const v = Math.round(current);
+    bar.style.width = v + '%';
+    pct.textContent = v + '%';
+    if (lbl) {
+      const pname = phaseIdx < phases.length ? phases[phaseIdx].phaseName : '等待服务器响应...';
+      lbl.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>' + pname;
+    }
+  }, 80);
+}
+
+function _activateProgressPhase(idx) {
+  ['pstep1','pstep2','pstep3'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    const lbl = document.getElementById(id + 'lbl');
+    if (!el || !lbl) return;
+    if (i < idx) {
+      el.className = 'bg-emerald-50 rounded-lg p-2 border border-emerald-100';
+      lbl.className = 'font-semibold text-emerald-700';
+    } else if (i === idx) {
+      el.className = 'bg-amber-50 rounded-lg p-2 border border-amber-200';
+      lbl.className = 'font-semibold text-amber-700';
+    } else {
+      el.className = 'bg-slate-50 rounded-lg p-2 border border-slate-100';
+      lbl.className = 'font-semibold text-slate-400';
+    }
+  });
+}
+
+function finishProgress(success) {
+  clearInterval(_progressTimer);
+  const bar = document.getElementById('encryptProgressBar');
+  const pct = document.getElementById('encryptProgressPct');
+  const lbl = document.getElementById('encryptProgressLabel');
+  const wrap = document.getElementById('encryptProgressWrap');
+  if (!bar) return;
+  if (success) {
+    bar.style.width = '100%';
+    if (pct) pct.textContent = '100%';
+    if (bar) bar.classList.replace('bg-amber-500', 'bg-emerald-500');
+    if (lbl) lbl.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i>加密完成！';
+    _activateProgressPhase(3);   // all phases green
+    setTimeout(() => { if (wrap) wrap.classList.add('hidden'); }, 1800);
+  } else {
+    if (bar) bar.classList.replace('bg-amber-500', 'bg-red-500');
+    if (lbl) lbl.innerHTML = '<i class="fa-solid fa-circle-xmark mr-1"></i>加密失败';
+    setTimeout(() => { if (wrap) wrap.classList.add('hidden'); }, 2500);
+  }
+}
+
 // ── Encrypt button ─────────────────────────────────────────
 const encryptBtn = document.querySelector('button.bg-amber-500');
 if (encryptBtn) {
@@ -710,7 +879,9 @@ if (encryptBtn) {
       alert('请先上传秘密图像！');
       return;
     }
+    advanceStep(2);   // step 2 done, step 3 (执行加密) active
     setLoading(encryptBtn, true, '加密中...');
+    startProgress();
     try {
       const fd = new FormData();
       fd.append('image',  selectedFile);
@@ -733,11 +904,15 @@ if (encryptBtn) {
       lastEncryptedB64 = data.encrypted_image;
       lastKey = data.key;
 
+      finishProgress(true);
+      advanceStep(3);   // step 3 done, step 4 (送入隐写) active
       // Show encrypted image in the right column
       showEncryptedResult(data);
       showToast('混沌加密成功 ✓', 'success');
 
     } catch (err) {
+      finishProgress(false);
+      advanceStep(1);   // step 1 done, step 2 active so user can retry
       showToast('加密失败: ' + err.message, 'error');
     } finally {
       setLoading(encryptBtn, false, '开始 Logistic 混沌加密');
@@ -783,6 +958,14 @@ document.querySelectorAll('button').forEach(btn => {
     });
   }
 });
+
+// ── Navigate to encode page ────────────────────────────────
+const btnGoEncode = document.getElementById('btnGoEncode');
+if (btnGoEncode) {
+  btnGoEncode.addEventListener('click', () => {
+    window.location.href = '/encode.html';
+  });
+}
 
 // ── Helpers ────────────────────────────────────────────────
 function setLoading(btn, loading, label) {
