@@ -65,7 +65,7 @@ fi
 # --- Stop any existing process already bound to the port ---
 OLD_PIDS=$(ss -tlnp 2>/dev/null | awk -F'pid=' "/0\.0\.0\.0:${PORT}|:::${PORT}/{print \$2}" | cut -d',' -f1)
 if [ -z "${OLD_PIDS}" ] && command -v fuser >/dev/null 2>&1; then
-    OLD_PIDS=$(fuser "${PORT}/tcp" 2>/dev/null | tr -s ' ' '\n' | grep -v '^$')
+    OLD_PIDS=$(fuser "${PORT}/tcp" 2>/dev/null | tr -s ' ' '\n' | grep -v '^$') || true
 fi
 for OLD_PID in ${OLD_PIDS}; do
     echo "[INFO] Port ${PORT} is in use by PID ${OLD_PID}. Stopping it..."
