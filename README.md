@@ -166,17 +166,19 @@ http://<server-ip>:5000
 
 ```bash
 ssh <user>@<server-ip>
-cd /path/to/INN-Image-Steganography
-git pull
 
 # 首次部署
+git clone https://github.com/sunshiji/INN-Image-Steganography.git
+cd INN-Image-Steganography
 conda env create -f environment.yml
 conda activate inn-stego
 bash setup.sh
 cp .env.example ~/.inn-stego.env && nano ~/.inn-stego.env && chmod 600 ~/.inn-stego.env
-
-# 启动
 bash start.sh
+
+# 后续更新代码（一键）
+cd /path/to/INN-Image-Steganography
+bash update.sh
 ```
 
 ---
@@ -197,9 +199,73 @@ bash start.sh
 
 ---
 
+## 更新代码
+
+当 Copilot / GitHub 生成了新代码并合并到仓库后，在 Linux 服务器上执行以下步骤即可拉取并重新加载。
+
+### 方式一：一键脚本（推荐）
+
+```bash
+cd /path/to/INN-Image-Steganography
+bash update.sh
+```
+
+`update.sh` 会自动完成：
+1. `git pull --ff-only`（拉取最新代码）
+2. 检测服务运行方式（systemd / nohup），并重启后端
+
+如需更新指定分支，传入分支名：
+
+```bash
+bash update.sh main
+```
+
+### 方式二：手动步骤
+
+#### systemd 用户服务模式
+
+```bash
+cd /path/to/INN-Image-Steganography
+git pull
+systemctl --user restart inn-stego
+# 验证
+systemctl --user status inn-stego --no-pager
+```
+
+#### nohup 后台模式
+
+```bash
+cd /path/to/INN-Image-Steganography
+git pull
+bash stop.sh                                         # 停止旧进程
+nohup bash start.sh >> ~/inn-stego.log 2>&1 &        # 启动新进程
+tail -f ~/inn-stego.log                              # 查看启动日志
+```
+
+#### 前台模式（调试）
+
+```bash
+cd /path/to/INN-Image-Steganography
+git pull
+# 在当前终端 Ctrl+C 停止旧进程，然后：
+bash start.sh
+```
+
+> **提示**：如果依赖（`requirements.txt` / `environment.yml`）也有更新，需额外执行：
+>
+> ```bash
+> conda activate inn-stego
+> bash setup.sh          # 重新安装/升级 Python 依赖
+> ```
+
+---
+
 ## 常用运维命令
 
 ```bash
+# 一键更新代码并重启
+bash update.sh
+
 # 停止后端
 bash stop.sh
 
@@ -214,11 +280,6 @@ systemctl --user restart inn-stego
 
 # 查看实时日志
 journalctl --user -u inn-stego -f
-
-# 更新代码后重启
-cd /path/to/INN-Image-Steganography
-git pull
-systemctl --user restart inn-stego
 ```
 
 ---
@@ -292,6 +353,7 @@ bash check.sh
 ├── setup.sh              # 安装脚本（安装 PyTorch，自动检测 CUDA）
 ├── start.sh              # 启动脚本（自动识别 conda/venv/系统 gunicorn）
 ├── stop.sh               # 停止脚本（优雅停止监听指定端口的后端进程）
+├── update.sh             # 更新脚本（git pull + 自动重启服务）
 ├── check.sh              # 网络诊断脚本（防火墙/绑定/路由检查）
 ├── inn-stego.service     # systemd 用户服务单元
 ├── login.html            # 登录页面
