@@ -538,9 +538,13 @@ if (encodeBtn && encodeBtn.textContent.includes('隐写')) {
       lastStegoB64 = data.stego_image;
       lastStegoKey = data.stego_key;
 
-      // Save to sessionStorage for decode page
-      sessionStorage.setItem('stegoImage', data.stego_image);
-      sessionStorage.setItem('stegoKey',   data.stego_key);
+      // Save to sessionStorage for decode page (best-effort; may exceed quota for large images)
+      try {
+        sessionStorage.setItem('stegoImage', data.stego_image);
+        sessionStorage.setItem('stegoKey',   data.stego_key);
+      } catch (_) {
+        showToast('图像较大，无法自动传递至解码页面，请手动上传隐写图像', 'error');
+      }
 
       showEncodeResult(data);
       showToast('INN隐写编码成功 ✓', 'success');

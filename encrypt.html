@@ -934,9 +934,13 @@ function showEncryptedResult(data) {
   if (metricEls[1]) metricEls[1].textContent = m.npcr?.toFixed(2) + '%';
   if (metricEls[2]) metricEls[2].textContent = m.uaci?.toFixed(2) + '%';
 
-  // Store key for download and passthrough to encode page
-  sessionStorage.setItem('encryptedImage', data.encrypted_image);
-  sessionStorage.setItem('chaosKey', JSON.stringify(data.key));
+  // Store key for download and passthrough to encode page (best-effort; may exceed quota for large images)
+  try {
+    sessionStorage.setItem('encryptedImage', data.encrypted_image);
+    sessionStorage.setItem('chaosKey', JSON.stringify(data.key));
+  } catch (_) {
+    showToast('图像较大，无法自动传递至隐写编码页面，请下载后手动上传', 'error');
+  }
 }
 
 // ── Download encrypted image ───────────────────────────────

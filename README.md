@@ -92,6 +92,37 @@ systemctl --user start  inn-stego
 sudo loginctl enable-linger $USER
 ```
 
+> **说明**：启动时若看到 `[INFO] Port 5000 is in use by PID XXXXXX. Stopping it...`，
+> 这是 `start.sh` 在自动停止旧进程，属于正常行为，无需手动处理。
+
+---
+
+### 停止服务
+
+**直接停止（bash stop.sh）：**
+
+```bash
+bash stop.sh           # 停止监听 5000 端口的后端进程
+PORT=8080 bash stop.sh # 停止其他端口
+```
+
+**前台运行时：** 在终端按 `Ctrl+C` 即可。
+
+**nohup 后台运行时：**
+
+```bash
+bash stop.sh
+```
+
+**systemd 用户服务：**
+
+```bash
+systemctl --user stop inn-stego
+
+# 同时禁止开机自启：
+systemctl --user disable inn-stego
+```
+
 ---
 
 ### 第六步：开放防火墙端口（**必须**）
@@ -169,8 +200,14 @@ bash start.sh
 ## 常用运维命令
 
 ```bash
+# 停止后端
+bash stop.sh
+
 # 查看服务状态
 systemctl --user status inn-stego
+
+# 停止 systemd 服务
+systemctl --user stop inn-stego
 
 # 重启服务（修改配置后）
 systemctl --user restart inn-stego
@@ -254,6 +291,7 @@ bash check.sh
 ├── .env.example          # 环境变量模板（复制到 ~/.inn-stego.env 后修改）
 ├── setup.sh              # 安装脚本（安装 PyTorch，自动检测 CUDA）
 ├── start.sh              # 启动脚本（自动识别 conda/venv/系统 gunicorn）
+├── stop.sh               # 停止脚本（优雅停止监听指定端口的后端进程）
 ├── check.sh              # 网络诊断脚本（防火墙/绑定/路由检查）
 ├── inn-stego.service     # systemd 用户服务单元
 ├── login.html            # 登录页面
