@@ -31,16 +31,22 @@ WorkingDirectory=%h/sys/INN-Image-Steganography/backend
 # Load credentials (SECRET_KEY, ADMIN_PASSWORD, PORT, etc.)
 EnvironmentFile=-%h/.inn-stego.env
 
-# --- Conda env option (recommended if using conda pris) ---
-# Uncomment and set the correct conda env bin path:
-# Environment=CONDA_PREFIX=/home/sunshiji/anaconda3/envs/pris
-# ExecStart=/home/sunshiji/anaconda3/envs/pris/bin/gunicorn \
+# --- Option A: conda inn-stego env (recommended) ---
+# Set CONDA_PREFIX so start.sh finds the right gunicorn; replace 'anaconda3'
+# with 'miniconda3' if that is your installation.
+Environment=CONDA_PREFIX=%h/anaconda3/envs/inn-stego
+ExecStart=/bin/bash %h/sys/INN-Image-Steganography/start.sh
+
+# --- Option B: conda pris env ---
+# Comment out Option A above, then uncomment these two lines:
+# Environment=CONDA_PREFIX=%h/anaconda3/envs/pris
+# ExecStart=/bin/bash %h/sys/INN-Image-Steganography/start.sh
+
+# --- Option C: project venv (./venv/) ---
+# Comment out Option A above, then uncomment:
+# ExecStart=%h/sys/INN-Image-Steganography/venv/bin/gunicorn \
 #     --config %h/sys/INN-Image-Steganography/backend/gunicorn.conf.py \
 #     app:app
-
-# --- Venv option (default) ---
-# Use start.sh which auto-detects venv, CONDA_PREFIX, or system gunicorn
-ExecStart=/bin/bash %h/sys/INN-Image-Steganography/start.sh
 
 Restart=on-failure
 RestartSec=5

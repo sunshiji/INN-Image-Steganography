@@ -1,0 +1,37 @@
+# ---------------------------------------------------------------------------
+# environment.yml - inn-stego conda environment
+#
+# Creates a clean Python 3.10 environment for INN-Image-Steganography.
+# PyTorch is NOT listed here — it is installed by setup.sh which auto-detects
+# the CUDA version and picks the correct torch build.
+#
+# Usage:
+#   conda env create -f environment.yml   # create env (one-time)
+#   conda activate inn-stego              # activate
+#   bash setup.sh                         # install torch + finish setup
+#   bash start.sh                         # start the service
+#
+# Update an existing env after code changes:
+#   conda env update -f environment.yml --prune
+# ---------------------------------------------------------------------------
+
+name: inn-stego
+
+channels:
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+  - defaults
+
+dependencies:
+  - python=3.10
+  # Scientific stack — compatible versions known to work with PyTorch 1.12+
+  - numpy=1.26
+  - scipy=1.13
+  - pillow=10.4
+  - pip
+
+  # Web-framework packages (installed via pip for the latest compatible versions)
+  - pip:
+    - flask>=3.0
+    - flask-cors>=4.0
+    - gunicorn>=20.0

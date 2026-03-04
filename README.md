@@ -9,57 +9,74 @@
 ### 第一步：获取代码
 
 ```bash
+cd /home/sunshiji/sys
 git clone https://github.com/sunshiji/INN-Image-Steganography.git
 cd INN-Image-Steganography
 ```
 
-### 第二步：安装环境（只需执行一次）
+---
 
-**方式 A：使用 Conda 环境（推荐，适用于已有 conda 的服务器）**
+### 第二步：创建专用 conda 环境（推荐）
 
 ```bash
-conda activate pris        # 激活目标 conda 环境
-bash setup.sh              # 自动检测到 conda，直接安装到 pris 环境
+# 创建 inn-stego 环境（仅需执行一次）
+conda env create -f environment.yml
+
+# 激活环境
+conda activate inn-stego
 ```
 
-**方式 B：自动创建 venv（不使用 conda）**
+> **说明**：`environment.yml` 安装 Python 3.10 + NumPy/SciPy/Pillow/Flask/Gunicorn，
+> 不包含 PyTorch（由下一步自动安装，避免 CUDA 版本冲突）。
+
+---
+
+### 第三步：安装 PyTorch（自动检测 CUDA）
 
 ```bash
-bash setup.sh              # 自动创建 ./venv/ 并安装所有依赖
+# 确保已激活 inn-stego 环境
+conda activate inn-stego
+
+bash setup.sh
 ```
 
-`setup.sh` 自动完成：
-- 检测当前 Conda 环境（若有），直接安装到已激活的 conda env
-- 否则创建 Python 虚拟环境（`./venv/`）
-- 自动检测 CUDA，安装匹配的 GPU 或 CPU 版 PyTorch（若未安装）
-- 安装所有其他 Python 依赖
+脚本自动完成：
+- 检测服务器 CUDA 版本，安装对应 torch 1.12.1（CUDA 11.3）
+- 若无 CUDA，安装 CPU 版
+- 若 torch 已存在则跳过
 
-### 第三步：配置账号
+---
+
+### 第四步：配置账号密码
 
 ```bash
-# 从模板创建凭据文件
 cp .env.example ~/.inn-stego.env
-
-# 编辑：修改 SECRET_KEY 和 ADMIN_PASSWORD
-nano ~/.inn-stego.env
-
-# 限制文件权限
+nano ~/.inn-stego.env       # 修改 SECRET_KEY 和 ADMIN_PASSWORD
 chmod 600 ~/.inn-stego.env
 ```
 
-### 第四步：启动服务
+生成随机 SECRET_KEY：
+```bash
+python3 -c "import secrets; print(secrets.token_hex(32))"
+```
+
+---
+
+### 第五步：启动服务
 
 **前台运行（调试）：**
 
 ```bash
+conda activate inn-stego
 bash start.sh
 ```
 
 **后台运行（nohup）：**
 
 ```bash
+conda activate inn-stego
 nohup bash start.sh > ~/inn-stego.log 2>&1 &
-tail -f ~/inn-stego.log   # 查看日志
+tail -f ~/inn-stego.log
 ```
 
 **systemd 用户服务（推荐，开机自启）：**
@@ -71,67 +88,39 @@ systemctl --user daemon-reload
 systemctl --user enable inn-stego
 systemctl --user start  inn-stego
 
-# 允许用户退出 SSH 后服务继续运行（需 root 执行一次）
+# 允许 SSH 退出后服务继续运行（需 root 执行一次）
 sudo loginctl enable-linger $USER
 ```
 
-### 第五步：浏览器访问
+---
+
+### 第六步：访问系统
+
+在浏览器中打开（将 `<server-ip>` 替换为实际服务器 IP）：
 
 ```
-http://<服务器IP>:5000
+http://<server-ip>:5000
 ```
 
-系统自动跳转到登录页 → 输入账号密码 → 进入主界面。
+→ 跳转到登录页 → 输入 `~/.inn-stego.env` 中设置的账号密码 → 进入主界面
 
 ---
 
-## 示例：在服务器 10.109.118.166 上部署（conda pris 环境）
+## 快速一览（部署示例）
 
 ```bash
-# SSH 登录服务器
-ssh sunshiji@10.109.118.166
-
-# 进入项目目录
-cd /home/sunshiji/sys/INN-Image-Steganography
-
-# 更新代码
+ssh <user>@<server-ip>
+cd /path/to/INN-Image-Steganography
 git pull
 
-# 激活已有 conda 环境，安装依赖（首次）
-conda activate pris
+# 首次部署
+conda env create -f environment.yml
+conda activate inn-stego
 bash setup.sh
+cp .env.example ~/.inn-stego.env && nano ~/.inn-stego.env && chmod 600 ~/.inn-stego.env
 
-# 配置凭据
-cp .env.example ~/.inn-stego.env
-nano ~/.inn-stego.env        # 修改 SECRET_KEY 和 ADMIN_PASSWORD
-chmod 600 ~/.inn-stego.env
-
-# 方式一：直接启动（conda 环境下）
+# 启动
 bash start.sh
-
-# 方式二：后台运行
-nohup bash start.sh > ~/inn-stego.log 2>&1 &
-```
-
-Windows 浏览器访问：**`http://10.109.118.166:5000`**
-
----
-
-## 常用运维命令
-
-```bash
-# 查看状态
-systemctl --user status inn-stego
-
-# 重启（修改配置后）
-systemctl --user restart inn-stego
-
-# 查看实时日志
-journalctl --user -u inn-stego -f
-
-# 更新代码后重新部署
-git pull
-systemctl --user restart inn-stego
 ```
 
 ---
@@ -141,7 +130,7 @@ systemctl --user restart inn-stego
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
 | `PORT` | `5000` | 监听端口 |
-| `SECRET_KEY` | 内置默认 | Flask Session 加密密钥（**必须修改**） |
+| `SECRET_KEY` | 内置默认 | Flask Session 密钥（**必须修改**） |
 | `ADMIN_USERNAME` | `admin` | 登录用户名 |
 | `ADMIN_PASSWORD` | `admin123` | 登录密码（**必须修改**） |
 | `WORKERS` | `1` | Gunicorn worker 数 |
@@ -149,8 +138,26 @@ systemctl --user restart inn-stego
 | `LOG_LEVEL` | `info` | 日志级别 |
 
 > ⚠️ **生产环境必须修改 `SECRET_KEY` 和 `ADMIN_PASSWORD`！**
->
-> 生成随机 SECRET_KEY：`python3 -c "import secrets; print(secrets.token_hex(32))"`
+
+---
+
+## 常用运维命令
+
+```bash
+# 查看服务状态
+systemctl --user status inn-stego
+
+# 重启服务（修改配置后）
+systemctl --user restart inn-stego
+
+# 查看实时日志
+journalctl --user -u inn-stego -f
+
+# 更新代码后重启
+cd /home/sunshiji/sys/INN-Image-Steganography
+git pull
+systemctl --user restart inn-stego
+```
 
 ---
 
@@ -158,23 +165,24 @@ systemctl --user restart inn-stego
 
 ```
 .
-├── login.html            # 登录页面（需身份验证）
+├── environment.yml       # conda 环境定义（inn-stego，Python 3.10）
+├── .env.example          # 环境变量模板（复制到 ~/.inn-stego.env 后修改）
+├── setup.sh              # 安装脚本（安装 PyTorch，自动检测 CUDA）
+├── start.sh              # 启动脚本（自动识别 conda/venv/系统 gunicorn）
+├── inn-stego.service     # systemd 用户服务单元
+├── login.html            # 登录页面
 ├── index.html            # 系统总览
 ├── home.html             # 系统首页
-├── encrypt.html          # 混沌加密
 ├── encode.html           # INN 隐写编码
 ├── decode.html           # INN 隐写解码
+├── encrypt.html          # 混沌加密
 ├── results.html          # 结果分析
 ├── gallery.html          # 案例图库
 ├── settings.html         # 系统设置
-├── .env.example          # 环境变量模板（复制到 ~/.inn-stego.env 后修改）
-├── setup.sh              # 一次性安装脚本
-├── start.sh              # 启动脚本
-├── inn-stego.service     # systemd 用户服务单元文件
 └── backend/
     ├── app.py            # Flask 应用（API + 页面 + 认证）
     ├── gunicorn.conf.py  # Gunicorn 生产配置
+    ├── inn_model.py      # INN 网络（Haar 小波 + 耦合层）
     ├── logistic_encrypt.py
-    ├── inn_model.py
-    └── requirements.txt
+    └── requirements.txt  # 非 torch 依赖（flask/gunicorn 等）
 ```

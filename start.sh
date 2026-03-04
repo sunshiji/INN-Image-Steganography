@@ -36,7 +36,7 @@ elif command -v gunicorn >/dev/null 2>&1; then
     GUNICORN="$(command -v gunicorn)"
 else
     echo "[ERROR] gunicorn not found." >&2
-    echo "  Option A (conda): conda activate pris && bash setup.sh" >&2
+    echo "  Option A (conda): conda activate inn-stego && bash setup.sh" >&2
     echo "  Option B (venv):  bash setup.sh" >&2
     exit 1
 fi
