@@ -967,6 +967,73 @@ if (btnGoEncode) {
   });
 }
 
+// ── Random key generation ──────────────────────────────────
+document.querySelectorAll('button').forEach(btn => {
+  if (btn.textContent.includes('随机生成密钥')) {
+    btn.addEventListener('click', () => {
+      const sliders = document.querySelectorAll('input[type=range]');
+      if (sliders[0]) { // r: chaos range 3.57–4.0
+        sliders[0].value = (3.57 + Math.random() * 0.43).toFixed(4);
+        sliders[0].dispatchEvent(new Event('input'));
+      }
+      if (sliders[1]) { // x0: initial value 0.01–0.99
+        sliders[1].value = (0.01 + Math.random() * 0.98).toFixed(5);
+        sliders[1].dispatchEvent(new Event('input'));
+      }
+      if (sliders[2]) { // n0: warmup steps 100–1000
+        sliders[2].value = Math.floor(100 + Math.random() * 900);
+        sliders[2].dispatchEvent(new Event('input'));
+      }
+      showToast('密钥已随机生成 ✓', 'success');
+    });
+  }
+  if (btn.textContent.includes('导入密钥文件')) {
+    btn.addEventListener('click', () => {
+      const inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = '.json,application/json';
+      inp.onchange = e => {
+        const f = e.target.files[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          try {
+            const key = JSON.parse(ev.target.result);
+            const sliders = document.querySelectorAll('input[type=range]');
+            if (key.r  !== undefined && sliders[0]) { sliders[0].value = key.r;  sliders[0].dispatchEvent(new Event('input')); }
+            if (key.x0 !== undefined && sliders[1]) { sliders[1].value = key.x0; sliders[1].dispatchEvent(new Event('input')); }
+            if (key.n0 !== undefined && sliders[2]) { sliders[2].value = key.n0; sliders[2].dispatchEvent(new Event('input')); }
+            lastKey = key;
+            showToast('密钥文件已导入 ✓', 'success');
+          } catch { showToast('密钥文件格式错误', 'error'); }
+        };
+        reader.readAsText(f);
+      };
+      inp.click();
+    });
+  }
+});
+
+// ── Reset button ───────────────────────────────────────────
+document.querySelectorAll('button').forEach(btn => {
+  if (btn.textContent.trim() === '重置' || btn.textContent.includes('重置')) {
+    if (btn.classList.contains('text-slate-600')) {
+      btn.addEventListener('click', () => {
+        selectedFile = null; lastEncryptedB64 = null; lastKey = null;
+        if (secretZone) {
+          const inner = secretZone.querySelector('div');
+          if (inner) inner.style.backgroundImage = '';
+          const label = secretZone.querySelector('p.text-sm');
+          if (label) label.textContent = '点击上传或拖拽图像至此';
+          const sub = secretZone.querySelector('p.text-xs');
+          if (sub) sub.textContent = 'PNG / JPEG / BMP · 最大 20MB';
+        }
+        advanceStep(0);
+        showToast('已重置', 'success');
+      });
+    }
+  }
+});
+
 // ── Helpers ────────────────────────────────────────────────
 function setLoading(btn, loading, label) {
   btn.disabled = loading;

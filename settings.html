@@ -116,7 +116,7 @@
       <div class="flex-1 space-y-6">
 
         <!-- Model Configuration -->
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+        <div id="sec-model" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
           <div class="flex items-center justify-between mb-6">
             <h2 class="font-bold text-slate-800 flex items-center gap-2">
               <i class="fa-solid fa-brain text-indigo-500"></i> 模型配置
@@ -202,7 +202,7 @@
         </div>
 
         <!-- Compute Environment -->
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+        <div id="sec-env" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
           <h2 class="font-bold text-slate-800 mb-6 flex items-center gap-2">
             <i class="fa-solid fa-microchip text-violet-500"></i> 运行环境
           </h2>
@@ -264,7 +264,7 @@
         </div>
 
         <!-- Encoding Defaults -->
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+        <div id="sec-encode" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
           <h2 class="font-bold text-slate-800 mb-6 flex items-center gap-2">
             <i class="fa-solid fa-sliders text-emerald-500"></i> 编码默认参数
           </h2>
@@ -334,7 +334,7 @@
         </div>
 
         <!-- Storage Paths -->
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+        <div id="sec-storage" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
           <h2 class="font-bold text-slate-800 mb-5 flex items-center gap-2">
             <i class="fa-solid fa-folder text-amber-500"></i> 存储路径配置
           </h2>
@@ -380,5 +380,109 @@
     </div>
   </div>
 
+<script>
+// ── Settings page interactions ─────────────────────────────
+function showToast(msg, type) {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;
+    border-radius:12px;font-size:0.85rem;font-weight:600;color:white;
+    background:${type==='success'?'#10b981':'#ef4444'};
+    box-shadow:0 4px 16px rgba(0,0,0,0.15);transition:opacity 0.4s`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(), 400); }, 3000);
+}
+
+// ── Sidebar navigation ─────────────────────────────────────
+const navSectionMap = {
+  '模型配置': 'sec-model',
+  '运行环境': 'sec-env',
+  '编码默认值': 'sec-encode',
+  '存储路径': 'sec-storage',
+  '安全选项': 'sec-storage',
+  '界面主题': 'sec-encode',
+  '关于系统': 'sec-model',
+};
+document.querySelectorAll('.nav-item').forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    document.querySelectorAll('.nav-item').forEach(l => {
+      l.classList.remove('active', 'bg-indigo-50', 'text-indigo-700', 'font-semibold');
+      l.classList.add('text-slate-600');
+    });
+    link.classList.add('active');
+    const label = link.textContent.trim();
+    const secId = navSectionMap[label];
+    if (secId) document.getElementById(secId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+// ── "浏览" buttons → open a directory/file picker ──────────
+document.querySelectorAll('button').forEach(btn => {
+  const t = btn.textContent.trim();
+  if (t === '浏览') {
+    btn.addEventListener('click', () => {
+      const inp = document.createElement('input');
+      // If sibling input contains a path (ends with /), treat as directory-like
+      const sibling = btn.previousElementSibling;
+      inp.type = 'file';
+      if (sibling && sibling.value && sibling.value.endsWith('/')) {
+        inp.setAttribute('webkitdirectory', '');
+      }
+      inp.onchange = e => {
+        const f = e.target.files[0];
+        if (f && sibling) {
+          const path = f.webkitRelativePath ? f.webkitRelativePath.split('/')[0] + '/' : f.name;
+          sibling.value = './' + path;
+        }
+      };
+      inp.click();
+    });
+  }
+
+  // ── Save all settings ──────────────────────────────────
+  if (t.includes('保存所有设置')) {
+    btn.addEventListener('click', () => {
+      // Collect settings from the form
+      const settings = {};
+      document.querySelectorAll('input[type=text], input[type=number], select').forEach(el => {
+        const label = el.closest('div')?.querySelector('label')?.textContent?.trim();
+        if (label) settings[label] = el.value;
+      });
+      sessionStorage.setItem('innSettings', JSON.stringify(settings));
+      showToast('设置已保存 ✓', 'success');
+    });
+  }
+
+  // ── Restore defaults ───────────────────────────────────
+  if (t.includes('恢复默认')) {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('input[type=range]').forEach(s => {
+        s.value = s.defaultValue || s.getAttribute('value') || '';
+        s.dispatchEvent(new Event('input'));
+      });
+      document.querySelectorAll('input[type=number]').forEach(n => {
+        n.value = n.defaultValue || n.getAttribute('value') || '';
+      });
+      showToast('已恢复默认设置 ✓', 'success');
+    });
+  }
+
+  // ── Export config ──────────────────────────────────────
+  if (t.includes('导出配置文件')) {
+    btn.addEventListener('click', () => {
+      const config = {};
+      document.querySelectorAll('input[type=text], input[type=number], select, input[type=range]').forEach(el => {
+        const key = el.name || el.id || el.closest('div')?.querySelector('label')?.textContent?.trim();
+        if (key) config[key] = el.value;
+      });
+      const a = document.createElement('a');
+      a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(config, null, 2));
+      a.download = 'inn_config.json';
+      a.click();
+    });
+  }
+});
+</script>
 </body>
 </html>

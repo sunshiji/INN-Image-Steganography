@@ -476,5 +476,62 @@
     </div>
   </div>
 
+<script>
+// ── Results page interactions ──────────────────────────────
+function showToast(msg, type) {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;
+    border-radius:12px;font-size:0.85rem;font-weight:600;color:white;
+    background:${type==='success'?'#10b981':'#ef4444'};
+    box-shadow:0 4px 16px rgba(0,0,0,0.15);transition:opacity 0.4s`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(), 400); }, 3000);
+}
+
+// ── Tab switching ──────────────────────────────────────────
+const tabBtns = document.querySelectorAll('.tab-active, .tab-inactive');
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    tabBtns.forEach(b => {
+      b.classList.remove('tab-active');
+      b.classList.add('tab-inactive');
+    });
+    btn.classList.remove('tab-inactive');
+    btn.classList.add('tab-active');
+    showToast('当前：' + btn.textContent.trim(), 'success');
+  });
+});
+
+// ── Export / Download all buttons ─────────────────────────
+document.querySelectorAll('button').forEach(btn => {
+  const t = btn.textContent.trim();
+  if (t.includes('导出PDF')) {
+    btn.addEventListener('click', () => showToast('PDF导出功能需要后端服务支持', 'success'));
+  }
+  if (t.includes('下载所有结果')) {
+    btn.addEventListener('click', () => showToast('请先通过隐写编解码流程生成结果', 'success'));
+  }
+});
+
+// ── Download result rows (cursor-pointer divs) ─────────────
+const _b64Re = /^[A-Za-z0-9+/]+=*$/;
+document.querySelectorAll('.cursor-pointer[class*="border"]').forEach(row => {
+  row.addEventListener('click', () => {
+    const label = row.querySelector('p.text-sm.font-semibold')?.textContent || '文件';
+    // Check sessionStorage for a matching file
+    const stego  = sessionStorage.getItem('stegoImage');
+    if (label.includes('隐写') && stego && _b64Re.test(stego)) {
+      const a = document.createElement('a');
+      a.href = 'data:image/png;base64,' + stego;
+      a.download = 'stego_output.png'; a.click();
+    } else if (label.includes('秘密') || label.includes('还原')) {
+      showToast('请先完成解码操作以获取还原图像', 'success');
+    } else {
+      showToast(label + '下载需要后端服务支持', 'success');
+    }
+  });
+});
+</script>
 </body>
 </html>

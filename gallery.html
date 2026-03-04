@@ -507,5 +507,69 @@
     </div>
   </div>
 
+<script>
+// ── Gallery page interactions ──────────────────────────────
+function showToast(msg, type) {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;
+    border-radius:12px;font-size:0.85rem;font-weight:600;color:white;
+    background:${type==='success'?'#10b981':'#ef4444'};
+    box-shadow:0 4px 16px rgba(0,0,0,0.15);transition:opacity 0.4s`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(), 400); }, 3000);
+}
+
+// ── Filter tabs ────────────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.classList.remove('active', 'bg-indigo-600', 'text-white', 'border-indigo-300');
+      b.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+    });
+    btn.classList.add('active');
+    btn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+  });
+});
+
+// ── Gallery card buttons ───────────────────────────────────
+document.querySelectorAll('.gallery-card button').forEach(btn => {
+  const t = btn.textContent.trim();
+  if (t.includes('查看详情')) {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      // Find card title
+      const card = btn.closest('.gallery-card');
+      const title = card?.querySelector('p.font-bold.text-slate-800.text-sm')?.textContent || '示例详情';
+      showToast('正在查看：' + title, 'success');
+    });
+  }
+  if (t.includes('复用参数')) {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      window.location.href = '/encode.html';
+    });
+  }
+});
+
+// ── Pagination ─────────────────────────────────────────────
+const pageBtns = document.querySelectorAll('.flex.items-center.justify-center.gap-2 button');
+pageBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    // Remove active from all numeric page buttons
+    pageBtns.forEach(b => {
+      if (/^\d+$/.test(b.textContent.trim())) {
+        b.classList.remove('bg-indigo-600', 'text-white', 'font-semibold');
+        b.classList.add('border', 'border-slate-200', 'bg-white', 'text-slate-600');
+      }
+    });
+    if (/^\d+$/.test(btn.textContent.trim())) {
+      btn.classList.add('bg-indigo-600', 'text-white', 'font-semibold');
+      btn.classList.remove('border', 'border-slate-200', 'bg-white', 'text-slate-600');
+      showToast('图库仅展示示例数据', 'success');
+    }
+  });
+});
+</script>
 </body>
 </html>

@@ -531,6 +531,20 @@ if (resetBtn && resetBtn.textContent.includes('重置')) {
   });
 }
 
+// ── Static result panel buttons ────────────────────────────
+document.querySelectorAll('button').forEach(btn => {
+  const t = btn.textContent.trim();
+  if (t.includes('下载还原图像')) {
+    btn.addEventListener('click', () => showToast('请先上传隐写图像并执行解码操作', 'error'));
+  }
+  if (t.includes('详细质量报告')) {
+    btn.addEventListener('click', () => { window.location.href = '/results.html'; });
+  }
+  if (t.includes('选择批量文件')) {
+    btn.addEventListener('click', () => showToast('批量解码功能开发中...', 'success'));
+  }
+});
+
 // ── Helpers ────────────────────────────────────────────────
 function setLoading(btn, loading, label) {
   btn.disabled = loading;

@@ -314,6 +314,14 @@
       await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
       window.location.href = '/login';
     }
+
+    // ── Nav "开始使用" button ───────────────────────────────
+    document.querySelectorAll('button').forEach(btn => {
+      const t = btn.textContent.trim();
+      if (t === '开始使用') btn.addEventListener('click', () => { window.location.href = '/encrypt.html'; });
+      if (t.includes('立即体验')) btn.addEventListener('click', () => { window.location.href = '/encrypt.html'; });
+      if (t.includes('查看文档')) btn.addEventListener('click', () => { window.location.href = '/gallery.html'; });
+    });
   </script>
 
 </body>

@@ -622,6 +622,37 @@ function showToast(msg, type) {
   document.body.appendChild(t);
   setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(), 400); }, 3000);
 }
+
+// ── Extra button wiring ────────────────────────────────────
+document.querySelectorAll('button').forEach(btn => {
+  const t = btn.textContent.trim();
+  // Reset
+  if (t.includes('重置') && btn.classList.contains('text-slate-600')) {
+    btn.addEventListener('click', () => {
+      coverFile = null; secretFile = null;
+      uploadZones.forEach(z => {
+        const thumb = z.querySelector('.w-full.h-44') || z.querySelector('div > div');
+        if (thumb) thumb.style.backgroundImage = '';
+      });
+      showToast('已重置', 'success');
+    });
+  }
+  // Restore defaults
+  if (t.includes('恢复默认设置')) {
+    btn.addEventListener('click', () => {
+      // Reset the quality sliders back to defaults
+      document.querySelectorAll('input[type=range]').forEach(s => {
+        s.value = s.defaultValue || s.getAttribute('value') || Math.round((+s.min + +s.max) / 2);
+        s.dispatchEvent(new Event('input'));
+      });
+      showToast('已恢复默认设置 ✓', 'success');
+    });
+  }
+  // Recent tasks: 查看 → go to results
+  if (t === '查看') btn.addEventListener('click', () => { window.location.href = '/results.html'; });
+  // Recent tasks: 重试 → reload page
+  if (t === '重试') btn.addEventListener('click', () => { window.location.reload(); });
+});
 </script>
 </body>
 </html>
