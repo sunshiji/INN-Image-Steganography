@@ -185,6 +185,9 @@
     <a href="#page-results"><i class="fa-solid fa-chart-bar" style="margin-right:5px;"></i>结果分析</a>
     <a href="#page-gallery"><i class="fa-solid fa-images" style="margin-right:5px;"></i>图库示例</a>
     <a href="#page-settings"><i class="fa-solid fa-gear" style="margin-right:5px;"></i>系统设置</a>
+    <button onclick="doLogout()" style="margin-left:auto;padding:6px 16px;border-radius:9999px;font-size:0.82rem;font-weight:600;border:1.5px solid #fee2e2;color:#dc2626;background:#fef2f2;cursor:pointer;">
+      <i class="fa-solid fa-right-from-bracket" style="margin-right:4px;"></i>退出登录
+    </button>
   </nav>
 
   <!-- ========== PAGE 1: HOME ========== -->
@@ -412,6 +415,11 @@
         } catch(e) {}
       });
     });
+
+    async function doLogout() {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+      window.location.href = '/login';
+    }
   </script>
 
 </body>

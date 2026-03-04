@@ -25,10 +25,11 @@ decode accepts:
 import io
 import base64
 import os
+import hmac
 
 import numpy as np
 from PIL import Image
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, session, redirect
 from flask_cors import CORS
 import torch
 
@@ -73,6 +74,71 @@ MODEL = INNSteganography.load(n_blocks=8)
 print("[INN] Model ready.", flush=True)
 
 MAX_DIM = 1024
+
+# ---------------------------------------------------------------------------
+# Authentication configuration
+# Set SECRET_KEY, ADMIN_USERNAME, ADMIN_PASSWORD via environment variables.
+# ---------------------------------------------------------------------------
+
+app.secret_key = os.environ.get("SECRET_KEY", "inn-stego-dev-key-change-in-production")
+if "SECRET_KEY" not in os.environ:
+    print(
+        "[WARNING] SECRET_KEY env var not set. Using insecure default key — "
+        "set SECRET_KEY in production!",
+        flush=True,
+    )
+
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
+
+
+@app.before_request
+def _check_auth():
+    """Redirect unauthenticated requests to /login; return 401 for API calls."""
+    public = {"/login", "/api/auth/login"}
+    if request.path in public:
+        return None
+    if not session.get("logged_in"):
+        if request.path.startswith("/api/"):
+            return jsonify({"error": "Unauthorized"}), 401
+        return redirect("/login")
+
+
+@app.route("/login")
+def serve_login():
+    if session.get("logged_in"):
+        return redirect("/")
+    return send_from_directory(ROOT_DIR, "login.html")
+
+
+@app.route("/api/auth/login", methods=["POST"])
+def api_auth_login():
+    data = request.get_json(silent=True) or {}
+    username = (data.get("username") or "").strip()
+    password = data.get("password") or ""
+    # Use compare_digest to prevent timing side-channel attacks
+    ok = (
+        hmac.compare_digest(username, ADMIN_USERNAME)
+        and hmac.compare_digest(password, ADMIN_PASSWORD)
+    )
+    if ok:
+        session["logged_in"] = True
+        session["username"] = username
+        return jsonify({"status": "ok"})
+    return jsonify({"error": "用户名或密码错误"}), 401
+
+
+@app.route("/api/auth/logout", methods=["POST"])
+def api_auth_logout():
+    session.clear()
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/auth/status", methods=["GET"])
+def api_auth_status():
+    if session.get("logged_in"):
+        return jsonify({"logged_in": True, "username": session.get("username", "")})
+    return jsonify({"logged_in": False}), 401
 
 # ---------------------------------------------------------------------------
 # Helpers
