@@ -41,6 +41,31 @@ else
     exit 1
 fi
 
+# --- Stop any existing process already bound to the port ---
+OLD_PIDS=$(ss -tlnp 2>/dev/null | awk -F'pid=' "/0\.0\.0\.0:${PORT}|:::${PORT}/{print \$2}" | cut -d',' -f1)
+if [ -z "${OLD_PIDS}" ] && command -v fuser >/dev/null 2>&1; then
+    OLD_PIDS=$(fuser "${PORT}/tcp" 2>/dev/null | tr -s ' ' '\n' | grep -v '^$')
+fi
+for OLD_PID in ${OLD_PIDS}; do
+    echo "[INFO] Port ${PORT} is in use by PID ${OLD_PID}. Stopping it..."
+    kill "${OLD_PID}" 2>/dev/null || true
+done
+if [ -n "${OLD_PIDS}" ]; then
+    # Wait up to 5 seconds for the port to be released
+    for attempt in 1 2 3 4 5; do
+        sleep 1
+        ss -tlnp 2>/dev/null | grep -qE "0\.0\.0\.0:${PORT}|:::${PORT}" || break
+    done
+    # Force-kill if port is still occupied
+    if ss -tlnp 2>/dev/null | grep -qE "0\.0\.0\.0:${PORT}|:::${PORT}"; then
+        echo "[WARN] Port ${PORT} still in use after SIGTERM; force-killing..."
+        for OLD_PID in ${OLD_PIDS}; do
+            kill -9 "${OLD_PID}" 2>/dev/null || true
+        done
+        sleep 1
+    fi
+fi
+
 echo "=================================================="
 echo "  INN Image Steganography System"
 echo "  Listen: http://0.0.0.0:${PORT}"
