@@ -24,8 +24,11 @@ decode accepts:
 
 import io
 import base64
+import json
 import os
 import hmac
+import hashlib
+import secrets
 
 import numpy as np
 from PIL import Image
@@ -91,11 +94,73 @@ if "SECRET_KEY" not in os.environ:
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 
+# ---------------------------------------------------------------------------
+# Multi-user store  (stored in ~/.inn-stego-users.json)
+# Env-var admin is always the ultimate fallback; file users take precedence
+# when a matching entry exists.
+# ---------------------------------------------------------------------------
+
+USERS_FILE = os.path.join(os.path.expanduser("~"), ".inn-stego-users.json")
+_MIN_PASSWORD_LEN = 6
+
+
+def _hash_password(password: str) -> str:
+    salt = secrets.token_hex(16)
+    h = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 100_000)
+    return f"{salt}${h.hex()}"
+
+
+def _verify_password(password: str, stored: str) -> bool:
+    try:
+        salt, h = stored.split("$", 1)
+        h2 = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 100_000)
+        return hmac.compare_digest(h, h2.hex())
+    except Exception:
+        return False
+
+
+def _load_users() -> dict:
+    if os.path.isfile(USERS_FILE):
+        try:
+            with open(USERS_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, dict) and "users" in data:
+                return data
+        except Exception:
+            pass
+    return {"users": {}}
+
+
+def _save_users(data: dict) -> None:
+    with open(USERS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    try:
+        os.chmod(USERS_FILE, 0o600)
+    except OSError:
+        pass
+
+
+def _auth_user(username: str, password: str) -> bool:
+    """Verify credentials: check file store first, then env-var admin fallback."""
+    store = _load_users()
+    entry = store.get("users", {}).get(username)
+    if entry:
+        return _verify_password(password, entry.get("password_hash", ""))
+    # Fallback: env-var admin
+    return (
+        hmac.compare_digest(username, ADMIN_USERNAME)
+        and hmac.compare_digest(password, ADMIN_PASSWORD)
+    )
+
 
 @app.before_request
 def _check_auth():
     """Redirect unauthenticated requests to /login; return 401 for API calls."""
-    public = {"/login", "/api/auth/login"}
+    public = {
+        "/login", "/api/auth/login",
+        "/register", "/api/auth/register",
+        "/forgot-password", "/api/auth/reset-password",
+    }
     if request.path in public:
         return None
     if not session.get("logged_in"):
@@ -111,17 +176,24 @@ def serve_login():
     return send_from_directory(ROOT_DIR, "login.html")
 
 
+@app.route("/register")
+def serve_register():
+    if session.get("logged_in"):
+        return redirect("/")
+    return send_from_directory(ROOT_DIR, "register.html")
+
+
+@app.route("/forgot-password")
+def serve_forgot_password():
+    return send_from_directory(ROOT_DIR, "forgot-password.html")
+
+
 @app.route("/api/auth/login", methods=["POST"])
 def api_auth_login():
     data = request.get_json(silent=True) or {}
     username = (data.get("username") or "").strip()
     password = data.get("password") or ""
-    # Use compare_digest to prevent timing side-channel attacks
-    ok = (
-        hmac.compare_digest(username, ADMIN_USERNAME)
-        and hmac.compare_digest(password, ADMIN_PASSWORD)
-    )
-    if ok:
+    if _auth_user(username, password):
         session["logged_in"] = True
         session["username"] = username
         return jsonify({"status": "ok"})
@@ -132,6 +204,63 @@ def api_auth_login():
 def api_auth_logout():
     session.clear()
     return jsonify({"status": "ok"})
+
+
+@app.route("/api/auth/register", methods=["POST"])
+def api_auth_register():
+    """Create a new user. Requires invite_code == SECRET_KEY."""
+    data = request.get_json(silent=True) or {}
+    username = (data.get("username") or "").strip()
+    password = data.get("password") or ""
+    invite_code = data.get("invite_code") or ""
+
+    if not all([username, password, invite_code]):
+        return jsonify({"error": "缺少必填字段"}), 400
+    if not hmac.compare_digest(invite_code, str(app.secret_key)):
+        return jsonify({"error": "邀请码错误"}), 401
+    if len(password) < _MIN_PASSWORD_LEN:
+        return jsonify({"error": f"密码至少需要 {_MIN_PASSWORD_LEN} 位字符"}), 400
+    if len(username) < 2 or len(username) > 32:
+        return jsonify({"error": "用户名长度应为 2–32 位字符"}), 400
+
+    store = _load_users()
+    users = store.setdefault("users", {})
+
+    # Prevent creating a file entry that shadows the env-var admin
+    if username == ADMIN_USERNAME or username in users:
+        return jsonify({"error": "用户名已存在"}), 409
+
+    users[username] = {"password_hash": _hash_password(password), "role": "user"}
+    _save_users(store)
+    return jsonify({"status": "ok", "message": "注册成功，请返回登录页面"})
+
+
+@app.route("/api/auth/reset-password", methods=["POST"])
+def api_auth_reset_password():
+    """Reset a user's password. Requires recovery_code == SECRET_KEY."""
+    data = request.get_json(silent=True) or {}
+    username = (data.get("username") or "").strip()
+    recovery_code = data.get("recovery_code") or ""
+    new_password = data.get("new_password") or ""
+
+    if not all([username, recovery_code, new_password]):
+        return jsonify({"error": "缺少必填字段"}), 400
+    if not hmac.compare_digest(recovery_code, str(app.secret_key)):
+        return jsonify({"error": "恢复码错误"}), 401
+    if len(new_password) < _MIN_PASSWORD_LEN:
+        return jsonify({"error": f"新密码至少需要 {_MIN_PASSWORD_LEN} 位字符"}), 400
+
+    store = _load_users()
+    users = store.setdefault("users", {})
+
+    # Allow resetting env-var admin: create/update their file entry
+    # After reset, the file entry takes precedence over the env var
+    users[username] = {
+        **users.get(username, {"role": "admin" if username == ADMIN_USERNAME else "user"}),
+        "password_hash": _hash_password(new_password),
+    }
+    _save_users(store)
+    return jsonify({"status": "ok", "message": "密码已重置，请返回登录页面"})
 
 
 @app.route("/api/auth/status", methods=["GET"])

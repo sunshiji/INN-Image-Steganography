@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>INN 图像隐写系统 — 原型全览</title>
+  <title>INN 图像隐写系统 — 控制台</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
   <style>
@@ -25,7 +25,7 @@
     .index-banner h1 { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
     .index-banner p { font-size: 0.95rem; opacity: 0.85; max-width: 640px; margin: 0 auto; }
 
-    /* ===== Page Anchor Nav ===== */
+    /* ===== Sticky Nav ===== */
     .page-nav {
       background: white;
       border-bottom: 1px solid #e2e8f0;
@@ -54,48 +54,61 @@
     .page-nav a:hover { background: #6366f1; color: white; border-color: #6366f1; }
     .page-nav .label { font-size: 0.78rem; color: #94a3b8; font-weight: 500; margin-right: 4px; }
 
-    /* ===== Page Block ===== */
-    .page-block {
-      margin: 40px 32px;
+    /* ===== Card Grid ===== */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+      padding: 40px 40px 60px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    .feature-card {
       background: white;
-      border-radius: 20px;
+      border-radius: 18px;
+      border: 1.5px solid #e0e7ff;
+      box-shadow: 0 2px 12px rgba(99,102,241,0.07);
       overflow: hidden;
-      box-shadow: 0 4px 24px rgba(99,102,241,0.08);
-      border: 1px solid #e0e7ff;
-    }
-
-    .page-block-header {
-      background: linear-gradient(90deg, #eef2ff, #f5f3ff);
-      border-bottom: 1px solid #e0e7ff;
-      padding: 14px 24px;
+      transition: box-shadow 0.2s, transform 0.2s;
+      text-decoration: none;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 10px;
+      flex-direction: column;
     }
-    .page-block-header .page-title {
+    .feature-card:hover {
+      box-shadow: 0 8px 32px rgba(99,102,241,0.15);
+      transform: translateY(-3px);
+    }
+    .card-header {
+      padding: 24px 24px 16px;
       display: flex;
-      align-items: center;
-      gap: 12px;
+      align-items: flex-start;
+      gap: 16px;
     }
-    .page-block-header .icon-wrap {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.9rem;
+      font-size: 1.2rem;
+      flex-shrink: 0;
     }
-    .page-block-header h2 { font-size: 1rem; font-weight: 700; color: #3730a3; margin: 0; }
-    .page-block-header p { font-size: 0.78rem; color: #6366f1; margin: 2px 0 0; }
-    .page-block-header .meta {
+    .card-body {
+      padding: 0 24px 20px;
+      flex: 1;
+    }
+    .card-title { font-size: 1.05rem; font-weight: 700; color: #1e293b; margin-bottom: 6px; }
+    .card-desc  { font-size: 0.82rem; color: #64748b; line-height: 1.6; }
+    .card-footer {
+      padding: 14px 24px;
+      border-top: 1px solid #f1f5f9;
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: space-between;
+      font-size: 0.78rem;
     }
-    .badge {
+    .card-badge {
       display: inline-flex;
       align-items: center;
       gap: 4px;
@@ -104,37 +117,13 @@
       font-size: 0.7rem;
       font-weight: 700;
     }
-
-    /* ===== iframe ===== */
-    .page-iframe {
-      width: 100%;
-      border: none;
-      display: block;
-      min-height: 900px;
-      background: #fff;
+    .card-arrow {
+      color: #a5b4fc;
+      font-size: 0.82rem;
+      font-weight: 600;
+      transition: color 0.15s, transform 0.15s;
     }
-
-    /* ===== Divider Label ===== */
-    .section-divider {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 48px 32px 0;
-      padding: 0 8px;
-    }
-    .section-divider .line {
-      flex: 1;
-      height: 1px;
-      background: #e2e8f0;
-    }
-    .section-divider .label {
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      white-space: nowrap;
-    }
+    .feature-card:hover .card-arrow { color: #6366f1; transform: translateX(4px); }
 
     /* ===== Footer ===== */
     .index-footer {
@@ -143,7 +132,6 @@
       text-align: center;
       padding: 24px;
       font-size: 0.82rem;
-      margin-top: 60px;
     }
     .index-footer strong { color: #e2e8f0; }
   </style>
@@ -157,234 +145,178 @@
         <i class="fa-solid fa-eye-slash" style="font-size:1.2rem;"></i>
       </div>
     </div>
-    <h1>INN 图像隐写系统 · 原型界面全览</h1>
-    <p>基于可逆神经网络（Invertible Neural Network）的图像信息隐写系统高保真UI原型，共 7 个页面，亮色系设计，可直接用于开发参考</p>
+    <h1>INN 图像隐写系统</h1>
+    <p>基于可逆神经网络（Invertible Neural Network）的图像信息隐写系统，点击下方功能卡片进入对应页面</p>
     <div style="display:flex;gap:12px;justify-content:center;margin-top:18px;flex-wrap:wrap;">
+      <span id="user-badge" style="background:rgba(255,255,255,0.2);padding:5px 14px;border-radius:9999px;font-size:0.78rem;font-weight:600;">
+        <i class="fa-solid fa-circle-user" style="margin-right:5px;"></i><span id="user-badge-name">…</span>
+      </span>
       <span style="background:rgba(255,255,255,0.15);padding:5px 14px;border-radius:9999px;font-size:0.78rem;font-weight:600;">
         <i class="fa-solid fa-palette" style="margin-right:5px;"></i>亮色系 · 适合论文打印
       </span>
       <span style="background:rgba(255,255,255,0.15);padding:5px 14px;border-radius:9999px;font-size:0.78rem;font-weight:600;">
         <i class="fa-brands fa-css3-alt" style="margin-right:5px;"></i>Tailwind CSS + FontAwesome
       </span>
-      <span style="background:rgba(255,255,255,0.15);padding:5px 14px;border-radius:9999px;font-size:0.78rem;font-weight:600;">
-        <i class="fa-solid fa-file-code" style="margin-right:5px;"></i>7 个独立 HTML 文件
-      </span>
-      <span style="background:rgba(255,255,255,0.15);padding:5px 14px;border-radius:9999px;font-size:0.78rem;font-weight:600;">
-        <i class="fa-solid fa-layer-group" style="margin-right:5px;"></i>iframe 平铺展示
-      </span>
     </div>
   </div>
 
-  <!-- Sticky Page Navigation -->
+  <!-- Sticky Navigation -->
   <nav class="page-nav">
-    <span class="label">快速跳转：</span>
-    <a href="#page-home"><i class="fa-solid fa-house" style="margin-right:5px;"></i>首页</a>
-    <a href="#page-encrypt"><i class="fa-solid fa-dice-d6" style="margin-right:5px;"></i>混沌加密</a>
-    <a href="#page-encode"><i class="fa-solid fa-file-image" style="margin-right:5px;"></i>隐写编码</a>
-    <a href="#page-decode"><i class="fa-solid fa-key" style="margin-right:5px;"></i>隐写解码</a>
-    <a href="#page-results"><i class="fa-solid fa-chart-bar" style="margin-right:5px;"></i>结果分析</a>
-    <a href="#page-gallery"><i class="fa-solid fa-images" style="margin-right:5px;"></i>图库示例</a>
-    <a href="#page-settings"><i class="fa-solid fa-gear" style="margin-right:5px;"></i>系统设置</a>
+    <span class="label">快速导航：</span>
+    <a href="/home.html"><i class="fa-solid fa-house" style="margin-right:5px;"></i>首页</a>
+    <a href="/encrypt.html"><i class="fa-solid fa-dice-d6" style="margin-right:5px;"></i>混沌加密</a>
+    <a href="/encode.html"><i class="fa-solid fa-file-image" style="margin-right:5px;"></i>隐写编码</a>
+    <a href="/decode.html"><i class="fa-solid fa-key" style="margin-right:5px;"></i>隐写解码</a>
+    <a href="/results.html"><i class="fa-solid fa-chart-bar" style="margin-right:5px;"></i>结果分析</a>
+    <a href="/gallery.html"><i class="fa-solid fa-images" style="margin-right:5px;"></i>图库示例</a>
+    <a href="/settings.html"><i class="fa-solid fa-gear" style="margin-right:5px;"></i>系统设置</a>
     <button onclick="doLogout()" style="margin-left:auto;padding:6px 16px;border-radius:9999px;font-size:0.82rem;font-weight:600;border:1.5px solid #fee2e2;color:#dc2626;background:#fef2f2;cursor:pointer;">
       <i class="fa-solid fa-right-from-bracket" style="margin-right:4px;"></i>退出登录
     </button>
   </nav>
 
-  <!-- ========== PAGE 1: HOME ========== -->
-  <div class="section-divider">
-    <div class="line"></div>
-    <div class="label">页面 1 / 7</div>
-    <div class="line"></div>
-  </div>
+  <!-- Feature Card Grid -->
+  <div class="card-grid">
 
-  <div id="page-home" class="page-block">
-    <div class="page-block-header">
-      <div class="page-title">
-        <div class="icon-wrap" style="background:#eef2ff;">
+    <!-- 1. Home -->
+    <a href="/home.html" class="feature-card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#eef2ff;">
           <i class="fa-solid fa-house" style="color:#6366f1;"></i>
         </div>
         <div>
-          <h2>首页（Home）</h2>
-          <p>系统概览、功能介绍、工作原理展示，作为用户进入系统的第一个页面</p>
+          <div class="card-title">系统首页</div>
         </div>
       </div>
-      <div class="meta">
-        <span class="badge" style="background:#eef2ff;color:#6366f1;">home.html</span>
-        <span class="badge" style="background:#ecfdf5;color:#065f46;"><i class="fa-solid fa-circle-check"></i> 完成</span>
+      <div class="card-body">
+        <p class="card-desc">系统概览、功能介绍、INN 工作原理展示，作为用户进入系统的第一个页面。</p>
       </div>
-    </div>
-    <iframe src="home.html" class="page-iframe" id="iframe-home" style="min-height:1100px;"
-      onload="this.style.height=(this.contentDocument.body.scrollHeight+40)+'px'"></iframe>
-  </div>
+      <div class="card-footer">
+        <span class="card-badge" style="background:#eef2ff;color:#6366f1;">home.html</span>
+        <span class="card-arrow">进入 <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
+    </a>
 
-  <!-- ========== PAGE 2: ENCRYPT ========== -->
-  <div class="section-divider">
-    <div class="line"></div>
-    <div class="label">页面 2 / 7</div>
-    <div class="line"></div>
-  </div>
-
-  <div id="page-encrypt" class="page-block">
-    <div class="page-block-header">
-      <div class="page-title">
-        <div class="icon-wrap" style="background:#fffbeb;">
+    <!-- 2. Encrypt -->
+    <a href="/encrypt.html" class="feature-card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#fffbeb;">
           <i class="fa-solid fa-dice-d6" style="color:#d97706;"></i>
         </div>
         <div>
-          <h2>Logistic 混沌加密（Encrypt）</h2>
-          <p>功能1：对秘密图像进行Logistic混沌映射加密（置乱+扩散），使其呈噪声外观后再送入隐写</p>
+          <div class="card-title">Logistic 混沌加密</div>
         </div>
       </div>
-      <div class="meta">
-        <span class="badge" style="background:#fffbeb;color:#d97706;">encrypt.html</span>
-        <span class="badge" style="background:#fef3c7;color:#92400e;"><i class="fa-solid fa-lock-open" style="margin-right:3px;"></i> 功能1·新增</span>
-        <span class="badge" style="background:#ecfdf5;color:#065f46;"><i class="fa-solid fa-circle-check"></i> 完成</span>
+      <div class="card-body">
+        <p class="card-desc">对秘密图像进行 Logistic 混沌映射加密（置乱 + 扩散），使其呈噪声外观后再送入隐写。</p>
       </div>
-    </div>
-    <iframe src="encrypt.html" class="page-iframe" id="iframe-encrypt" style="min-height:1300px;"
-      onload="this.style.height=(this.contentDocument.body.scrollHeight+40)+'px'"></iframe>
-  </div>
+      <div class="card-footer">
+        <span class="card-badge" style="background:#fffbeb;color:#d97706;">encrypt.html</span>
+        <span class="card-arrow">进入 <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
+    </a>
 
-  <!-- ========== PAGE 3: ENCODE ========== -->
-  <div class="section-divider">
-    <div class="line"></div>
-    <div class="label">页面 3 / 7</div>
-    <div class="line"></div>
-  </div>
-
-  <div id="page-encode" class="page-block">
-    <div class="page-block-header">
-      <div class="page-title">
-        <div class="icon-wrap" style="background:#eef2ff;">
+    <!-- 3. Encode -->
+    <a href="/encode.html" class="feature-card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#eef2ff;">
           <i class="fa-solid fa-file-image" style="color:#6366f1;"></i>
         </div>
         <div>
-          <h2>INN 隐写编码（Encode）</h2>
-          <p>功能2：将Logistic混沌加密后的秘密图像嵌入载体图像，INN前向传播生成隐写图像</p>
+          <div class="card-title">INN 隐写编码</div>
         </div>
       </div>
-      <div class="meta">
-        <span class="badge" style="background:#eef2ff;color:#6366f1;">encode.html</span>
-        <span class="badge" style="background:#e0e7ff;color:#3730a3;"><i class="fa-solid fa-shield-halved" style="margin-right:3px;"></i> 功能2·更新</span>
-        <span class="badge" style="background:#ecfdf5;color:#065f46;"><i class="fa-solid fa-circle-check"></i> 完成</span>
+      <div class="card-body">
+        <p class="card-desc">将加密后的秘密图像嵌入载体图像，通过 INN 前向传播生成隐写图像，视觉不可分辨。</p>
       </div>
-    </div>
-    <iframe src="encode.html" class="page-iframe" id="iframe-encode" style="min-height:1200px;"
-      onload="this.style.height=(this.contentDocument.body.scrollHeight+40)+'px'"></iframe>
-  </div>
+      <div class="card-footer">
+        <span class="card-badge" style="background:#eef2ff;color:#6366f1;">encode.html</span>
+        <span class="card-arrow">进入 <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
+    </a>
 
-  <!-- ========== PAGE 4: DECODE ========== -->
-  <div class="section-divider">
-    <div class="line"></div>
-    <div class="label">页面 4 / 7</div>
-    <div class="line"></div>
-  </div>
-
-  <div id="page-decode" class="page-block">
-    <div class="page-block-header">
-      <div class="page-title">
-        <div class="icon-wrap" style="background:#f5f3ff;">
+    <!-- 4. Decode -->
+    <a href="/decode.html" class="feature-card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#f5f3ff;">
           <i class="fa-solid fa-key" style="color:#7c3aed;"></i>
         </div>
         <div>
-          <h2>隐写解码（Decode）</h2>
-          <p>上传隐写图像，自动检测隐写内容，执行INN逆向推理还原秘密图像</p>
+          <div class="card-title">隐写解码</div>
         </div>
       </div>
-      <div class="meta">
-        <span class="badge" style="background:#f5f3ff;color:#7c3aed;">decode.html</span>
-        <span class="badge" style="background:#ecfdf5;color:#065f46;"><i class="fa-solid fa-circle-check"></i> 完成</span>
+      <div class="card-body">
+        <p class="card-desc">上传隐写图像，自动检测隐写内容，执行 INN 逆向推理还原加密秘密图像。</p>
       </div>
-    </div>
-    <iframe src="decode.html" class="page-iframe" id="iframe-decode" style="min-height:1000px;"
-      onload="this.style.height=(this.contentDocument.body.scrollHeight+40)+'px'"></iframe>
-  </div>
+      <div class="card-footer">
+        <span class="card-badge" style="background:#f5f3ff;color:#7c3aed;">decode.html</span>
+        <span class="card-arrow">进入 <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
+    </a>
 
-  <!-- ========== PAGE 5: RESULTS ========== -->
-  <div class="section-divider">
-    <div class="line"></div>
-    <div class="label">页面 5 / 7</div>
-    <div class="line"></div>
-  </div>
-
-  <div id="page-results" class="page-block">
-    <div class="page-block-header">
-      <div class="page-title">
-        <div class="icon-wrap" style="background:#ecfdf5;">
+    <!-- 5. Results -->
+    <a href="/results.html" class="feature-card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#ecfdf5;">
           <i class="fa-solid fa-chart-bar" style="color:#059669;"></i>
         </div>
         <div>
-          <h2>结果分析（Results）</h2>
-          <p>四图对比（原始载体、隐写图像、原始秘密、还原秘密）+ PSNR/SSIM指标 + 误差图分析</p>
+          <div class="card-title">结果分析</div>
         </div>
       </div>
-      <div class="meta">
-        <span class="badge" style="background:#ecfdf5;color:#059669;">results.html</span>
-        <span class="badge" style="background:#ecfdf5;color:#065f46;"><i class="fa-solid fa-circle-check"></i> 完成</span>
+      <div class="card-body">
+        <p class="card-desc">四图对比（原始载体、隐写图像、原始秘密、还原秘密）+ PSNR / SSIM 指标 + 误差图分析。</p>
       </div>
-    </div>
-    <iframe src="results.html" class="page-iframe" id="iframe-results" style="min-height:1100px;"
-      onload="this.style.height=(this.contentDocument.body.scrollHeight+40)+'px'"></iframe>
-  </div>
+      <div class="card-footer">
+        <span class="card-badge" style="background:#ecfdf5;color:#059669;">results.html</span>
+        <span class="card-arrow">进入 <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
+    </a>
 
-  <!-- ========== PAGE 6: GALLERY ========== -->
-  <div class="section-divider">
-    <div class="line"></div>
-    <div class="label">页面 6 / 7</div>
-    <div class="line"></div>
-  </div>
-
-  <div id="page-gallery" class="page-block">
-    <div class="page-block-header">
-      <div class="page-title">
-        <div class="icon-wrap" style="background:#fffbeb;">
+    <!-- 6. Gallery -->
+    <a href="/gallery.html" class="feature-card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#fffbeb;">
           <i class="fa-solid fa-images" style="color:#d97706;"></i>
         </div>
         <div>
-          <h2>图库示例（Gallery）</h2>
-          <p>典型隐写案例展示，多种图像类型对比，含筛选、排序、分页功能</p>
+          <div class="card-title">图库示例</div>
         </div>
       </div>
-      <div class="meta">
-        <span class="badge" style="background:#fffbeb;color:#d97706;">gallery.html</span>
-        <span class="badge" style="background:#ecfdf5;color:#065f46;"><i class="fa-solid fa-circle-check"></i> 完成</span>
+      <div class="card-body">
+        <p class="card-desc">典型隐写案例展示，多种图像类型对比，含筛选、排序、分页功能。</p>
       </div>
-    </div>
-    <iframe src="gallery.html" class="page-iframe" id="iframe-gallery" style="min-height:1200px;"
-      onload="this.style.height=(this.contentDocument.body.scrollHeight+40)+'px'"></iframe>
-  </div>
+      <div class="card-footer">
+        <span class="card-badge" style="background:#fffbeb;color:#d97706;">gallery.html</span>
+        <span class="card-arrow">进入 <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
+    </a>
 
-  <!-- ========== PAGE 7: SETTINGS ========== -->
-  <div class="section-divider">
-    <div class="line"></div>
-    <div class="label">页面 7 / 7</div>
-    <div class="line"></div>
-  </div>
-
-  <div id="page-settings" class="page-block">
-    <div class="page-block-header">
-      <div class="page-title">
-        <div class="icon-wrap" style="background:#f8fafc;">
+    <!-- 7. Settings -->
+    <a href="/settings.html" class="feature-card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#f8fafc;">
           <i class="fa-solid fa-gear" style="color:#475569;"></i>
         </div>
         <div>
-          <h2>系统设置（Settings）</h2>
-          <p>模型选择、运行环境、超参数配置、存储路径、性能调优等全局系统设置</p>
+          <div class="card-title">系统设置</div>
         </div>
       </div>
-      <div class="meta">
-        <span class="badge" style="background:#f1f5f9;color:#475569;">settings.html</span>
-        <span class="badge" style="background:#ecfdf5;color:#065f46;"><i class="fa-solid fa-circle-check"></i> 完成</span>
+      <div class="card-body">
+        <p class="card-desc">模型选择、运行环境、超参数配置、存储路径、性能调优等全局系统设置。</p>
       </div>
-    </div>
-    <iframe src="settings.html" class="page-iframe" id="iframe-settings" style="min-height:1100px;"
-      onload="this.style.height=(this.contentDocument.body.scrollHeight+40)+'px'"></iframe>
+      <div class="card-footer">
+        <span class="card-badge" style="background:#f1f5f9;color:#475569;">settings.html</span>
+        <span class="card-arrow">进入 <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
+    </a>
+
   </div>
 
   <!-- Footer -->
   <div class="index-footer">
     <p>
-      <strong>INN 图像隐写系统</strong> · 高保真 UI 原型 · 基于可逆神经网络的图像信息隐写技术研究<br/>
+      <strong>INN 图像隐写系统</strong> · 基于可逆神经网络的图像信息隐写技术研究<br/>
       <span style="font-size:0.75rem;">使用 Tailwind CSS + FontAwesome · 亮色系设计 · 适合学术论文展示与系统开发参考</span>
     </p>
     <div style="display:flex;gap:24px;justify-content:center;margin-top:12px;font-size:0.75rem;">
@@ -395,26 +327,16 @@
   </div>
 
   <script>
-    // Smooth scroll for anchor links
-    document.querySelectorAll('.page-nav a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function(e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Display logged-in username in banner
+    (async () => {
+      try {
+        const resp = await fetch('/api/auth/status', { credentials: 'same-origin' });
+        if (resp.ok) {
+          const data = await resp.json();
+          document.getElementById('user-badge-name').textContent = data.username || '用户';
         }
-      });
-    });
-
-    // Auto resize iframes after full load
-    window.addEventListener('load', () => {
-      document.querySelectorAll('.page-iframe').forEach(iframe => {
-        try {
-          const h = iframe.contentDocument.body.scrollHeight;
-          if (h > 200) iframe.style.height = (h + 40) + 'px';
-        } catch(e) {}
-      });
-    });
+      } catch (e) {}
+    })();
 
     async function doLogout() {
       await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
