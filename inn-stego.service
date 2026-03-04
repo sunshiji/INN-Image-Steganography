@@ -1,0 +1,59 @@
+# ---------------------------------------------------------------------------
+# inn-stego.service — systemd 用户服务单元
+#
+# 使用 %h（用户主目录）使服务文件对任意用户账号均可用。
+# 凭据通过 EnvironmentFile（~/.inn-stego.env）加载，不写入服务文件。
+#
+# 安装方法（在服务器上执行）:
+#
+#   # 1. 创建凭据文件（只需一次）
+#   cp /path/to/INN-Image-Steganography/.env.example ~/.inn-stego.env
+#   nano ~/.inn-stego.env          # 修改 SECRET_KEY 和 ADMIN_PASSWORD
+#   chmod 600 ~/.inn-stego.env     # 只有本用户可读
+#
+#   # 2. 安装服务
+#   mkdir -p ~/.config/systemd/user
+#   cp /path/to/INN-Image-Steganography/inn-stego.service \
+#      ~/.config/systemd/user/inn-stego.service
+#
+#   # 3. 启用并启动
+#   systemctl --user daemon-reload
+#   systemctl --user enable inn-stego
+#   systemctl --user start  inn-stego
+#
+#   # 4. 允许用户退出 SSH 后服务继续运行（只需 root 执行一次）
+#   sudo loginctl enable-linger $USER
+#
+#   # 查看状态 / 日志
+#   systemctl --user status inn-stego
+#   journalctl --user -u inn-stego -f
+# ---------------------------------------------------------------------------
+
+[Unit]
+Description=INN Image Steganography System
+After=network.target
+
+[Service]
+Type=simple
+# %h 展开为当前用户的主目录（如 /home/sunshiji）
+WorkingDirectory=%h/sys/INN-Image-Steganography/backend
+
+# 从独立文件加载凭据（不写入服务文件）
+# 前缀 '-' 表示文件不存在时静默忽略（使用 app.py 内的默认值）
+EnvironmentFile=-%h/.inn-stego.env
+
+# 激活虚拟环境，使用 gunicorn 启动
+ExecStart=%h/sys/INN-Image-Steganography/venv/bin/gunicorn \
+    --config %h/sys/INN-Image-Steganography/backend/gunicorn.conf.py \
+    app:app
+
+Restart=on-failure
+RestartSec=5
+
+# 标准输出重定向到 journald
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=inn-stego
+
+[Install]
+WantedBy=default.target
