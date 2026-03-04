@@ -591,6 +591,15 @@
   </div>
 
 
+<!-- Lightbox modal for click-to-zoom image viewing -->
+<div id="lbOverlay" class="hidden fixed inset-0 bg-black z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-label="图像放大查看" style="background:rgba(0,0,0,0.85);cursor:zoom-out">
+  <div class="relative flex flex-col items-center" style="max-width:90vw;max-height:95vh">
+    <button id="lbClose" aria-label="关闭" title="关闭（Esc）" style="position:absolute;top:-14px;right:-14px;background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:50%;width:32px;height:32px;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10">×</button>
+    <img id="lbImg" src="" alt="" style="max-width:90vw;max-height:80vh;object-fit:contain;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,0.6)">
+    <p id="lbCaption" style="color:rgba(255,255,255,0.7);margin-top:10px;font-size:0.82rem;font-weight:600;letter-spacing:0.03em"></p>
+  </div>
+</div>
+
 <script>
 /* ═══════════════════════════════════════════════════════════
    Encrypt page — JS backend wiring
@@ -843,7 +852,14 @@ function showEncryptedResult(data) {
   const uploadImg = document.getElementById('encryptedUploadImg');
   const uploadNoise = document.getElementById('encryptedUploadNoise');
   const uploadNoiseLbl = document.getElementById('encryptedUploadNoiseLbl');
-  if (uploadImg) { uploadImg.src = dataUrl; uploadImg.classList.remove('hidden'); }
+  if (uploadImg) {
+    uploadImg.src = dataUrl; uploadImg.classList.remove('hidden');
+    uploadImg.style.cursor = 'zoom-in';
+    if (!uploadImg.dataset.lbWired) {
+      uploadImg.dataset.lbWired = '1';
+      uploadImg.addEventListener('click', () => openLightbox(uploadImg.src, '加密后图像'));
+    }
+  }
   if (uploadNoise) uploadNoise.classList.add('hidden');
   if (uploadNoiseLbl) uploadNoiseLbl.classList.add('hidden');
 
@@ -857,9 +873,16 @@ function showEncryptedResult(data) {
     afterDiv.style.backgroundImage = dataUrl ? `url('${dataUrl}')` : '';
     afterDiv.style.backgroundSize = 'cover';
     afterDiv.style.backgroundPosition = 'center';
+    afterDiv.style.cursor = 'zoom-in';
     // hide the simulated noise overlay
     const noise = afterDiv.querySelector('.absolute.inset-0');
     if (noise) noise.classList.add('hidden');
+    if (!afterDiv.dataset.lbWired) {
+      afterDiv.dataset.lbWired = '1';
+      afterDiv.addEventListener('click', () => {
+        if (lastEncryptedB64) openLightbox(`data:image/png;base64,${lastEncryptedB64}`, '加密图像（混沌噪声）');
+      });
+    }
   }
 
   // Update "before" original image in before/after comparison
@@ -871,8 +894,13 @@ function showEncryptedResult(data) {
         origDiv.style.backgroundImage = `url('${ev.target.result}')`;
         origDiv.style.backgroundSize = 'cover';
         origDiv.style.backgroundPosition = 'center';
+        origDiv.style.cursor = 'zoom-in';
         const placeholder = origDiv.querySelector('.grid');
         if (placeholder) placeholder.classList.add('hidden');
+        if (!origDiv.dataset.lbWired) {
+          origDiv.dataset.lbWired = '1';
+          origDiv.addEventListener('click', () => openLightbox(ev.target.result, '原始图像（加密前）'));
+        }
       };
       reader.readAsDataURL(selectedFile);
     }
@@ -1038,6 +1066,37 @@ document.querySelectorAll('button').forEach(btn => {
     }
   }
 });
+
+// ── Lightbox (click-to-zoom) ────────────────────────────────
+let _lbTrigger = null;   // element that opened lightbox (for focus restore)
+
+function openLightbox(src, caption) {
+  const overlay = document.getElementById('lbOverlay');
+  const img     = document.getElementById('lbImg');
+  const cap     = document.getElementById('lbCaption');
+  const closeBtn = document.getElementById('lbClose');
+  if (!overlay || !img || !src) return;
+  _lbTrigger = document.activeElement;
+  img.src = src;
+  if (cap) cap.textContent = caption || '';
+  overlay.classList.remove('hidden');
+  if (closeBtn) closeBtn.focus();
+}
+function closeLightbox() {
+  const overlay = document.getElementById('lbOverlay');
+  if (overlay) overlay.classList.add('hidden');
+  if (_lbTrigger && typeof _lbTrigger.focus === 'function') _lbTrigger.focus();
+  _lbTrigger = null;
+}
+(function wireLightboxClose() {
+  const overlay  = document.getElementById('lbOverlay');
+  const closeBtn = document.getElementById('lbClose');
+  if (overlay)  overlay.addEventListener('click', e => { if (e.target === overlay || e.target === closeBtn) closeLightbox(); });
+  document.addEventListener('keydown', e => {
+    const ov = document.getElementById('lbOverlay');
+    if (e.key === 'Escape' && ov && !ov.classList.contains('hidden')) closeLightbox();
+  });
+})();
 
 // ── Helpers ────────────────────────────────────────────────
 function setLoading(btn, loading, label) {
