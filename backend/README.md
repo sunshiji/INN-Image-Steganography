@@ -25,35 +25,58 @@ backend/
 
 ```bash
 cd backend
-pip install -r requirements.txt
-# 或安装 CPU 版 PyTorch（更小体积）：
+
+# 安装 CPU 版 PyTorch（体积小，无需 GPU）
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-pip install flask flask-cors pillow numpy scipy
+
+# 安装其余依赖
+pip install flask flask-cors pillow numpy scipy gunicorn
+# 或者一次性安装（requirements.txt 包含所有依赖）：
+pip install -r requirements.txt
 ```
 
-### 2. 启动后端服务
+### 2. 启动服务
+
+**本地开发**（Flask 开发服务器）：
 
 ```bash
 cd backend
 python app.py
-# 默认监听 http://localhost:5000
-# 可通过环境变量改变端口：PORT=8080 python app.py
+# 本地访问：http://localhost:5000
 ```
+
+**部署到服务器**（推荐使用 gunicorn）：
+
+```bash
+cd backend
+gunicorn -w 2 -b 0.0.0.0:5000 app:app
+# 任意机器访问：http://<服务器IP>:5000
+```
+
+> **提示**：如需更改端口，用 `-b 0.0.0.0:8080` 替换上面的 `5000`，
+> 或者设置环境变量 `PORT=8080`（仅限 Flask 开发服务器模式）。
 
 ### 3. 打开前端页面
 
-用任意浏览器直接打开项目根目录下的 `index.html`（所有页面平铺展示），
-或单独打开各功能页面：
+启动后端后，**在任意机器的浏览器**中直接输入：
 
-| 页面 | 地址 |
-|------|------|
-| 首页 | `home.html` |
-| 混沌加密 | `encrypt.html` |
-| 隐写编码 | `encode.html` |
-| 隐写解码 | `decode.html` |
-| 结果对比 | `results.html` |
-| 案例库 | `gallery.html` |
-| 系统设置 | `settings.html` |
+```
+http://<服务器IP>:5000
+```
+
+Flask 会同时提供前端页面和后端 API，无需单独部署静态文件。
+
+各功能页面：
+
+| 页面 | URL |
+|------|-----|
+| 首页 | `http://<服务器IP>:5000/` |
+| 混沌加密 | `http://<服务器IP>:5000/encrypt.html` |
+| 隐写编码 | `http://<服务器IP>:5000/encode.html` |
+| 隐写解码 | `http://<服务器IP>:5000/decode.html` |
+| 结果对比 | `http://<服务器IP>:5000/results.html` |
+| 案例库 | `http://<服务器IP>:5000/gallery.html` |
+| 系统设置 | `http://<服务器IP>:5000/settings.html` |
 
 ---
 

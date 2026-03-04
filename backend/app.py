@@ -28,7 +28,7 @@ import os
 
 import numpy as np
 from PIL import Image
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import torch
 
@@ -55,6 +55,18 @@ from inn_model import (
 
 app = Flask(__name__)
 CORS(app)
+
+# Project root directory (one level up from backend/)
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+# Startup sanity-check: warn if the main page is absent.
+_index_path = os.path.join(ROOT_DIR, "index.html")
+if not os.path.isfile(_index_path):
+    print(
+        f"[WARNING] index.html not found at {_index_path}. "
+        "Static page serving will return 404 until the file is present.",
+        flush=True,
+    )
 
 print("[INN] Loading model …", flush=True)
 MODEL = INNSteganography.load(n_blocks=8)
@@ -314,6 +326,39 @@ def api_pipeline_decode_decrypt():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# ---------------------------------------------------------------------------
+# Static file serving — serves HTML pages and assets from the project root.
+# Flask's registered API routes take priority over this catch-all.
+#
+# Security: reject requests for hidden paths (e.g. .git/) and the
+# backend/ source directory so Python source code is not exposed.
+# ---------------------------------------------------------------------------
+
+def _is_safe_static_path(filename: str) -> bool:
+    """Return True only if *filename* is safe to serve as a static asset."""
+    # Normalise separators and strip leading slashes
+    parts = filename.replace("\\", "/").lstrip("/").split("/")
+    # Block hidden files / directories (names starting with '.')
+    if any(part.startswith(".") for part in parts):
+        return False
+    # Block the backend source directory
+    if parts[0].lower() == "backend":
+        return False
+    return True
+
+
+@app.route("/")
+def serve_root():
+    return send_from_directory(ROOT_DIR, "index.html")
+
+
+@app.route("/<path:filename>")
+def serve_static(filename):
+    if not _is_safe_static_path(filename):
+        return jsonify({"error": "Not found"}), 404
+    return send_from_directory(ROOT_DIR, filename)
 
 
 # ---------------------------------------------------------------------------
