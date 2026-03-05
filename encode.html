@@ -288,7 +288,7 @@
 
         <!-- Action Buttons -->
         <div class="flex items-center gap-4">
-          <button class="flex-1 py-3.5 bg-indigo-600 text-white rounded-xl font-semibold text-base hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 flex items-center justify-center gap-2">
+          <button id="encodeBtn" class="flex-1 py-3.5 bg-indigo-600 text-white rounded-xl font-semibold text-base hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 flex items-center justify-center gap-2">
             <i class="fa-solid fa-bolt"></i>
             开始隐写编码
           </button>
@@ -297,34 +297,34 @@
           </button>
         </div>
 
-        <!-- Processing State (hidden normally, shown when processing) -->
-        <div class="bg-white rounded-2xl border border-indigo-100 shadow-sm p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-slate-700 flex items-center gap-2">
+        <!-- Encoding Progress (hidden by default; shown during API call) -->
+        <div id="encodeProgressWrap" hidden class="hidden bg-white rounded-2xl border border-indigo-100 shadow-sm p-6">
+          <div class="flex items-center justify-between mb-3">
+            <h3 id="encodeProgressLabel" class="font-bold text-slate-700 flex items-center gap-2 text-sm">
               <i class="fa-solid fa-spinner fa-spin text-indigo-500"></i>
-              正在处理...
+              正在执行隐写编码...
             </h3>
-            <span class="text-sm text-indigo-600 font-medium">73%</span>
+            <span id="encodeProgressPct" class="text-sm text-indigo-600 font-bold">0%</span>
           </div>
-          <div class="w-full bg-indigo-100 rounded-full h-2.5">
-            <div class="progress-bar bg-indigo-600 h-2.5 rounded-full" style="width: 73%"></div>
+          <div class="w-full bg-indigo-100 rounded-full h-2.5 mb-4">
+            <div id="encodeProgressBar" class="progress-bar bg-indigo-600 h-2.5 rounded-full" style="width:0%"></div>
           </div>
-          <div class="mt-4 space-y-2">
-            <div class="flex items-center gap-2 text-sm text-slate-600">
-              <i class="fa-solid fa-circle-check text-emerald-500 text-xs"></i>
-              图像预处理与尺寸对齐完成
+          <div class="grid grid-cols-4 gap-2 text-xs text-center">
+            <div id="epstep1" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
+              <p id="epstep1lbl" class="font-semibold text-slate-500">图像预处理</p>
+              <p class="text-slate-400">尺寸对齐</p>
             </div>
-            <div class="flex items-center gap-2 text-sm text-slate-600">
-              <i class="fa-solid fa-circle-check text-emerald-500 text-xs"></i>
-              Haar小波变换完成
+            <div id="epstep2" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
+              <p id="epstep2lbl" class="font-semibold text-slate-500">Haar小波变换</p>
+              <p class="text-slate-400">DWT</p>
             </div>
-            <div class="flex items-center gap-2 text-sm text-indigo-600 font-medium">
-              <i class="fa-solid fa-spinner fa-spin text-indigo-500 text-xs"></i>
-              INN前向传播中（第6/8层）...
+            <div id="epstep3" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
+              <p id="epstep3lbl" class="font-semibold text-slate-500">INN前向传播</p>
+              <p class="text-slate-400">耦合层</p>
             </div>
-            <div class="flex items-center gap-2 text-sm text-slate-400">
-              <i class="fa-regular fa-circle text-slate-300 text-xs"></i>
-              后处理与图像导出
+            <div id="epstep4" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
+              <p id="epstep4lbl" class="font-semibold text-slate-500">后处理导出</p>
+              <p class="text-slate-400">PNG输出</p>
             </div>
           </div>
         </div>
@@ -382,29 +382,47 @@
           </h3>
           <div class="space-y-3">
             <div class="flex justify-between items-center text-sm">
-              <span class="text-slate-500">模型版本</span>
-              <span class="font-semibold text-slate-700">INN-Stego v2.1</span>
+              <span class="text-slate-500">当前模型</span>
+              <span id="modelName" class="font-semibold text-slate-700">加载中...</span>
             </div>
             <div class="flex justify-between items-center text-sm">
               <span class="text-slate-500">网络架构</span>
-              <span class="font-semibold text-slate-700">HaarWave + RRDB</span>
+              <span id="modelArch" class="font-semibold text-slate-700">—</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-500">权重来源</span>
+              <span id="modelWeightsStatus" class="font-semibold text-slate-500">—</span>
             </div>
             <div class="flex justify-between items-center text-sm">
               <span class="text-slate-500">支持分辨率</span>
-              <span class="font-semibold text-slate-700">最大 2048×2048</span>
-            </div>
-            <div class="flex justify-between items-center text-sm">
-              <span class="text-slate-500">运行设备</span>
-              <div class="flex items-center gap-1">
-                <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                <span class="font-semibold text-emerald-700">GPU (CUDA)</span>
-              </div>
-            </div>
-            <div class="flex justify-between items-center text-sm">
-              <span class="text-slate-500">预计用时</span>
-              <span class="font-semibold text-slate-700">~2.3 秒</span>
+              <span class="font-semibold text-slate-700">最大 1024×1024</span>
             </div>
           </div>
+        </div>
+
+        <!-- HiNet Weight Upload -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-upload text-violet-500"></i> 加载 HiNet 预训练权重
+          </h3>
+          <p class="text-xs text-slate-500 mb-4">
+            上传由 HiNetcp/train.py 训练得到的 <code class="bg-slate-100 px-1 rounded">.pt</code>
+            权重文件，系统将切换至 HiNet 模型进行隐写编码/解码。
+          </p>
+          <div id="weightsDropZone" class="border-2 border-dashed border-violet-200 rounded-xl p-4 text-center cursor-pointer hover:border-violet-400 hover:bg-violet-50 transition-all">
+            <i class="fa-solid fa-file-arrow-up text-violet-400 text-2xl mb-2"></i>
+            <p class="text-sm text-slate-500">点击或拖拽 <strong>.pt</strong> 权重文件至此</p>
+            <p id="weightsFileName" class="text-xs text-violet-600 mt-1 font-medium"></p>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button id="btnUploadWeights" class="flex-1 py-2 bg-violet-600 text-white rounded-xl text-xs font-semibold hover:bg-violet-700 transition-colors flex items-center justify-center gap-1">
+              <i class="fa-solid fa-cloud-arrow-up"></i>上传权重
+            </button>
+            <button id="btnRemoveWeights" class="flex-1 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-200 transition-colors flex items-center justify-center gap-1">
+              <i class="fa-solid fa-trash"></i>移除权重
+            </button>
+          </div>
+          <div id="weightsUploadMsg" hidden class="mt-2 text-xs hidden"></div>
         </div>
 
         <!-- Recent Tasks -->
@@ -516,16 +534,106 @@ window.addEventListener('DOMContentLoaded', () => {
     previewInZone(secretZone, secretFile);
     showToast('已自动载入混沌加密图像 ✓', 'success');
   }
+  refreshModelStatus();
 });
 
+// ── Encoding progress bar ──────────────────────────────────
+let _encodeProgressTimer = null;
+
+function startEncodeProgress() {
+  const wrap  = document.getElementById('encodeProgressWrap');
+  const bar   = document.getElementById('encodeProgressBar');
+  const pct   = document.getElementById('encodeProgressPct');
+  const lbl   = document.getElementById('encodeProgressLabel');
+  if (!wrap) return;
+
+  wrap.removeAttribute('hidden'); wrap.classList.remove('hidden');
+  bar.style.width = '0%';
+  pct.textContent = '0%';
+  bar.className = 'progress-bar bg-indigo-600 h-2.5 rounded-full';
+
+  const phases = [
+    { target: 20, stepId: 'epstep1', name: '图像预处理中...' },
+    { target: 45, stepId: 'epstep2', name: 'Haar 小波变换中...' },
+    { target: 88, stepId: 'epstep3', name: 'INN 前向传播中...' },
+    { target: 96, stepId: 'epstep4', name: '后处理与图像导出...' },
+  ];
+  let current = 0;
+  let phaseIdx = 0;
+
+  _activateEncodePhase(0);
+
+  _encodeProgressTimer = setInterval(() => {
+    if (phaseIdx < phases.length) {
+      const phase = phases[phaseIdx];
+      const prev  = phaseIdx === 0 ? 0 : phases[phaseIdx - 1].target;
+      current += (phase.target - prev) * 0.05;
+      if (current >= phase.target) {
+        current = phase.target;
+        phaseIdx++;
+        if (phaseIdx < phases.length) _activateEncodePhase(phaseIdx);
+      }
+    } else {
+      current = Math.min(current + 0.2, 96);
+    }
+    const v = Math.round(current);
+    bar.style.width = v + '%';
+    pct.textContent = v + '%';
+    if (lbl) {
+      const name = phaseIdx < phases.length ? phases[phaseIdx].name : '等待服务器响应...';
+      lbl.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-indigo-500 mr-1"></i>' + name;
+    }
+  }, 80);
+}
+
+function _activateEncodePhase(idx) {
+  ['epstep1', 'epstep2', 'epstep3', 'epstep4'].forEach((id, i) => {
+    const el  = document.getElementById(id);
+    const lbl = document.getElementById(id + 'lbl');
+    if (!el || !lbl) return;
+    if (i < idx) {
+      el.className  = 'bg-emerald-50 rounded-lg p-2 border border-emerald-100';
+      lbl.className = 'font-semibold text-emerald-700';
+    } else if (i === idx) {
+      el.className  = 'bg-indigo-50 rounded-lg p-2 border border-indigo-200';
+      lbl.className = 'font-semibold text-indigo-700';
+    } else {
+      el.className  = 'bg-slate-50 rounded-lg p-2 border border-slate-100';
+      lbl.className = 'font-semibold text-slate-400';
+    }
+  });
+}
+
+function finishEncodeProgress(success) {
+  clearInterval(_encodeProgressTimer);
+  const bar = document.getElementById('encodeProgressBar');
+  const pct = document.getElementById('encodeProgressPct');
+  const lbl = document.getElementById('encodeProgressLabel');
+  const wrap = document.getElementById('encodeProgressWrap');
+  if (!bar) return;
+  if (success) {
+    bar.style.width = '100%';
+    if (pct) pct.textContent = '100%';
+    bar.className = 'progress-bar bg-emerald-500 h-2.5 rounded-full';
+    if (lbl) lbl.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i>编码完成！';
+    _activateEncodePhase(4);
+    setTimeout(() => { if (wrap) { wrap.setAttribute('hidden',''); wrap.classList.add('hidden'); } }, 2000);
+  } else {
+    bar.className = 'progress-bar bg-red-500 h-2.5 rounded-full';
+    if (lbl) lbl.innerHTML = '<i class="fa-solid fa-circle-xmark text-red-500 mr-1"></i>编码失败';
+    setTimeout(() => { if (wrap) { wrap.setAttribute('hidden',''); wrap.classList.add('hidden'); } }, 3000);
+  }
+}
+
 // ── Encode button ──────────────────────────────────────────
-const encodeBtn = document.querySelector('button.bg-indigo-600');
-if (encodeBtn && encodeBtn.textContent.includes('隐写')) {
+const encodeBtn = document.getElementById('encodeBtn');
+if (encodeBtn) {
   encodeBtn.addEventListener('click', async () => {
     if (!coverFile)  { alert('请先上传载体图像！'); return; }
     if (!secretFile) { alert('请先上传秘密图像（或先完成混沌加密）！'); return; }
 
     setLoading(encodeBtn, true, '编码中...');
+    startEncodeProgress();
     try {
       const fd = new FormData();
       fd.append('cover',  coverFile);
@@ -538,6 +646,8 @@ if (encodeBtn && encodeBtn.textContent.includes('隐写')) {
       lastStegoB64 = data.stego_image;
       lastStegoKey = data.stego_key;
 
+      finishEncodeProgress(true);
+
       // Save to sessionStorage for decode page (best-effort; may exceed quota for large images)
       try {
         sessionStorage.setItem('stegoImage', data.stego_image);
@@ -549,6 +659,7 @@ if (encodeBtn && encodeBtn.textContent.includes('隐写')) {
       showEncodeResult(data);
       showToast('INN隐写编码成功 ✓', 'success');
     } catch (err) {
+      finishEncodeProgress(false);
       showToast('编码失败: ' + err.message, 'error');
     } finally {
       setLoading(encodeBtn, false, '开始隐写编码');
@@ -557,12 +668,13 @@ if (encodeBtn && encodeBtn.textContent.includes('隐写')) {
 }
 
 function showEncodeResult(data) {
-  // Update the "processing" section to show results
-  const processingBox = document.querySelector('.border-indigo-100');
-  if (!processingBox) return;
+  // Replace the progress wrap content with results card
+  const wrap = document.getElementById('encodeProgressWrap');
+  if (!wrap) return;
 
   const m = data.metrics;
-  processingBox.innerHTML = `
+  wrap.removeAttribute('hidden'); wrap.classList.remove('hidden');
+  wrap.innerHTML = `
     <div class="flex items-center justify-between mb-4">
       <h3 class="font-bold text-slate-700 flex items-center gap-2">
         <i class="fa-solid fa-circle-check text-emerald-500"></i>隐写编码完成
@@ -608,6 +720,101 @@ function downloadStegoKey() {
   a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(lastStegoKey);
   a.download = 'stego_key.txt'; a.click();
 }
+
+// ── Model status ───────────────────────────────────────────
+async function refreshModelStatus() {
+  try {
+    const resp = await fetch(`${API}/api/model/status`);
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const nameEl   = document.getElementById('modelName');
+    const archEl   = document.getElementById('modelArch');
+    const wstatEl  = document.getElementById('modelWeightsStatus');
+    if (nameEl) nameEl.textContent = data.active_model === 'HiNet' ? 'HiNet（已加载权重）' : 'INN-Stego（内置）';
+    if (archEl) archEl.textContent = data.active_model === 'HiNet' ? 'Haar DWT + RRDB × 16' : 'Haar DWT + Coupling × 8';
+    if (wstatEl) {
+      if (data.hinet_weights_loaded) {
+        wstatEl.textContent = '已上传预训练权重';
+        wstatEl.className = 'font-semibold text-emerald-600';
+      } else {
+        wstatEl.textContent = '使用随机初始化（内置）';
+        wstatEl.className = 'font-semibold text-slate-500';
+      }
+    }
+  } catch (_) {
+    const nameEl = document.getElementById('modelName');
+    if (nameEl) nameEl.textContent = 'INN-Stego（内置）';
+  }
+}
+
+// ── HiNet weight upload ────────────────────────────────────
+let _weightsFile = null;
+
+const weightsDropZone = document.getElementById('weightsDropZone');
+if (weightsDropZone) {
+  weightsDropZone.addEventListener('click', () => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = '.pt';
+    inp.onchange = e => {
+      _weightsFile = e.target.files[0];
+      const lbl = document.getElementById('weightsFileName');
+      if (lbl && _weightsFile) lbl.textContent = _weightsFile.name;
+    };
+    inp.click();
+  });
+  weightsDropZone.addEventListener('dragover', e => { e.preventDefault(); weightsDropZone.style.borderColor = '#7c3aed'; });
+  weightsDropZone.addEventListener('dragleave', () => { weightsDropZone.style.borderColor = ''; });
+  weightsDropZone.addEventListener('drop', e => {
+    e.preventDefault(); weightsDropZone.style.borderColor = '';
+    _weightsFile = e.dataTransfer.files[0];
+    const lbl = document.getElementById('weightsFileName');
+    if (lbl && _weightsFile) lbl.textContent = _weightsFile.name;
+  });
+}
+
+document.getElementById('btnUploadWeights')?.addEventListener('click', async () => {
+  if (!_weightsFile) { showToast('请先选择 .pt 权重文件', 'error'); return; }
+  const btn = document.getElementById('btnUploadWeights');
+  const msg = document.getElementById('weightsUploadMsg');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>上传中...';
+  if (msg) { msg.className = 'mt-2 text-xs text-slate-500'; msg.textContent = '正在上传，请稍候...'; msg.removeAttribute('hidden'); msg.classList.remove('hidden'); }
+  try {
+    const fd = new FormData();
+    fd.append('weights', _weightsFile);
+    const resp = await fetch(`${API}/api/model/upload_weights`, { method: 'POST', body: fd });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error);
+    if (msg) { msg.className = 'mt-2 text-xs text-emerald-600 font-semibold'; msg.textContent = '✓ ' + data.message; }
+    showToast('HiNet 权重上传成功 ✓', 'success');
+    refreshModelStatus();
+  } catch (err) {
+    if (msg) { msg.className = 'mt-2 text-xs text-red-600 font-semibold'; msg.textContent = '✗ ' + err.message; }
+    showToast('上传失败: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-1"></i>上传权重';
+  }
+});
+
+document.getElementById('btnRemoveWeights')?.addEventListener('click', async () => {
+  const msg = document.getElementById('weightsUploadMsg');
+  try {
+    const fd = new FormData();
+    fd.append('action', 'remove');
+    const resp = await fetch(`${API}/api/model/upload_weights`, { method: 'POST', body: fd });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error);
+    _weightsFile = null;
+    const lbl = document.getElementById('weightsFileName');
+    if (lbl) lbl.textContent = '';
+    if (msg) { msg.className = 'mt-2 text-xs text-slate-500'; msg.textContent = data.message; msg.removeAttribute('hidden'); msg.classList.remove('hidden'); }
+    showToast('已切换回内置 INN 模型 ✓', 'success');
+    refreshModelStatus();
+  } catch (err) {
+    showToast('操作失败: ' + err.message, 'error');
+  }
+});
 
 // ── Helpers ────────────────────────────────────────────────
 function setLoading(btn, loading, label) {

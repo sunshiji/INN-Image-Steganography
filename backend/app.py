@@ -52,6 +52,7 @@ from inn_model import (
     psnr,
     ssim,
 )
+from hinet_model import HiNetSteganography
 
 # ---------------------------------------------------------------------------
 # App + model
@@ -62,6 +63,10 @@ CORS(app)
 
 # Project root directory (one level up from backend/)
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+# Directory for user-uploaded model weights
+WEIGHTS_DIR = os.path.join(os.path.expanduser("~"), ".inn-stego-weights")
+HINET_WEIGHTS_FILE = os.path.join(WEIGHTS_DIR, "hinet_weights.pt")
 
 # Startup sanity-check: warn if the main page is absent.
 _index_path = os.path.join(ROOT_DIR, "index.html")
@@ -74,10 +79,15 @@ if not os.path.isfile(_index_path):
 
 print("[INN] model import OK — will load on first request.", flush=True)
 _MODEL = None
+_HINET_MODEL = None
 
 
-def _get_model() -> INNSteganography:
-    """Lazily initialise the INN model inside the worker process.
+def _get_model():
+    """Lazily initialise the steganography model inside the worker process.
+
+    If HiNet weights have been uploaded (to HINET_WEIGHTS_FILE) a
+    HiNetSteganography instance is returned; otherwise falls back to the
+    built-in INNSteganography.
 
     Deferring model creation until after Gunicorn forks avoids the well-known
     PyTorch/OpenMP fork deadlock that silently prevents sync workers from
@@ -86,15 +96,24 @@ def _get_model() -> INNSteganography:
     belt-and-suspenders fallback for non-gunicorn entry points (e.g.
     ``flask run`` or ``python app.py``).
     """
-    global _MODEL
+    global _MODEL, _HINET_MODEL
+    try:
+        os.environ.setdefault("OMP_NUM_THREADS", "1")
+        os.environ.setdefault("MKL_NUM_THREADS", "1")
+        torch.set_num_threads(1)
+    except Exception:
+        pass
+
+    # Prefer HiNet when pre-trained weights are available
+    if os.path.isfile(HINET_WEIGHTS_FILE):
+        if _HINET_MODEL is None:
+            print("[HiNet] Loading model with pre-trained weights …", flush=True)
+            _HINET_MODEL = HiNetSteganography.load(weights_path=HINET_WEIGHTS_FILE)
+            print("[HiNet] Model ready.", flush=True)
+        return _HINET_MODEL
+
+    # Fall back to built-in INN
     if _MODEL is None:
-        try:
-            import os as _os
-            _os.environ.setdefault("OMP_NUM_THREADS", "1")
-            _os.environ.setdefault("MKL_NUM_THREADS", "1")
-            torch.set_num_threads(1)
-        except Exception:
-            pass
         print("[INN] Loading model …", flush=True)
         _MODEL = INNSteganography.load(n_blocks=8)
         print("[INN] Model ready.", flush=True)
@@ -546,6 +565,81 @@ def api_pipeline_decode_decrypt():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# ── Model management ────────────────────────────────────────────────────────
+
+@app.route("/api/model/status", methods=["GET"])
+def api_model_status():
+    """Return which steganography model is currently active."""
+    hinet_loaded = os.path.isfile(HINET_WEIGHTS_FILE)
+    return jsonify({
+        "active_model": "HiNet" if hinet_loaded else "INN",
+        "hinet_weights_loaded": hinet_loaded,
+        "hinet_weights_path": HINET_WEIGHTS_FILE if hinet_loaded else None,
+    })
+
+
+@app.route("/api/model/upload_weights", methods=["POST"])
+def api_model_upload_weights():
+    """Upload a pre-trained HiNet checkpoint (.pt file).
+
+    The file is saved to HINET_WEIGHTS_FILE and the HiNet model is
+    re-initialised on the next encode/decode call.
+
+    Expected form field: ``weights`` (file)
+    Optional form field: ``action=remove`` to delete existing weights and
+                         revert to the built-in INN model.
+    """
+    global _HINET_MODEL
+
+    # Allow removing weights to revert to built-in INN
+    if request.form.get("action") == "remove":
+        if os.path.isfile(HINET_WEIGHTS_FILE):
+            os.remove(HINET_WEIGHTS_FILE)
+        _HINET_MODEL = None
+        return jsonify({"status": "ok", "message": "已移除 HiNet 权重，已切换回内置 INN 模型"})
+
+    if "weights" not in request.files:
+        return jsonify({"error": "缺少 'weights' 文件字段"}), 400
+
+    f = request.files["weights"]
+    if not f.filename:
+        return jsonify({"error": "未选择文件"}), 400
+    if not f.filename.lower().endswith(".pt"):
+        return jsonify({"error": "权重文件必须是 .pt 格式"}), 400
+
+    try:
+        raw = f.read()
+        # Validate the file is a valid PyTorch checkpoint
+        ckpt = torch.load(io.BytesIO(raw), map_location="cpu")
+        if isinstance(ckpt, dict):
+            state_dict = ckpt.get("net", ckpt)
+        else:
+            return jsonify({"error": "不支持的 checkpoint 格式（需要包含 'net' key 的字典，或直接的 state_dict）"}), 400
+
+        # Quick architecture check: verify at least one expected key exists
+        keys = list(state_dict.keys())
+        stripped = [k[len("module."):] if k.startswith("module.") else k for k in keys]
+        has_inv = any("inv1" in k or "inv_blocks" in k for k in stripped)
+        if not has_inv:
+            return jsonify({"error": "权重文件与 HiNet 架构不匹配（未找到 inv1 层）"}), 400
+
+        # Save to disk
+        os.makedirs(WEIGHTS_DIR, exist_ok=True)
+        with open(HINET_WEIGHTS_FILE, "wb") as out:
+            out.write(raw)
+
+        # Force re-load on next request
+        _HINET_MODEL = None
+
+        return jsonify({
+            "status": "ok",
+            "message": "HiNet 权重已成功上传，下次推理时将自动使用 HiNet 模型",
+            "keys_count": len(keys),
+        })
+    except Exception as e:
+        return jsonify({"error": f"权重文件无效: {e}"}), 400
 
 
 # ---------------------------------------------------------------------------
