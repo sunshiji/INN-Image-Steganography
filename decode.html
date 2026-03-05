@@ -141,12 +141,9 @@
           </div>
         </div>
 
-        <!-- Decode Parameters -->
+        <!-- Decode Parameters (hidden: fixed parameters used in backend; key file kept below) -->
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-          <h2 class="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
-            <i class="fa-solid fa-sliders text-violet-500"></i> 解码参数
-          </h2>
-          <div class="grid grid-cols-3 gap-4">
+          <div class="grid grid-cols-3 gap-4" style="display:none">
             <div>
               <label class="block text-sm font-semibold text-slate-600 mb-2">解码模式</label>
               <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-violet-300 outline-none">
@@ -201,7 +198,7 @@
         </div>
 
         <!-- Result Preview (shown after decoding) -->
-        <div class="bg-white rounded-2xl border border-emerald-100 shadow-sm p-6">
+        <div id="decodeResultBox" class="bg-white rounded-2xl border border-emerald-100 shadow-sm p-6">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
               <i class="fa-solid fa-circle-check text-emerald-500"></i>
@@ -515,7 +512,7 @@ if (decodeBtn) {
 }
 
 function showDecodeResult(data) {
-  const resultBox = document.querySelector('.border-emerald-100');
+  const resultBox = document.getElementById('decodeResultBox');
   if (!resultBox) return;
   const modeLabel = data.mode === 'exact' ? '精确模式（密钥）' : '近似模式（无密钥）';
   resultBox.innerHTML = `

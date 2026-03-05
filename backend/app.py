@@ -66,7 +66,15 @@ CORS(app)
 # Project root directory (one level up from backend/)
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-# Directory for user-uploaded model weights
+# Fixed pre-trained HiNet weights path (production server).
+# Override via env var HINET_WEIGHTS_FIXED_PATH for non-default deployments.
+# This is checked first; the user-uploaded path is a secondary fallback.
+HINET_WEIGHTS_FIXED_PATH = os.environ.get(
+    "HINET_WEIGHTS_FIXED_PATH",
+    "/home/sunshiji/system/Hinet_sys/INN-Image-Steganography/weight/model_best_s.pt",
+)
+
+# Directory for user-uploaded model weights (secondary)
 WEIGHTS_DIR = os.path.join(os.path.expanduser("~"), ".inn-stego-weights")
 HINET_WEIGHTS_FILE = os.path.join(WEIGHTS_DIR, "hinet_weights.pt")
 
@@ -106,9 +114,10 @@ _HINET_MODEL = None
 def _get_model():
     """Lazily initialise the steganography model inside the worker process.
 
-    If HiNet weights have been uploaded (to HINET_WEIGHTS_FILE) a
-    HiNetSteganography instance is returned; otherwise falls back to the
-    built-in INNSteganography.
+    Priority order for HiNet weights:
+      1. Fixed production path (HINET_WEIGHTS_FIXED_PATH)
+      2. User-uploaded path (HINET_WEIGHTS_FILE)
+      3. Fall back to built-in INNSteganography (random-init, near-identity)
 
     Deferring model creation until after Gunicorn forks avoids the well-known
     PyTorch/OpenMP fork deadlock that silently prevents sync workers from
@@ -125,11 +134,18 @@ def _get_model():
     except Exception:
         pass
 
-    # Prefer HiNet when pre-trained weights are available
-    if os.path.isfile(HINET_WEIGHTS_FILE):
+    # Prefer HiNet when pre-trained weights are available.
+    # Check the fixed production path first, then the user-uploaded path.
+    hinet_weights_path = None
+    if os.path.isfile(HINET_WEIGHTS_FIXED_PATH):
+        hinet_weights_path = HINET_WEIGHTS_FIXED_PATH
+    elif os.path.isfile(HINET_WEIGHTS_FILE):
+        hinet_weights_path = HINET_WEIGHTS_FILE
+
+    if hinet_weights_path:
         if _HINET_MODEL is None:
-            print("[HiNet] Loading model with pre-trained weights …", flush=True)
-            _HINET_MODEL = HiNetSteganography.load(weights_path=HINET_WEIGHTS_FILE)
+            print(f"[HiNet] Loading model from {hinet_weights_path} …", flush=True)
+            _HINET_MODEL = HiNetSteganography.load(weights_path=hinet_weights_path)
             print("[HiNet] Model ready.", flush=True)
         return _HINET_MODEL
 
@@ -593,11 +609,21 @@ def api_pipeline_decode_decrypt():
 @app.route("/api/model/status", methods=["GET"])
 def api_model_status():
     """Return which steganography model is currently active."""
-    hinet_loaded = os.path.isfile(HINET_WEIGHTS_FILE)
+    fixed_loaded  = os.path.isfile(HINET_WEIGHTS_FIXED_PATH)
+    upload_loaded = os.path.isfile(HINET_WEIGHTS_FILE)
+    hinet_loaded  = fixed_loaded or upload_loaded
+
+    if fixed_loaded:
+        active_path = HINET_WEIGHTS_FIXED_PATH
+    elif upload_loaded:
+        active_path = HINET_WEIGHTS_FILE
+    else:
+        active_path = None
+
     return jsonify({
         "active_model": "HiNet" if hinet_loaded else "INN",
         "hinet_weights_loaded": hinet_loaded,
-        "hinet_weights_path": HINET_WEIGHTS_FILE if hinet_loaded else None,
+        "hinet_weights_path": active_path,
     })
 
 
