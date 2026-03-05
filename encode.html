@@ -665,7 +665,7 @@ if (encodeBtn) {
       fd.append('secret', secretFile);
 
       const resp = await fetch(`${API}/api/encode`, { method: 'POST', body: fd });
-      if (!resp.ok) { const e = await resp.json(); throw new Error(e.error); }
+      if (!resp.ok) { let m = `HTTP ${resp.status}`; try { const e = await resp.json(); m = e.error || m; } catch (_) {} throw new Error(m); }
       const data = await resp.json();
 
       lastStegoB64 = data.stego_image;
@@ -829,8 +829,8 @@ document.getElementById('btnUploadWeights')?.addEventListener('click', async () 
     const fd = new FormData();
     fd.append('weights', _weightsFile);
     const resp = await fetch(`${API}/api/model/upload_weights`, { method: 'POST', body: fd });
+    if (!resp.ok) { let m = `HTTP ${resp.status}`; try { const e = await resp.json(); m = e.error || m; } catch (_) {} throw new Error(m); }
     const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error);
     if (msg) { msg.className = 'mt-2 text-xs text-emerald-600 font-semibold'; msg.textContent = '✓ ' + data.message; }
     showToast('HiNet 权重上传成功 ✓', 'success');
     refreshModelStatus();
@@ -849,8 +849,8 @@ document.getElementById('btnRemoveWeights')?.addEventListener('click', async () 
     const fd = new FormData();
     fd.append('action', 'remove');
     const resp = await fetch(`${API}/api/model/upload_weights`, { method: 'POST', body: fd });
+    if (!resp.ok) { let m = `HTTP ${resp.status}`; try { const e = await resp.json(); m = e.error || m; } catch (_) {} throw new Error(m); }
     const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error);
     _weightsFile = null;
     const lbl = document.getElementById('weightsFileName');
     if (lbl) lbl.textContent = '';

@@ -36,6 +36,7 @@ import numpy as np
 from PIL import Image
 from flask import Flask, request, jsonify, send_from_directory, session, redirect
 from flask_cors import CORS
+from werkzeug.exceptions import HTTPException
 import torch
 
 from logistic_encrypt import (
@@ -248,6 +249,14 @@ def _check_auth():
         if request.path.startswith("/api/"):
             return jsonify({"error": "Unauthorized"}), 401
         return redirect("/login")
+
+
+@app.errorhandler(HTTPException)
+def _handle_http_exception(e):
+    """Return JSON instead of Flask's default HTML for HTTP errors on /api/ routes."""
+    if request.path.startswith("/api/"):
+        return jsonify({"error": e.description}), e.code
+    return e.get_response()
 
 
 @app.route("/login")

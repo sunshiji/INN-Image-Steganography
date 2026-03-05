@@ -498,7 +498,7 @@ if (decodeBtn) {
       if (stegoKeyData) fd.append('stego_key', stegoKeyData);
 
       const resp = await fetch(`${API}/api/decode`, { method: 'POST', body: fd });
-      if (!resp.ok) { const e = await resp.json(); throw new Error(e.error); }
+      if (!resp.ok) { let m = `HTTP ${resp.status}`; try { const e = await resp.json(); m = e.error || m; } catch (_) {} throw new Error(m); }
       const data = await resp.json();
 
       showDecodeResult(data);
