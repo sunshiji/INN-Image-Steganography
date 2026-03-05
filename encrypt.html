@@ -416,7 +416,7 @@
 
         <!-- Action Buttons -->
         <div class="flex items-center gap-4">
-          <button class="flex-1 py-3.5 bg-amber-500 text-white rounded-xl font-semibold text-base hover:bg-amber-600 transition-colors shadow-md shadow-amber-200 flex items-center justify-center gap-2">
+          <button id="btnEncrypt" class="flex-1 py-3.5 bg-amber-500 text-white rounded-xl font-semibold text-base hover:bg-amber-600 transition-colors shadow-md shadow-amber-200 flex items-center justify-center gap-2">
             <i class="fa-solid fa-bolt"></i>
             开始 Logistic 混沌加密
           </button>
@@ -797,7 +797,7 @@ function finishProgress(success) {
 }
 
 // ── Encrypt button ─────────────────────────────────────────
-const encryptBtn = document.querySelector('button.bg-amber-500');
+const encryptBtn = document.getElementById('btnEncrypt');
 if (encryptBtn) {
   encryptBtn.addEventListener('click', async () => {
     if (!selectedFile) {
