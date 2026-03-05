@@ -330,7 +330,7 @@ class HiNetSteganography(nn.Module):
 
         DataParallel 'module.' prefixes are stripped automatically.
         """
-        ckpt = torch.load(path, map_location=map_location)
+        ckpt = torch.load(path, map_location=map_location, weights_only=False)
         if isinstance(ckpt, dict) and "net" in ckpt:
             state_dict = ckpt["net"]
         elif isinstance(ckpt, dict):

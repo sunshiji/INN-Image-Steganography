@@ -659,7 +659,7 @@ def api_model_upload_weights():
     try:
         raw = f.read()
         # Validate the file is a valid PyTorch checkpoint
-        ckpt = torch.load(io.BytesIO(raw), map_location="cpu")
+        ckpt = torch.load(io.BytesIO(raw), map_location="cpu", weights_only=False)
         if isinstance(ckpt, dict):
             state_dict = ckpt.get("net", ckpt)
         else:
