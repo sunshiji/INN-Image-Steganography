@@ -160,6 +160,7 @@ def _check_auth():
         "/login", "/api/auth/login",
         "/register", "/api/auth/register",
         "/forgot-password", "/api/auth/reset-password",
+        "/api/health",
     }
     if request.path in public:
         return None
