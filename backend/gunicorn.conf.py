@@ -32,11 +32,11 @@ graceful_timeout = 30
 keepalive = 5
 
 # ── Request limits ───────────────────────────────────────────────────────────
-# 图像上传体积上限：50 MB
+# 图像上传体积上限：200 MB（与 Flask MAX_CONTENT_LENGTH 保持一致）
 limit_request_line       = 8190
 limit_request_fields     = 200
 limit_request_field_size = 8190
-limit_request_body       = 52_428_800  # 50 MiB
+limit_request_body       = int(os.environ.get("MAX_UPLOAD_MB", "200")) * 1024 * 1024
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 accesslog = "-"          # 输出到 stdout

@@ -64,6 +64,14 @@ from hinet_model import HiNetSteganography
 app = Flask(__name__)
 CORS(app)
 
+# Upload size limits.
+# Werkzeug 3.0 introduced MAX_FORM_MEMORY_SIZE (default 500 KB) which applies to
+# non-file multipart fields.  The stego_key field is a base64-encoded float32
+# tensor that can exceed 15 MB for a 1024×1024 image, so we raise both limits.
+_MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "200"))
+app.config["MAX_CONTENT_LENGTH"]  = _MAX_UPLOAD_MB * 1024 * 1024
+app.config["MAX_FORM_MEMORY_SIZE"] = _MAX_UPLOAD_MB * 1024 * 1024
+
 # Project root directory (one level up from backend/)
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
