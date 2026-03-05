@@ -523,19 +523,44 @@ function previewInZone(zone, file) {
 makeZoneClickable(coverZone,  (z, f) => { coverFile  = f; previewInZone(z, f); });
 makeZoneClickable(secretZone, (z, f) => { secretFile = f; previewInZone(z, f); });
 
-// Auto-load encrypted image from sessionStorage (passed from encrypt page)
-window.addEventListener('DOMContentLoaded', () => {
+// Auto-load encrypted image from sessionStorage / server session (passed from encrypt page)
+window.addEventListener('DOMContentLoaded', async () => {
+  // Check server-side session store first (handles images > 5 MB)
+  const token = sessionStorage.getItem('encryptedToken');
+  if (token && secretZone) {
+    try {
+      const resp = await fetch(`${API}/api/session/load/${token}`);
+      if (resp.ok) {
+        const d = await resp.json();
+        sessionStorage.removeItem('encryptedToken');
+        _loadSecretFromB64(d.stego_image);
+        return;
+      }
+    } catch (_) {}
+  }
+
+  // Fall back to direct sessionStorage
   const encB64 = sessionStorage.getItem('encryptedImage');
   if (encB64 && secretZone) {
-    // Convert base64 → Blob → File
-    const bytes = atob(encB64);
+    _loadSecretFromB64(encB64);
+  }
+  refreshModelStatus();
+});
+
+function _loadSecretFromB64(b64) {
+  if (!b64 || !secretZone) return;
+  try {
+    const bytes = atob(b64);
     const arr   = new Uint8Array(bytes.length).map((_, i) => bytes.charCodeAt(i));
     secretFile  = new File([arr], 'secret_encrypted.png', { type: 'image/png' });
     previewInZone(secretZone, secretFile);
     showToast('已自动载入混沌加密图像 ✓', 'success');
+  } catch(e) {
+    console.error('Failed to load secret image from session:', e);
+    showToast('自动载入失败，请手动上传秘密图像', 'error');
   }
   refreshModelStatus();
-});
+}
 
 // ── Encoding progress bar ──────────────────────────────────
 let _encodeProgressTimer = null;
@@ -648,12 +673,33 @@ if (encodeBtn) {
 
       finishEncodeProgress(true);
 
-      // Save to sessionStorage for decode page (best-effort; may exceed quota for large images)
+      // Pass stego image to decode page.
+      // Strategy: try server-side session store first (no size limit);
+      // fall back to sessionStorage for small images.
+      let transferred = false;
       try {
-        sessionStorage.setItem('stegoImage', data.stego_image);
-        sessionStorage.setItem('stegoKey',   data.stego_key);
-      } catch (_) {
-        showToast('图像较大，无法自动传递至解码页面，请手动上传隐写图像', 'error');
+        const sessResp = await fetch(`${API}/api/session/store`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stego_image: data.stego_image, stego_key: data.stego_key }),
+        });
+        if (sessResp.ok) {
+          const sessData = await sessResp.json();
+          sessionStorage.setItem('stegoToken', sessData.token);
+          sessionStorage.removeItem('stegoImage');
+          sessionStorage.removeItem('stegoKey');
+          transferred = true;
+        }
+      } catch (_) {}
+      if (!transferred) {
+        // Fall back to sessionStorage (may fail for large images)
+        try {
+          sessionStorage.setItem('stegoImage', data.stego_image);
+          sessionStorage.setItem('stegoKey',   data.stego_key);
+          sessionStorage.removeItem('stegoToken');
+        } catch (_) {
+          showToast('图像将在解码页面手动上传', 'error');
+        }
       }
 
       showEncodeResult(data);

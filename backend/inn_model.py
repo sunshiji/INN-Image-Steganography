@@ -186,11 +186,22 @@ class INNSteganography(nn.Module):
     @classmethod
     def load(cls, n_blocks: int = 8) -> "INNSteganography":
         """
-        Build a deterministic model from a fixed seed.
-        (In production you would load fine-tuned weights here.)
+        Build a deterministic model from a fixed seed with small-scale
+        initialisation so the coupling blocks start near-identity.
+
+        Near-identity coupling means:
+            F(x) ≈ 0  →  stego ≈ cover  (no visible colour distortion)
+        The exact stego-key (noise tensor) allows perfect round-trip recovery.
         """
         torch.manual_seed(2024)
         model = cls(n_blocks=n_blocks)
+        # Initialise with very small weights so the INN is near-identity and
+        # the stego image visually resembles the cover.
+        for m in model.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.normal_(m.weight, mean=0.0, std=0.01)
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
         model.eval()
         return model
 

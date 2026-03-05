@@ -29,6 +29,8 @@ import os
 import hmac
 import hashlib
 import secrets
+import time as _time
+import threading as _threading
 
 import numpy as np
 from PIL import Image
@@ -67,6 +69,25 @@ ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 # Directory for user-uploaded model weights
 WEIGHTS_DIR = os.path.join(os.path.expanduser("~"), ".inn-stego-weights")
 HINET_WEIGHTS_FILE = os.path.join(WEIGHTS_DIR, "hinet_weights.pt")
+
+# ---------------------------------------------------------------------------
+# In-memory cross-page session store (avoids sessionStorage 5 MB quota limit)
+# Maps token (UUID hex) → {'stego_image': b64, 'stego_key': str, 'ts': float}
+# ---------------------------------------------------------------------------
+
+_SESSION_STORE: dict = {}
+_SESSION_LOCK = _threading.Lock()
+_SESSION_TTL = 600  # 10 minutes
+
+
+def _session_cleanup() -> None:
+    """Remove expired entries from the in-memory session store."""
+    now = _time.time()
+    with _SESSION_LOCK:
+        expired = [k for k, v in _SESSION_STORE.items() if now - v["ts"] > _SESSION_TTL]
+        for k in expired:
+            del _SESSION_STORE[k]
+
 
 # Startup sanity-check: warn if the main page is absent.
 _index_path = os.path.join(ROOT_DIR, "index.html")
@@ -640,6 +661,56 @@ def api_model_upload_weights():
         })
     except Exception as e:
         return jsonify({"error": f"权重文件无效: {e}"}), 400
+
+
+# ── Cross-page session store (solves sessionStorage 5 MB quota limit) ─────
+
+@app.route("/api/session/store", methods=["POST"])
+def api_session_store():
+    """Store stego image + key server-side, return a short-lived token.
+
+    Request body (JSON):
+        stego_image : base64 string
+        stego_key   : base64 string (optional)
+
+    Response:
+        { "token": "<uuid_hex>" }
+    """
+    _session_cleanup()
+    data = request.get_json(silent=True) or {}
+    stego_image = data.get("stego_image", "")
+    stego_key   = data.get("stego_key",   "")
+    if not stego_image:
+        return jsonify({"error": "缺少 stego_image 字段"}), 400
+    token = secrets.token_hex(16)
+    with _SESSION_LOCK:
+        _SESSION_STORE[token] = {
+            "stego_image": stego_image,
+            "stego_key":   stego_key,
+            "ts":          _time.time(),
+        }
+    return jsonify({"token": token})
+
+
+@app.route("/api/session/load/<token>", methods=["GET"])
+def api_session_load(token: str):
+    """Retrieve and delete a stored session by token.
+
+    Response:
+        { "stego_image": "...", "stego_key": "..." }
+    """
+    # Validate token format: must be exactly 32 lowercase hex characters
+    if not token or len(token) != 32 or not all(c in "0123456789abcdef" for c in token):
+        return jsonify({"error": "会话令牌格式无效"}), 400
+    _session_cleanup()
+    with _SESSION_LOCK:
+        entry = _SESSION_STORE.pop(token, None)
+    if entry is None:
+        return jsonify({"error": "会话令牌无效或已过期"}), 404
+    return jsonify({
+        "stego_image": entry["stego_image"],
+        "stego_key":   entry["stego_key"],
+    })
 
 
 # ---------------------------------------------------------------------------

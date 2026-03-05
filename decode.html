@@ -191,11 +191,11 @@
 
         <!-- Action Buttons -->
         <div class="flex items-center gap-4">
-          <button class="flex-1 py-3.5 bg-violet-600 text-white rounded-xl font-semibold text-base hover:bg-violet-700 transition-colors shadow-md shadow-violet-200 flex items-center justify-center gap-2">
+          <button id="decodeBtn" class="flex-1 py-3.5 bg-blue-600 text-black rounded-xl font-semibold text-base hover:bg-blue-700 transition-colors shadow-md flex items-center justify-center gap-2" style="background:#2563eb;color:#000;">
             <i class="fa-solid fa-unlock"></i>
             开始提取秘密图像
           </button>
-          <button class="px-6 py-3.5 bg-white text-slate-600 border border-slate-200 rounded-xl font-medium text-base hover:bg-slate-50 transition-colors">
+          <button id="decodeResetBtn" class="px-6 py-3.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-xl font-medium text-base hover:bg-slate-200 transition-colors" style="background:#f1f5f9;color:#334155;">
             <i class="fa-solid fa-rotate-left mr-2"></i>重置
           </button>
         </div>
@@ -439,7 +439,22 @@ if (keyDropZone) {
 }
 
 // Auto-load stego key from sessionStorage (passed from encode page)
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  // Check server-side session store first (handles images > 5 MB)
+  const token = sessionStorage.getItem('stegoToken');
+  if (token) {
+    try {
+      const resp = await fetch(`${API}/api/session/load/${token}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        sessionStorage.removeItem('stegoToken');
+        _loadStegoFromB64(data.stego_image, data.stego_key);
+        return;
+      }
+    } catch (_) {}
+  }
+
+  // Fall back to direct sessionStorage values
   const savedKey = sessionStorage.getItem('stegoKey');
   if (savedKey) {
     stegoKeyData = savedKey;
@@ -447,21 +462,35 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   const savedStego = sessionStorage.getItem('stegoImage');
   if (savedStego) {
-    const bytes = atob(savedStego);
-    const arr   = new Uint8Array(bytes.length).map((_, i) => bytes.charCodeAt(i));
-    stegoFile   = new File([arr], 'stego_output.png', { type: 'image/png' });
-    const fakeFileReader = new FileReader();
-    fakeFileReader.onload = ev => {
-      const box = stegoZone?.querySelector('.w-48.h-48');
-      if (box) { box.style.backgroundImage=`url(${ev.target.result})`; box.style.backgroundSize='cover'; }
-    };
-    fakeFileReader.readAsDataURL(stegoFile);
-    showToast('已从编码页面自动载入隐写图像 ✓', 'success');
+    _loadStegoFromB64(savedStego, savedKey);
   }
 });
 
+function _loadStegoFromB64(b64, keyB64) {
+  if (keyB64) {
+    stegoKeyData = keyB64;
+    if (keyFileName) keyFileName.textContent = '✓ 已从编码页面自动载入密钥';
+  }
+  if (!b64) return;
+  try {
+    const bytes = atob(b64);
+    const arr   = new Uint8Array(bytes.length).map((_, i) => bytes.charCodeAt(i));
+    stegoFile   = new File([arr], 'stego_output.png', { type: 'image/png' });
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const box = stegoZone?.querySelector('.w-48.h-48');
+      if (box) { box.style.backgroundImage=`url(${ev.target.result})`; box.style.backgroundSize='cover'; }
+    };
+    reader.readAsDataURL(stegoFile);
+    showToast('已从编码页面自动载入隐写图像 ✓', 'success');
+  } catch(e) {
+    console.error('Failed to load stego image from session:', e);
+    showToast('自动载入失败，请手动上传隐写图像', 'error');
+  }
+}
+
 // ── Decode button ──────────────────────────────────────────
-const decodeBtn = document.querySelector('button.bg-violet-600');
+const decodeBtn = document.getElementById('decodeBtn');
 if (decodeBtn) {
   decodeBtn.addEventListener('click', async () => {
     if (!stegoFile) { alert('请先上传隐写图像！'); return; }
@@ -521,8 +550,8 @@ function showDecodeResult(data) {
 }
 
 // ── Reset button ───────────────────────────────────────────
-const resetBtn = document.querySelector('button.border-slate-200');
-if (resetBtn && resetBtn.textContent.includes('重置')) {
+const resetBtn = document.getElementById('decodeResetBtn');
+if (resetBtn) {
   resetBtn.addEventListener('click', () => {
     stegoFile = null; stegoKeyData = null;
     if (keyFileName) keyFileName.textContent = '点击上传 stego_key.txt（可选）';
@@ -548,6 +577,7 @@ document.querySelectorAll('button').forEach(btn => {
 // ── Helpers ────────────────────────────────────────────────
 function setLoading(btn, loading, label) {
   btn.disabled = loading;
+  btn.style.opacity = loading ? '0.7' : '1';
   btn.innerHTML = loading
     ? '<i class="fa-solid fa-spinner fa-spin mr-2"></i>' + label
     : '<i class="fa-solid fa-unlock mr-2"></i>' + label;
