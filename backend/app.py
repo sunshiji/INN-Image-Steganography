@@ -72,9 +72,32 @@ if not os.path.isfile(_index_path):
         flush=True,
     )
 
-print("[INN] Loading model …", flush=True)
-MODEL = INNSteganography.load(n_blocks=8)
-print("[INN] Model ready.", flush=True)
+print("[INN] model import OK — will load on first request.", flush=True)
+_MODEL = None
+
+
+def _get_model() -> INNSteganography:
+    """Lazily initialise the INN model in the worker process.
+
+    Loading inside the worker (rather than at module import time) avoids the
+    well-known PyTorch + gunicorn fork deadlock: PyTorch's OpenMP/MKL thread
+    pool must be initialised *after* the worker process is forked, not before.
+
+    The gunicorn post_fork hook in gunicorn.conf.py already calls
+    torch.set_num_threads(1) before this runs.  The call below is a
+    belt-and-suspenders guard for non-gunicorn entry points (e.g. `flask run`
+    or `python app.py`) where no post_fork hook is executed.
+    """
+    global _MODEL
+    if _MODEL is None:
+        try:
+            torch.set_num_threads(1)
+        except Exception:
+            pass
+        print("[INN] Loading model …", flush=True)
+        _MODEL = INNSteganography.load(n_blocks=8)
+        print("[INN] Model ready.", flush=True)
+    return _MODEL
 
 MAX_DIM = 1024
 
@@ -386,7 +409,7 @@ def api_encode():
         st = pil_to_tensor(secret_pil)
 
         with torch.no_grad():
-            stego_t, noise_t = MODEL.encode(ct, st)
+            stego_t, noise_t = _get_model().encode(ct, st)
 
         stego_pil  = tensor_to_pil(stego_t)
         cover_arr  = np.array(cover_pil)
@@ -422,7 +445,7 @@ def api_decode():
             noise_t = _b64_to_tensor(key_b64)
 
         with torch.no_grad():
-            secret_t = MODEL.decode(st, noise_t)
+            secret_t = _get_model().decode(st, noise_t)
 
         secret_pil = tensor_to_pil(secret_t)
         mode = "exact" if noise_t is not None else "approximate"
@@ -462,7 +485,7 @@ def api_pipeline_encrypt_encode():
         et = pil_to_tensor(enc_pil)
 
         with torch.no_grad():
-            stego_t, noise_t = MODEL.encode(ct, et)
+            stego_t, noise_t = _get_model().encode(ct, et)
 
         stego_pil = tensor_to_pil(stego_t)
         cover_arr = np.array(cover_pil)
@@ -501,7 +524,7 @@ def api_pipeline_decode_decrypt():
             noise_t = _b64_to_tensor(key_b64)
 
         with torch.no_grad():
-            secret_enc_t = MODEL.decode(st, noise_t)
+            secret_enc_t = _get_model().decode(st, noise_t)
 
         secret_enc_pil = tensor_to_pil(secret_enc_t)
         enc_arr = np.array(secret_enc_pil)

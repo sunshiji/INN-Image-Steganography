@@ -25,8 +25,23 @@ keepalive = 5
 
 # ── Request limits ───────────────────────────────────────────────────────────
 # 图像上传体积上限：50 MB
-limit_request_line = 8190
+limit_request_line   = 8190
 limit_request_fields = 200
+limit_request_field_size = 8190
+
+# ── Post-fork hook ────────────────────────────────────────────────────────────
+# Called in each worker process immediately after forking.
+# Setting OMP/MKL thread counts to 1 *before* any torch code runs prevents
+# the classic fork-induced OpenMP deadlock that makes workers hang silently.
+def post_fork(server, worker):
+    import os
+    os.environ.setdefault("OMP_NUM_THREADS", "1")
+    os.environ.setdefault("MKL_NUM_THREADS", "1")
+    try:
+        import torch
+        torch.set_num_threads(1)
+    except ImportError:
+        pass
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 accesslog = "-"          # 输出到 stdout
