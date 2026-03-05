@@ -33,9 +33,10 @@ keepalive = 5
 
 # ── Request limits ───────────────────────────────────────────────────────────
 # 图像上传体积上限：50 MB
-limit_request_line = 8190
-limit_request_fields = 200
-limit_request_body = 52_428_800  # 50 MiB
+limit_request_line       = 8190
+limit_request_fields     = 200
+limit_request_field_size = 8190
+limit_request_body       = 52_428_800  # 50 MiB
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 accesslog = "-"          # 输出到 stdout
@@ -49,9 +50,17 @@ proc_name = "inn-stego"
 
 # ── Hooks ─────────────────────────────────────────────────────────────────────
 def post_fork(server, worker):
-    """在 fork 后重置 PyTorch 随机数生成器，避免多 worker 间 RNG 状态共享。"""
+    """在 fork 后限制 PyTorch/OpenMP/MKL 线程数并重置随机数种子。
+
+    限制线程数防止 fork 后 OpenMP/MKL 线程池进入死锁状态（这是 sync worker
+    出现静默无响应的常见原因）。RNG 重置则保证多 worker 间不共享相同的随机序列。
+    """
+    import os as _os
+    _os.environ.setdefault("OMP_NUM_THREADS", "1")
+    _os.environ.setdefault("MKL_NUM_THREADS", "1")
     try:
         import torch
+        torch.set_num_threads(1)
         # Combine pid and age to keep seeds unique even after PID reuse.
         torch.manual_seed(torch.initial_seed() ^ (worker.pid << 16) ^ worker.age)
     except Exception:
