@@ -390,6 +390,7 @@ const API = '';
 
 let stegoFile    = null;
 let stegoKeyData = null;   // base64 string or null
+let recoveryImageData = null;  // pre-computed exact recovery from server session
 
 // ── Stego file upload ──────────────────────────────────────
 const stegoZone = document.querySelector('.upload-zone.has-image');
@@ -398,7 +399,7 @@ if (stegoZone) {
   stegoZone.addEventListener('click', () => {
     const inp = document.createElement('input');
     inp.type = 'file'; inp.accept = 'image/*';
-    inp.onchange = e => { const f = e.target.files[0]; if(f) { stegoFile = f; previewStego(f); } };
+    inp.onchange = e => { const f = e.target.files[0]; if(f) { stegoFile = f; recoveryImageData = null; previewStego(f); } };
     inp.click();
   });
 }
@@ -445,7 +446,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       if (resp.ok) {
         const data = await resp.json();
         sessionStorage.removeItem('stegoToken');
-        _loadStegoFromB64(data.stego_image, data.stego_key);
+        _loadStegoFromB64(data.stego_image, data.stego_key, data.recovery_image);
         return;
       }
     } catch (_) {}
@@ -463,7 +464,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-function _loadStegoFromB64(b64, keyB64) {
+function _loadStegoFromB64(b64, keyB64, recoveryB64) {
+  if (recoveryB64) {
+    recoveryImageData = recoveryB64;
+  }
   if (keyB64) {
     stegoKeyData = keyB64;
     if (keyFileName) keyFileName.textContent = '✓ 已从编码页面自动载入密钥';
@@ -491,6 +495,18 @@ const decodeBtn = document.getElementById('decodeBtn');
 if (decodeBtn) {
   decodeBtn.addEventListener('click', async () => {
     if (!stegoFile) { alert('请先上传隐写图像！'); return; }
+
+    // If a pre-computed recovery image was stored on the server during encoding
+    // (train.py approach: stego + z → secret_rev), use it directly without
+    // sending the large stego_key tensor over the network.
+    if (recoveryImageData) {
+      const precomputedRecovery = recoveryImageData;
+      recoveryImageData = null;   // consume once; user can re-decode via API
+      showDecodeResult({ secret_image: precomputedRecovery, mode: 'server' });
+      showToast('解码成功（服务端精确恢复）✓', 'success');
+      return;
+    }
+
     setLoading(decodeBtn, true, '解码中...');
     try {
       const fd = new FormData();
@@ -514,7 +530,9 @@ if (decodeBtn) {
 function showDecodeResult(data) {
   const resultBox = document.getElementById('decodeResultBox');
   if (!resultBox) return;
-  const modeLabel = data.mode === 'exact' ? '精确模式（密钥）' : '近似模式（无密钥）';
+  const modeLabel = data.mode === 'server' ? '服务端精确恢复' :
+                    data.mode === 'exact'  ? '精确模式（密钥）' :
+                    '近似模式（无密钥）';
   resultBox.innerHTML = `
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
@@ -550,7 +568,7 @@ function showDecodeResult(data) {
 const resetBtn = document.getElementById('decodeResetBtn');
 if (resetBtn) {
   resetBtn.addEventListener('click', () => {
-    stegoFile = null; stegoKeyData = null;
+    stegoFile = null; stegoKeyData = null; recoveryImageData = null;
     if (keyFileName) keyFileName.textContent = '点击上传 stego_key.txt（可选）';
     sessionStorage.removeItem('stegoKey');
     sessionStorage.removeItem('stegoImage');

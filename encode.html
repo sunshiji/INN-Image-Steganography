@@ -681,7 +681,7 @@ if (encodeBtn) {
         const sessResp = await fetch(`${API}/api/session/store`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ stego_image: data.stego_image, stego_key: data.stego_key }),
+          body: JSON.stringify({ stego_image: data.stego_image, stego_key: data.stego_key, recovery_image: data.recovery_image }),
         });
         if (sessResp.ok) {
           const sessData = await sessResp.json();

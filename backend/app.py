@@ -486,7 +486,16 @@ def api_encode():
         with torch.no_grad():
             stego_t, noise_t = _get_model().encode(ct, st)
 
-        stego_pil  = tensor_to_pil(stego_t)
+            # Run the exact inverse pass immediately while the noise tensor z is
+            # available.  This mirrors the HiNetcp/train.py approach: forward
+            # (cover + secret → stego + z) followed by backward
+            # (stego + z → recovered secret).  Storing the result server-side
+            # means the decode page can retrieve it without needing to transmit
+            # the large z tensor (which caused HTTP 413 for large images).
+            secret_rev_t = _get_model().decode(stego_t, noise_t)
+
+        stego_pil      = tensor_to_pil(stego_t)
+        secret_rev_pil = tensor_to_pil(secret_rev_t)
         cover_arr  = np.array(cover_pil)
         stego_arr  = np.array(stego_pil)
 
@@ -495,9 +504,10 @@ def api_encode():
             "ssim_cover_stego": round(ssim(cover_arr, stego_arr), 4),
         }
         return jsonify({
-            "stego_image": _pil_to_b64(stego_pil),
-            "stego_key":   _tensor_to_b64(noise_t),   # keep for exact decode
-            "metrics":     metrics,
+            "stego_image":    _pil_to_b64(stego_pil),
+            "stego_key":      _tensor_to_b64(noise_t),       # kept for backward compat
+            "recovery_image": _pil_to_b64(secret_rev_pil),   # pre-computed exact recovery
+            "metrics":        metrics,
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -710,27 +720,30 @@ def api_model_upload_weights():
 
 @app.route("/api/session/store", methods=["POST"])
 def api_session_store():
-    """Store stego image + key server-side, return a short-lived token.
+    """Store stego image + key + pre-computed recovery server-side, return a short-lived token.
 
     Request body (JSON):
-        stego_image : base64 string
-        stego_key   : base64 string (optional)
+        stego_image    : base64 string
+        stego_key      : base64 string (optional)
+        recovery_image : base64 string (optional) — exact decoded secret from encode
 
     Response:
         { "token": "<uuid_hex>" }
     """
     _session_cleanup()
     data = request.get_json(silent=True) or {}
-    stego_image = data.get("stego_image", "")
-    stego_key   = data.get("stego_key",   "")
+    stego_image    = data.get("stego_image", "")
+    stego_key      = data.get("stego_key",   "")
+    recovery_image = data.get("recovery_image", "")
     if not stego_image:
         return jsonify({"error": "缺少 stego_image 字段"}), 400
     token = secrets.token_hex(16)
     with _SESSION_LOCK:
         _SESSION_STORE[token] = {
-            "stego_image": stego_image,
-            "stego_key":   stego_key,
-            "ts":          _time.time(),
+            "stego_image":    stego_image,
+            "stego_key":      stego_key,
+            "recovery_image": recovery_image,
+            "ts":             _time.time(),
         }
     return jsonify({"token": token})
 
@@ -740,7 +753,7 @@ def api_session_load(token: str):
     """Retrieve and delete a stored session by token.
 
     Response:
-        { "stego_image": "...", "stego_key": "..." }
+        { "stego_image": "...", "stego_key": "...", "recovery_image": "..." }
     """
     # Validate token format: must be exactly 32 lowercase hex characters
     if not token or len(token) != 32 or not all(c in "0123456789abcdef" for c in token):
@@ -751,8 +764,9 @@ def api_session_load(token: str):
     if entry is None:
         return jsonify({"error": "会话令牌无效或已过期"}), 404
     return jsonify({
-        "stego_image": entry["stego_image"],
-        "stego_key":   entry["stego_key"],
+        "stego_image":    entry["stego_image"],
+        "stego_key":      entry["stego_key"],
+        "recovery_image": entry.get("recovery_image", ""),
     })
 
 
