@@ -64,57 +64,23 @@
             <i class="fa-solid fa-upload text-violet-500"></i> 上传隐写图像
           </h2>
 
-          <div class="upload-zone has-image rounded-xl p-5 cursor-pointer">
+          <div class="upload-zone rounded-xl p-5 cursor-pointer">
             <div class="flex items-start gap-6">
-              <div class="w-48 h-48 bg-gradient-to-br from-violet-50 to-purple-100 rounded-xl flex items-center justify-center flex-shrink-0 relative overflow-hidden border border-violet-200">
-                <!-- Simulated stego image -->
-                <div class="absolute inset-0 flex items-center justify-center">
-                  <div class="grid grid-cols-3 gap-1">
-                    <div class="w-10 h-10 bg-violet-300 rounded opacity-70"></div>
-                    <div class="w-10 h-10 bg-purple-200 rounded opacity-80"></div>
-                    <div class="w-10 h-10 bg-indigo-300 rounded opacity-60"></div>
-                    <div class="w-10 h-10 bg-purple-400 rounded opacity-50"></div>
-                    <div class="w-10 h-10 bg-violet-200 rounded opacity-90"></div>
-                    <div class="w-10 h-10 bg-indigo-200 rounded opacity-70"></div>
-                    <div class="w-10 h-10 bg-purple-300 rounded opacity-80"></div>
-                    <div class="w-10 h-10 bg-violet-400 rounded opacity-60"></div>
-                    <div class="w-10 h-10 bg-purple-200 rounded opacity-75"></div>
-                  </div>
-                </div>
-                <div class="absolute top-2 right-2 bg-violet-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
-                  <i class="fa-solid fa-check text-xs"></i>
+              <div class="w-48 h-48 rounded-xl border-2 border-dashed border-violet-200 bg-violet-50 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+                <div class="upload-empty text-center p-2 pointer-events-none">
+                  <i class="fa-solid fa-image text-4xl text-violet-300 mb-2 block"></i>
+                  <p class="text-sm text-slate-400">点击上传<br>隐写图像</p>
                 </div>
               </div>
               <div class="flex-1">
                 <div class="flex items-center justify-between mb-3">
                   <div>
-                    <p class="font-semibold text-slate-700">stego_output.png</p>
-                    <p class="text-sm text-slate-400 mt-1">512×512 · 2.1 MB · PNG</p>
+                    <p class="font-semibold text-slate-500">未选择文件</p>
+                    <p class="text-sm text-slate-400 mt-1">PNG · JPG · BMP</p>
                   </div>
                   <button class="text-sm text-violet-500 hover:text-violet-700 font-medium border border-violet-200 rounded-lg px-3 py-1.5">重新上传</button>
                 </div>
-                <!-- Image Info -->
-                <div class="grid grid-cols-2 gap-3 mt-4">
-                  <div class="bg-slate-50 rounded-xl p-3">
-                    <p class="text-xs text-slate-500 mb-1">图像尺寸</p>
-                    <p class="text-sm font-bold text-slate-700">512 × 512 px</p>
-                  </div>
-                  <div class="bg-slate-50 rounded-xl p-3">
-                    <p class="text-xs text-slate-500 mb-1">色彩空间</p>
-                    <p class="text-sm font-bold text-slate-700">RGB (24-bit)</p>
-                  </div>
-                  <div class="bg-slate-50 rounded-xl p-3">
-                    <p class="text-xs text-slate-500 mb-1">文件大小</p>
-                    <p class="text-sm font-bold text-slate-700">2.1 MB</p>
-                  </div>
-                  <div class="bg-violet-50 rounded-xl p-3">
-                    <p class="text-xs text-violet-500 mb-1">检测状态</p>
-                    <div class="flex items-center gap-1">
-                      <div class="w-2 h-2 bg-violet-500 rounded-full"></div>
-                      <p class="text-sm font-bold text-violet-700">已识别隐写</p>
-                    </div>
-                  </div>
-                </div>
+                <p class="text-sm text-slate-400 mt-4">上传由INN隐写编码步骤生成的图像，系统将从中提取被隐藏的秘密图像</p>
               </div>
             </div>
           </div>
@@ -197,100 +163,8 @@
           </button>
         </div>
 
-        <!-- Result Preview (shown after decoding) -->
-        <div id="decodeResultBox" class="bg-white rounded-2xl border border-emerald-100 shadow-sm p-6">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
-              <i class="fa-solid fa-circle-check text-emerald-500"></i>
-              解码完成 — 提取结果
-            </h2>
-            <div class="flex items-center gap-2">
-              <span class="tag bg-emerald-100 text-emerald-700">
-                <i class="fa-solid fa-check mr-1"></i>成功
-              </span>
-              <span class="text-xs text-slate-400">耗时 1.87 秒</span>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-3 gap-5">
-            <!-- Stego Image -->
-            <div class="text-center">
-              <div class="bg-gradient-to-br from-violet-50 to-purple-100 rounded-xl h-36 flex items-center justify-center mb-3 border border-violet-100 relative overflow-hidden">
-                <div class="grid grid-cols-3 gap-0.5 opacity-70">
-                  <div class="w-8 h-8 bg-violet-300 rounded-sm"></div>
-                  <div class="w-8 h-8 bg-purple-200 rounded-sm"></div>
-                  <div class="w-8 h-8 bg-indigo-300 rounded-sm"></div>
-                  <div class="w-8 h-8 bg-purple-400 rounded-sm"></div>
-                  <div class="w-8 h-8 bg-violet-200 rounded-sm"></div>
-                  <div class="w-8 h-8 bg-indigo-200 rounded-sm"></div>
-                  <div class="w-8 h-8 bg-purple-300 rounded-sm"></div>
-                  <div class="w-8 h-8 bg-violet-400 rounded-sm"></div>
-                  <div class="w-8 h-8 bg-purple-200 rounded-sm"></div>
-                </div>
-              </div>
-              <p class="text-xs font-semibold text-slate-600">输入：隐写图像</p>
-              <p class="text-xs text-slate-400 mt-1">512×512</p>
-            </div>
-
-            <!-- Arrow -->
-            <div class="flex items-center justify-center">
-              <div class="text-center">
-                <div class="w-12 h-12 bg-violet-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <i class="fa-solid fa-arrows-rotate text-violet-600"></i>
-                </div>
-                <p class="text-xs text-violet-600 font-medium">INN逆变换</p>
-              </div>
-            </div>
-
-            <!-- Recovered Secret Image -->
-            <div class="text-center">
-              <div class="bg-gradient-to-br from-emerald-50 to-teal-100 rounded-xl h-36 flex items-center justify-center mb-3 border border-emerald-100 relative overflow-hidden">
-                <div class="grid grid-cols-3 gap-0.5">
-                  <div class="w-8 h-8 bg-emerald-200 rounded-sm"></div>
-                  <div class="w-8 h-8 bg-teal-300 rounded-sm"></div>
-                  <div class="w-8 h-8 bg-emerald-400 rounded-sm"></div>
-                  <div class="w-8 h-8 bg-teal-200 rounded-sm"></div>
-                  <div class="w-8 h-8 bg-emerald-300 rounded-sm"></div>
-                  <div class="w-8 h-8 bg-teal-400 rounded-sm"></div>
-                  <div class="w-8 h-8 bg-emerald-200 rounded-sm"></div>
-                  <div class="w-8 h-8 bg-teal-300 rounded-sm"></div>
-                  <div class="w-8 h-8 bg-emerald-400 rounded-sm"></div>
-                </div>
-              </div>
-              <p class="text-xs font-semibold text-emerald-700">输出：还原秘密图像</p>
-              <p class="text-xs text-slate-400 mt-1">512×512</p>
-            </div>
-          </div>
-
-          <!-- Quality Metrics -->
-          <div class="mt-5 grid grid-cols-4 gap-3 pt-5 border-t border-slate-100">
-            <div class="bg-emerald-50 rounded-xl p-3 text-center">
-              <p class="text-xs text-emerald-600 mb-1">PSNR</p>
-              <p class="text-lg font-extrabold text-emerald-700">43.2 dB</p>
-            </div>
-            <div class="bg-emerald-50 rounded-xl p-3 text-center">
-              <p class="text-xs text-emerald-600 mb-1">SSIM</p>
-              <p class="text-lg font-extrabold text-emerald-700">0.997</p>
-            </div>
-            <div class="bg-emerald-50 rounded-xl p-3 text-center">
-              <p class="text-xs text-emerald-600 mb-1">MSE</p>
-              <p class="text-lg font-extrabold text-emerald-700">0.032</p>
-            </div>
-            <div class="bg-emerald-50 rounded-xl p-3 text-center">
-              <p class="text-xs text-emerald-600 mb-1">恢复率</p>
-              <p class="text-lg font-extrabold text-emerald-700">100%</p>
-            </div>
-          </div>
-
-          <div class="mt-4 flex gap-3">
-            <button class="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2">
-              <i class="fa-solid fa-download"></i>下载还原图像
-            </button>
-            <button class="flex-1 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
-              <i class="fa-solid fa-chart-bar text-indigo-500"></i>详细质量报告
-            </button>
-          </div>
-        </div>
+        <!-- Result Preview (shown after decoding; hidden until decode runs) -->
+        <div id="decodeResultBox" hidden class="bg-white rounded-2xl border border-emerald-100 shadow-sm p-6">
 
       </div>
 
@@ -393,7 +267,7 @@ let stegoKeyData = null;   // base64 string or null
 let recoveryImageData = null;  // pre-computed exact recovery from server session
 
 // ── Stego file upload ──────────────────────────────────────
-const stegoZone = document.querySelector('.upload-zone.has-image');
+const stegoZone = document.querySelector('.upload-zone');
 if (stegoZone) {
   stegoZone.style.cursor = 'pointer';
   stegoZone.addEventListener('click', () => {
@@ -408,7 +282,14 @@ function previewStego(file) {
   const reader = new FileReader();
   reader.onload = ev => {
     const box = stegoZone?.querySelector('.w-48.h-48');
-    if (box) { box.style.backgroundImage=`url(${ev.target.result})`; box.style.backgroundSize='cover'; }
+    if (box) {
+      box.style.backgroundImage = `url(${ev.target.result})`;
+      box.style.backgroundSize = 'cover';
+      box.style.backgroundPosition = 'center';
+      const placeholder = box.querySelector('.upload-empty');
+      if (placeholder) placeholder.style.display = 'none';
+    }
+    stegoZone?.classList.add('has-image');
     const nameEl = stegoZone?.querySelector('p.font-semibold');
     const sizeEl = stegoZone?.querySelector('p.text-sm.text-slate-400');
     if (nameEl) nameEl.textContent = file.name;
@@ -480,7 +361,18 @@ function _loadStegoFromB64(b64, keyB64, recoveryB64) {
     const reader = new FileReader();
     reader.onload = ev => {
       const box = stegoZone?.querySelector('.w-48.h-48');
-      if (box) { box.style.backgroundImage=`url(${ev.target.result})`; box.style.backgroundSize='cover'; }
+      if (box) {
+        box.style.backgroundImage = `url(${ev.target.result})`;
+        box.style.backgroundSize = 'cover';
+        box.style.backgroundPosition = 'center';
+        const placeholder = box.querySelector('.upload-empty');
+        if (placeholder) placeholder.style.display = 'none';
+      }
+      stegoZone?.classList.add('has-image');
+      const nameEl = stegoZone?.querySelector('p.font-semibold');
+      const sizeEl = stegoZone?.querySelector('p.text-sm.text-slate-400');
+      if (nameEl) nameEl.textContent = stegoFile.name;
+      if (sizeEl) sizeEl.textContent = `${(stegoFile.size / 1024).toFixed(1)} KB`;
     };
     reader.readAsDataURL(stegoFile);
     showToast('已从编码页面自动载入隐写图像 ✓', 'success');
@@ -530,6 +422,8 @@ if (decodeBtn) {
 function showDecodeResult(data) {
   const resultBox = document.getElementById('decodeResultBox');
   if (!resultBox) return;
+  // Un-hide the result box (it starts hidden to avoid showing fake placeholder content)
+  resultBox.removeAttribute('hidden');
   const modeLabel = data.mode === 'server' ? '服务端精确恢复' :
                     data.mode === 'exact'  ? '精确模式（密钥）' :
                     '近似模式（无密钥）';
