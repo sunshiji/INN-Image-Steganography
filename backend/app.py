@@ -56,6 +56,7 @@ from inn_model import (
     ssim,
 )
 from hinet_model import HiNetSteganography
+import db as _db
 
 # ---------------------------------------------------------------------------
 # App + model
@@ -98,12 +99,14 @@ _SESSION_TTL = 600  # 10 minutes
 
 
 def _session_cleanup() -> None:
-    """Remove expired entries from the in-memory session store."""
+    """Remove expired entries from the in-memory session store and MySQL."""
     now = _time.time()
     with _SESSION_LOCK:
         expired = [k for k, v in _SESSION_STORE.items() if now - v["ts"] > _SESSION_TTL]
         for k in expired:
             del _SESSION_STORE[k]
+    # Best-effort MySQL purge (non-blocking — ignores failures)
+    _db.purge_expired()
 
 
 # Startup sanity-check: warn if the main page is absent.
@@ -503,10 +506,30 @@ def api_encode():
             "psnr_cover_stego": round(psnr(cover_arr, stego_arr), 2),
             "ssim_cover_stego": round(ssim(cover_arr, stego_arr), 4),
         }
+
+        stego_b64    = _pil_to_b64(stego_pil)
+        recovery_b64 = _pil_to_b64(secret_rev_pil)
+
+        # Persist to MySQL when available (non-blocking best-effort).
+        # A fresh token is generated purely as a stable DB key for the task row;
+        # the browser-visible session token is created separately in
+        # api_session_store() when the encode page calls /api/session/store.
+        _db.record_encode_task(
+            token=secrets.token_hex(16),
+            username=session.get("username", "__anonymous__"),
+            cover_b64=_pil_to_b64(cover_pil),
+            secret_b64=_pil_to_b64(secret_pil),
+            stego_b64=stego_b64,
+            recovery_b64=recovery_b64,
+            psnr=metrics["psnr_cover_stego"],
+            ssim=metrics["ssim_cover_stego"],
+            model_type="HiNet" if isinstance(_get_model(), HiNetSteganography) else "INN",
+        )
+
         return jsonify({
-            "stego_image":    _pil_to_b64(stego_pil),
+            "stego_image":    stego_b64,
             "stego_key":      _tensor_to_b64(noise_t),       # kept for backward compat
-            "recovery_image": _pil_to_b64(secret_rev_pil),   # pre-computed exact recovery
+            "recovery_image": recovery_b64,                   # pre-computed exact recovery
             "metrics":        metrics,
         })
     except Exception as e:
@@ -534,8 +557,19 @@ def api_decode():
 
         secret_pil = tensor_to_pil(secret_t)
         mode = "exact" if noise_t is not None else "approximate"
+
+        secret_b64 = _pil_to_b64(secret_pil)
+
+        # Persist to MySQL when available (non-blocking best-effort)
+        _db.record_decode_task(
+            username=session.get("username", "__anonymous__"),
+            stego_b64=_pil_to_b64(stego_pil),
+            recovered_b64=secret_b64,
+            mode=mode,
+        )
+
         return jsonify({
-            "secret_image": _pil_to_b64(secret_pil),
+            "secret_image": secret_b64,
             "mode": mode,
         })
     except Exception as e:
@@ -767,6 +801,37 @@ def api_session_load(token: str):
         "stego_image":    entry["stego_image"],
         "stego_key":      entry["stego_key"],
         "recovery_image": entry.get("recovery_image", ""),
+    })
+
+
+# ── Task history (MySQL) ─────────────────────────────────────────────────────
+
+@app.route("/api/tasks", methods=["GET"])
+def api_tasks():
+    """Return recent encode + decode tasks for the logged-in user.
+
+    Query params:
+        limit : int  (default 20, max 100)
+
+    Response:
+        { "tasks": [ { type, id, created_at, psnr, ssim, mode, ... }, ... ],
+          "db_available": true|false }
+    """
+    limit = min(int(request.args.get("limit", 20)), 100)
+    username = session.get("username", "__anonymous__")
+    tasks = _db.get_task_history(username=username, limit=limit)
+    return jsonify({"tasks": tasks, "db_available": _db.MYSQL_ENABLED})
+
+
+@app.route("/api/db/status", methods=["GET"])
+def api_db_status():
+    """Return MySQL connection status."""
+    available = _db.is_available()
+    return jsonify({
+        "mysql_enabled":   _db.MYSQL_ENABLED,
+        "mysql_available": available,
+        "mysql_host":      _db.MYSQL_HOST,
+        "mysql_db":        _db.MYSQL_DB,
     })
 
 

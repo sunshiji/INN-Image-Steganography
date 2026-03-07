@@ -559,7 +559,8 @@ function showDecodeResult(data) {
     dlBtn.addEventListener('click', () => {
       const a = document.createElement('a');
       a.href = 'data:image/png;base64,' + b64;
-      a.download = 'recovered_secret.png'; a.click();
+      a.download = 'recovered_secret.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
     });
   }
 }
