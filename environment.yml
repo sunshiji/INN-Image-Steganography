@@ -3,7 +3,10 @@
 #
 # Creates a clean Python 3.10 environment for INN-Image-Steganography.
 # PyTorch is NOT listed here — it is installed by setup.sh which auto-detects
-# the CUDA version and picks the correct torch build.
+# the CUDA version and picks the correct torch build (GPU or CPU).
+#
+# Database: Python's built-in sqlite3 is used — no external database server
+# is required.
 #
 # Usage:
 #   conda env create -f environment.yml   # create env (one-time)

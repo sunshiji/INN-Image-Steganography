@@ -296,6 +296,9 @@ class HiNetSteganography(nn.Module):
 
     def encode(self, cover: torch.Tensor, secret: torch.Tensor):
         """Returns (stego [B,3,H,W], z [B,12,H/2,W/2])."""
+        device = next(self.parameters()).device
+        cover  = cover.to(device)
+        secret = secret.to(device)
         cover_w  = self.dwt(cover)
         secret_w = self.dwt(secret)
         x   = torch.cat([cover_w, secret_w], dim=1)   # [B, 24, H/2, W/2]
@@ -310,9 +313,13 @@ class HiNetSteganography(nn.Module):
 
         z : tensor from encode() for exact recovery, or None for approximate.
         """
+        device = next(self.parameters()).device
+        stego  = stego.to(device)
         steg_w = self.dwt(stego)                       # [B, 12, H/2, W/2]
         if z is None:
             z = torch.randn_like(steg_w)
+        else:
+            z = z.to(device)
         x_rev   = torch.cat([steg_w, z], dim=1)        # [B, 24, H/2, W/2]
         out_rev = self._backbone(x_rev, rev=True)
         secret_w = out_rev[:, _SPLIT:]                 # [B, 12, H/2, W/2]
@@ -320,7 +327,7 @@ class HiNetSteganography(nn.Module):
 
     # ── weight management ──────────────────────────────────────────────────
 
-    def load_weights(self, path: str, map_location: str = "cpu") -> None:
+    def load_weights(self, path: str, map_location=None) -> None:
         """Load a checkpoint produced by HiNetcp/train.py.
 
         Supported checkpoint formats
@@ -330,6 +337,8 @@ class HiNetSteganography(nn.Module):
 
         DataParallel 'module.' prefixes are stripped automatically.
         """
+        if map_location is None:
+            map_location = "cuda" if torch.cuda.is_available() else "cpu"
         ckpt = torch.load(path, map_location=map_location, weights_only=False)
         if isinstance(ckpt, dict) and "net" in ckpt:
             state_dict = ckpt["net"]
@@ -360,9 +369,10 @@ class HiNetSteganography(nn.Module):
     @classmethod
     def load(cls, weights_path: str = None) -> "HiNetSteganography":
         """Create a HiNetSteganography, optionally loading pre-trained weights."""
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = cls()
         if weights_path and os.path.isfile(weights_path):
-            model.load_weights(weights_path)
+            model.load_weights(weights_path, map_location=str(device))
         else:
             # Deterministic small-scale random init (mirrors HiNetcp/model.py init_model
             # which uses init_scale=0.01 to keep coupling exponentials stable at start).
@@ -372,7 +382,12 @@ class HiNetSteganography(nn.Module):
                     nn.init.normal_(m.weight, mean=0.0, std=0.01)
                     if m.bias is not None:
                         nn.init.zeros_(m.bias)
+        model = model.to(device)
         model.eval()
+        if device.type == "cuda":
+            print(f"[HiNet] Using GPU: {torch.cuda.get_device_name(device)}", flush=True)
+        else:
+            print("[HiNet] Using CPU (no CUDA device found).", flush=True)
         return model
 
 
@@ -386,7 +401,7 @@ def pil_to_tensor(img: Image.Image) -> torch.Tensor:
 
 
 def tensor_to_pil(t: torch.Tensor) -> Image.Image:
-    arr = t.squeeze(0).permute(1, 2, 0).detach().numpy()
+    arr = t.squeeze(0).permute(1, 2, 0).detach().cpu().numpy()
     return Image.fromarray((np.clip(arr, 0.0, 1.0) * 255).astype(np.uint8))
 
 
