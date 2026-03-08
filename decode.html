@@ -85,28 +85,6 @@
             </div>
           </div>
 
-          <!-- Steganography Detection Result -->
-          <div class="mt-5 bg-violet-50 border border-violet-200 rounded-xl p-4">
-            <div class="flex items-center gap-3 mb-3">
-              <div class="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center">
-                <i class="fa-solid fa-magnifying-glass text-violet-600 text-sm"></i>
-              </div>
-              <div>
-                <p class="font-semibold text-violet-800 text-sm">隐写内容检测</p>
-                <p class="text-xs text-violet-600">系统已检测到此图像包含隐写信息</p>
-              </div>
-              <div class="ml-auto flex items-center gap-2">
-                <span class="text-xs font-bold text-violet-700 bg-violet-100 px-3 py-1 rounded-full">置信度 96.3%</span>
-              </div>
-            </div>
-            <div class="flex items-center gap-4">
-              <div class="flex-1 bg-violet-100 rounded-full h-2">
-                <div class="bg-violet-600 h-2 rounded-full" style="width: 96.3%"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- Decode Parameters (hidden: fixed parameters used in backend; key file kept below) -->
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
           <div class="grid grid-cols-3 gap-4" style="display:none">
@@ -419,11 +397,31 @@ if (decodeBtn) {
   });
 }
 
+// Track current result object URL so it can be revoked on reset
+let _resultObjectUrl = null;
+
 function showDecodeResult(data) {
   const resultBox = document.getElementById('decodeResultBox');
   if (!resultBox) return;
   // Un-hide the result box (it starts hidden to avoid showing fake placeholder content)
   resultBox.removeAttribute('hidden');
+
+  // Convert base64 to Blob and use an object URL — more reliable than a raw
+  // data URL for large images (display and download both work cross-browser).
+  if (_resultObjectUrl) { URL.revokeObjectURL(_resultObjectUrl); _resultObjectUrl = null; }
+  let imageUrl;
+  try {
+    const b64 = data.secret_image;
+    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    const blob = new Blob([bytes], { type: 'image/png' });
+    imageUrl = URL.createObjectURL(blob);
+    _resultObjectUrl = imageUrl;
+  } catch (err) {
+    // atob or Blob creation failed (e.g. malformed base64); fall back to data URL
+    console.warn('createObjectURL failed, using data URL fallback:', err);
+    imageUrl = 'data:image/png;base64,' + data.secret_image;
+  }
+
   const modeLabel = data.mode === 'server' ? '服务端精确恢复' :
                     data.mode === 'exact'  ? '精确模式（密钥）' :
                     '近似模式（无密钥）';
@@ -434,13 +432,11 @@ function showDecodeResult(data) {
       </h2>
       <span class="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-bold">${modeLabel}</span>
     </div>
-    <div class="flex gap-4 mb-4">
-      <div class="flex-1 text-center">
-        <img src="data:image/png;base64,${data.secret_image}"
-             class="w-full max-h-52 object-contain rounded-xl border border-emerald-100 mb-2" />
-        <p class="text-xs font-semibold text-emerald-700">提取的秘密图像</p>
-        ${data.mode !== 'exact' ? '<p class="text-xs text-amber-500 mt-1">⚠ 近似结果，提供密钥可获得精确恢复</p>' : ''}
-      </div>
+    <div class="mb-4 text-center">
+      <img src="${imageUrl}"
+           class="max-w-full max-h-96 object-contain rounded-xl border border-emerald-100 mb-2 mx-auto block" />
+      <p class="text-xs font-semibold text-emerald-700 mt-2">提取的秘密图像</p>
+      ${data.mode !== 'exact' ? '<p class="text-xs text-amber-500 mt-1">⚠ 近似结果，提供密钥可获得精确恢复</p>' : ''}
     </div>
     <button id="downloadSecretBtn"
       class="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700">
@@ -449,10 +445,9 @@ function showDecodeResult(data) {
 
   const dlBtn = resultBox.querySelector('#downloadSecretBtn');
   if (dlBtn) {
-    const b64 = data.secret_image;
     dlBtn.addEventListener('click', () => {
       const a = document.createElement('a');
-      a.href = 'data:image/png;base64,' + b64;
+      a.href = imageUrl;
       a.download = 'recovered_secret.png';
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     });
@@ -463,7 +458,18 @@ function showDecodeResult(data) {
 const resetBtn = document.getElementById('decodeResetBtn');
 if (resetBtn) {
   resetBtn.addEventListener('click', () => {
-    stegoFile = null; stegoKeyData = null; recoveryImageData = null;
+    stegoFile = null;
+    stegoKeyData = null;
+    recoveryImageData = null;
+    if (_resultObjectUrl) {
+      URL.revokeObjectURL(_resultObjectUrl);
+      _resultObjectUrl = null;
+    }
+    const resultBox = document.getElementById('decodeResultBox');
+    if (resultBox) {
+      resultBox.setAttribute('hidden', '');
+      resultBox.innerHTML = '';
+    }
     if (keyFileName) keyFileName.textContent = '点击上传 stego_key.txt（可选）';
     sessionStorage.removeItem('stegoKey');
     sessionStorage.removeItem('stegoImage');
