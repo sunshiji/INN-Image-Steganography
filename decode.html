@@ -439,7 +439,8 @@ function showDecodeResult(data) {
       ${data.mode !== 'exact' ? '<p class="text-xs text-amber-500 mt-1">⚠ 近似结果，提供密钥可获得精确恢复</p>' : ''}
     </div>
     <button id="downloadSecretBtn"
-      class="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700">
+      class="w-full py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
+      style="background:#2563eb;color:#000;">
       <i class="fa-solid fa-download mr-1"></i>下载提取图像
     </button>`;
 
