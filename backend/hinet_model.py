@@ -129,7 +129,7 @@ class Residual_Attention_Block(nn.Module):
         k, s, p = 3, 1, 1
         self.res = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, k, s, p, bias=bias),
-            nn.ReLU(inplace=True),
+            nn.ReLU(inplace=False),
             nn.Conv2d(in_channels, out_channels, k, s, p, bias=bias),
         )
         self.sab = _SAB()
@@ -163,7 +163,7 @@ class ResidualDenseBlock_out(nn.Module):
         self.conv5 = nn.Conv2d(input + 128,    32,     3, 1, 1, bias=bias)
         self.conv6 = nn.Conv2d(input + 160,    output, 3, 1, 1, bias=bias)
         self.res   = Residual_Attention_Block(input, output, bias=bias)
-        self.lrelu = nn.LeakyReLU(inplace=True)
+        self.lrelu = nn.LeakyReLU(inplace=False)
 
     def forward(self, x):
         x1 = self.lrelu(self.conv1(x))
