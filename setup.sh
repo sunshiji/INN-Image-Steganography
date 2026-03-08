@@ -2,10 +2,14 @@
 # ---------------------------------------------------------------------------
 # setup.sh - One-time environment setup script
 #
+# This script ONLY installs GPU (CUDA) builds of PyTorch.
+# A machine with an NVIDIA GPU and CUDA toolkit is required.
+# The script will abort if no CUDA installation is detected.
+#
 # Recommended usage (new dedicated conda env):
 #   conda env create -f environment.yml   # create inn-stego env (one-time)
 #   conda activate inn-stego
-#   bash setup.sh                         # installs torch with CUDA detection
+#   bash setup.sh                         # installs GPU torch matching CUDA version
 #
 # Alternative usage (existing conda env):
 #   conda activate <env-name>
@@ -69,42 +73,48 @@ elif [ -f /usr/local/cuda/version.txt ]; then
     CUDA_VER=$(grep -oP '[\d.]+' /usr/local/cuda/version.txt | head -1)
 fi
 
-# Helper: install the correct GPU or CPU torch build for CUDA_VER
+# Helper: install the correct GPU torch build for CUDA_VER.
+# Aborts if CUDA_VER is empty (no CUDA detected).
 _install_torch() {
-    if [ -n "${CUDA_VER}" ]; then
-        CUDA_MAJOR=$(echo "${CUDA_VER}" | cut -d. -f1)
-        CUDA_MINOR=$(echo "${CUDA_VER}" | cut -d. -f2)
-        if [ "${CUDA_MAJOR}" -ge 12 ]; then
-            echo "  Installing torch 2.1.0 (CUDA 12.1)"
-            "${PIP}" install "torch==2.1.0" "torchvision==0.16.0" \
-                --index-url https://download.pytorch.org/whl/cu121 --quiet
-        elif [ "${CUDA_MAJOR}" -eq 11 ] && [ "${CUDA_MINOR}" -ge 8 ]; then
-            echo "  Installing torch 2.0.1 (CUDA 11.8)"
-            "${PIP}" install "torch==2.0.1" "torchvision==0.15.2" \
-                --index-url https://download.pytorch.org/whl/cu118 --quiet
-        else
-            # CUDA 11.3 – 11.7: use torch 1.12.1+cu113 (last release with cu113 builds)
-            echo "  Installing torch 1.12.1 (CUDA 11.3)"
-            "${PIP}" install "torch==1.12.1+cu113" "torchvision==0.13.1+cu113" \
-                --extra-index-url https://download.pytorch.org/whl/cu113 --quiet
-        fi
+    if [ -z "${CUDA_VER}" ]; then
+        echo "[ERROR] No CUDA installation detected. A GPU with CUDA is required." >&2
+        echo "        Install the NVIDIA CUDA toolkit and re-run this script." >&2
+        exit 1
+    fi
+    CUDA_MAJOR=$(echo "${CUDA_VER}" | cut -d. -f1)
+    CUDA_MINOR=$(echo "${CUDA_VER}" | cut -d. -f2)
+    if [ "${CUDA_MAJOR}" -ge 12 ]; then
+        echo "  Installing torch 2.1.0 (CUDA 12.1)"
+        "${PIP}" install "torch==2.1.0" "torchvision==0.16.0" \
+            --index-url https://download.pytorch.org/whl/cu121 --quiet
+    elif [ "${CUDA_MAJOR}" -eq 11 ] && [ "${CUDA_MINOR}" -ge 8 ]; then
+        echo "  Installing torch 2.0.1 (CUDA 11.8)"
+        "${PIP}" install "torch==2.0.1" "torchvision==0.15.2" \
+            --index-url https://download.pytorch.org/whl/cu118 --quiet
     else
-        echo "  No CUDA detected - installing CPU PyTorch"
-        "${PIP}" install torch torchvision --index-url https://download.pytorch.org/whl/cpu --quiet
+        # CUDA 11.3 – 11.7: use torch 1.12.1+cu113 (last release with cu113 builds)
+        echo "  Installing torch 1.12.1 (CUDA 11.3)"
+        "${PIP}" install "torch==1.12.1+cu113" "torchvision==0.13.1+cu113" \
+            --extra-index-url https://download.pytorch.org/whl/cu113 --quiet
     fi
 }
 
-# torch / torchvision install logic:
-#   - If torch is not installed at all: install the right build.
-#   - If torch is already installed AND CUDA is available on this machine:
-#       check whether the installed torch actually has CUDA support.
-#       If it does not (CPU-only build on a GPU machine), reinstall with the GPU build.
-#   - If torch is already installed and no CUDA is present: keep as-is.
+# torch / torchvision install logic (GPU only):
+#   - If no CUDA is detected on this machine: abort with an error.
+#   - If torch is not installed: install the matching GPU build.
+#   - If torch is already installed with CUDA support: keep as-is.
+#   - If torch is already installed but is a CPU-only build: reinstall GPU build.
+if [ -z "${CUDA_VER}" ]; then
+    echo "[ERROR] No CUDA installation detected. A GPU with CUDA is required." >&2
+    echo "        Install the NVIDIA CUDA toolkit and re-run this script." >&2
+    exit 1
+fi
+echo "  CUDA ${CUDA_VER} detected"
 TORCH_VER=$("${PYTHON}" -c "import torch; print(torch.__version__)" 2>/dev/null || echo "")
 if [ -z "${TORCH_VER}" ]; then
-    echo "  torch not found - installing..."
+    echo "  torch not found - installing GPU build..."
     _install_torch
-elif [ -n "${CUDA_VER}" ]; then
+else
     # CUDA is available — verify the installed torch was built with CUDA support
     TORCH_CUDA=$("${PYTHON}" -c "import torch; print(torch.version.cuda or '')" 2>/dev/null || echo "")
     if [ -z "${TORCH_CUDA}" ]; then
@@ -114,8 +124,6 @@ elif [ -n "${CUDA_VER}" ]; then
     else
         echo "  torch ${TORCH_VER} (CUDA ${TORCH_CUDA}) already present - skipping"
     fi
-else
-    echo "  torch ${TORCH_VER} already present - skipping"
 fi
 
 # Other dependencies (flask, flask-cors, gunicorn; no torch conflict)
