@@ -59,23 +59,21 @@ echo "[2/3] Upgrading pip..."
 # --- 3. Install dependencies ---
 echo "[3/3] Installing dependencies..."
 
-# torch / torchvision: skip if already installed (preserves conda-installed pytorch)
-TORCH_VER=$("${PYTHON}" -c "import torch; print(torch.__version__)" 2>/dev/null || echo "")
-if [ -n "${TORCH_VER}" ]; then
-    echo "  torch ${TORCH_VER} already present - skipping"
-else
-    # Detect CUDA version from nvcc or toolkit directory
-    CUDA_VER=""
-    if command -v nvcc >/dev/null 2>&1; then
-        CUDA_VER=$(nvcc --version 2>/dev/null | grep -oP 'release \K[\d.]+' | head -1)
-    elif [ -f /usr/local/cuda/version.txt ]; then
-        CUDA_VER=$(grep -oP '[\d.]+' /usr/local/cuda/version.txt | head -1)
-    fi
+# Detect CUDA version from nvcc or toolkit directory (always, before torch check)
+CUDA_VER=""
+if command -v nvcc >/dev/null 2>&1; then
+    CUDA_VER=$(nvcc --version 2>/dev/null | grep -oP 'release \K[\d.]+' | head -1)
+elif [ -f /usr/local/cuda/version.json ]; then
+    CUDA_VER=$(python3 -c "import json,sys; d=json.load(open('/usr/local/cuda/version.json')); print(d.get('cuda',{}).get('version',''))" 2>/dev/null || true)
+elif [ -f /usr/local/cuda/version.txt ]; then
+    CUDA_VER=$(grep -oP '[\d.]+' /usr/local/cuda/version.txt | head -1)
+fi
 
+# Helper: install the correct GPU or CPU torch build for CUDA_VER
+_install_torch() {
     if [ -n "${CUDA_VER}" ]; then
         CUDA_MAJOR=$(echo "${CUDA_VER}" | cut -d. -f1)
         CUDA_MINOR=$(echo "${CUDA_VER}" | cut -d. -f2)
-        echo "  CUDA ${CUDA_VER} detected"
         if [ "${CUDA_MAJOR}" -ge 12 ]; then
             echo "  Installing torch 2.1.0 (CUDA 12.1)"
             "${PIP}" install "torch==2.1.0" "torchvision==0.16.0" \
@@ -94,6 +92,30 @@ else
         echo "  No CUDA detected - installing CPU PyTorch"
         "${PIP}" install torch torchvision --index-url https://download.pytorch.org/whl/cpu --quiet
     fi
+}
+
+# torch / torchvision install logic:
+#   - If torch is not installed at all: install the right build.
+#   - If torch is already installed AND CUDA is available on this machine:
+#       check whether the installed torch actually has CUDA support.
+#       If it does not (CPU-only build on a GPU machine), reinstall with the GPU build.
+#   - If torch is already installed and no CUDA is present: keep as-is.
+TORCH_VER=$("${PYTHON}" -c "import torch; print(torch.__version__)" 2>/dev/null || echo "")
+if [ -z "${TORCH_VER}" ]; then
+    echo "  torch not found - installing..."
+    _install_torch
+elif [ -n "${CUDA_VER}" ]; then
+    # CUDA is available — verify the installed torch was built with CUDA support
+    TORCH_CUDA=$("${PYTHON}" -c "import torch; print(torch.version.cuda or '')" 2>/dev/null || echo "")
+    if [ -z "${TORCH_CUDA}" ]; then
+        echo "  torch ${TORCH_VER} is CPU-only but CUDA ${CUDA_VER} is available - reinstalling GPU build..."
+        "${PIP}" uninstall -y torch torchvision 2>/dev/null || true
+        _install_torch
+    else
+        echo "  torch ${TORCH_VER} (CUDA ${TORCH_CUDA}) already present - skipping"
+    fi
+else
+    echo "  torch ${TORCH_VER} already present - skipping"
 fi
 
 # Other dependencies (flask, flask-cors, gunicorn; no torch conflict)
