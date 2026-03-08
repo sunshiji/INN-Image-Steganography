@@ -1,8 +1,9 @@
 # ---------------------------------------------------------------------------
 # environment.yml - inn-stego conda environment
 #
-# Creates a complete Python 3.10 environment for INN-Image-Steganography,
-# including GPU-only PyTorch (CUDA 12.1 build).
+# Creates a complete Python 3.10 environment for INN-Image-Steganography.
+# ALL packages — including GPU PyTorch — are installed via conda so that
+# "conda env create" never invokes pip and never hangs on network downloads.
 #
 # Requirements:
 #   An NVIDIA GPU with driver >= 525.  nvcc / full CUDA toolkit is NOT
@@ -20,24 +21,24 @@
 name: inn-stego
 
 channels:
+  # pytorch channel must come first so conda resolves GPU pytorch builds
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/pytorch
   - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge
   - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
   - defaults
 
 dependencies:
   - python=3.10
-  # Scientific stack — compatible versions known to work with PyTorch 2.x
+  # Scientific stack
   - numpy=1.26
   - scipy=1.13
   - pillow=10.4
-  - pip
-
-  # All pip packages, including GPU-only PyTorch (CUDA 12.1).
-  # The --extra-index-url line tells pip where to find the +cu121 wheels.
-  - pip:
-    - --extra-index-url https://download.pytorch.org/whl/cu121
-    - torch==2.1.0+cu121
-    - torchvision==0.16.0+cu121
-    - flask>=3.0
-    - flask-cors>=4.0
-    - gunicorn>=20.0
+  # GPU PyTorch — pytorch-cuda pins the CUDA runtime bundled with the wheel;
+  # driver 525+ supports CUDA 12.1 runtime even without nvcc installed.
+  - pytorch=2.1.0
+  - torchvision=0.16.0
+  - pytorch-cuda=12.1
+  # Web framework
+  - flask>=3.0
+  - flask-cors>=4.0
+  - gunicorn>=20.0

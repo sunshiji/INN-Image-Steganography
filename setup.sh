@@ -2,10 +2,9 @@
 # ---------------------------------------------------------------------------
 # setup.sh - Environment verification script
 #
-# All packages (including GPU-only PyTorch) are installed by environment.yml.
-# This script verifies that the GPU is reachable and that the installed torch
-# was built with CUDA support.  It also installs/refreshes the backend pip
-# packages from backend/requirements.txt for convenience.
+# All packages (including GPU-only PyTorch) are installed via conda by
+# environment.yml — no pip step is needed.  This script only verifies that
+# the GPU is reachable and that the installed torch was built with CUDA support.
 #
 # Usage:
 #   conda env create -f environment.yml   # install everything (one-time)
@@ -24,11 +23,10 @@ echo "  INN Steganography System - Setup"
 echo "  Project: ${PROJ_DIR}"
 echo "============================================================"
 
-# --- 1. Detect Python / pip ---
+# --- 1. Verify conda env is active ---
 if [ -n "${CONDA_DEFAULT_ENV}" ] && [ "${CONDA_DEFAULT_ENV}" != "base" ]; then
-    echo "[1/3] Conda env: ${CONDA_DEFAULT_ENV}  (${CONDA_PREFIX})"
+    echo "[1/2] Conda env: ${CONDA_DEFAULT_ENV}  (${CONDA_PREFIX})"
     PYTHON="${CONDA_PREFIX}/bin/python"
-    PIP="${CONDA_PREFIX}/bin/pip"
 else
     echo "[ERROR] No active conda env detected." >&2
     echo "  Create and activate the inn-stego env first:" >&2
@@ -37,8 +35,8 @@ else
     exit 1
 fi
 
-# --- 2. Verify GPU is available via nvidia-smi ---
-echo "[2/3] Checking GPU..."
+# --- 2. Verify GPU and torch CUDA support ---
+echo "[2/2] Checking GPU and torch..."
 if ! command -v nvidia-smi >/dev/null 2>&1; then
     echo "[ERROR] nvidia-smi not found. An NVIDIA GPU driver is required." >&2
     exit 1
@@ -69,11 +67,6 @@ elif [ -z "${TORCH_CUDA}" ]; then
 else
     echo "  torch: ${TORCH_VER} (CUDA ${TORCH_CUDA}) ✓"
 fi
-
-# --- 3. Upgrade pip and install backend dependencies ---
-echo "[3/3] Installing backend dependencies..."
-"${PIP}" install --upgrade pip --quiet
-"${PIP}" install -r "${PROJ_DIR}/backend/requirements.txt" --quiet
 
 echo ""
 echo "============================================================"
