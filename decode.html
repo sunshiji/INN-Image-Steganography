@@ -433,7 +433,7 @@ function showDecodeResult(data) {
 
   const modeLabel = data.mode === 'server' ? '服务端精确恢复' :
                     data.mode === 'exact'  ? '精确模式（密钥）' :
-                    ;
+                    '精确模式';
   resultBox.innerHTML = `
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
