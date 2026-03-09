@@ -433,7 +433,7 @@ function showDecodeResult(data) {
 
   const modeLabel = data.mode === 'server' ? '服务端精确恢复' :
                     data.mode === 'exact'  ? '精确模式（密钥）' :
-                    '近似模式（无密钥）';
+                    ;
   resultBox.innerHTML = `
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
@@ -445,7 +445,7 @@ function showDecodeResult(data) {
       <img src="${imageUrl}"
            class="max-w-full max-h-96 object-contain rounded-xl border border-emerald-100 mb-2 mx-auto block" />
       <p class="text-xs font-semibold text-emerald-700 mt-2">提取的秘密图像</p>
-      ${data.mode !== 'exact' ? '<p class="text-xs text-amber-500 mt-1">⚠ 近似结果，提供密钥可获得精确恢复</p>' : ''}
+      ${data.mode !== 'exact' ? '<p class="text-xs text-amber-500 mt-1">⚠ </p>' : ''}
     </div>
     <button id="downloadSecretBtn"
       class="w-full py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
