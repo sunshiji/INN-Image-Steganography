@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# environment.yml - inn-stego conda environment
+# environment.yml - inn conda environment
 #
 # Creates a complete Python 3.10 environment for INN-Image-Steganography.
 # Most packages are installed via conda (tsinghua mirrors).
@@ -13,14 +13,14 @@
 #
 # Usage:
 #   conda env create -f environment.yml   # one-time: creates env + installs everything
-#   conda activate inn-stego
+#   conda activate inn
 #   bash start.sh                         # start the service
 #
 # Update an existing env after code changes:
 #   conda env update -f environment.yml --prune
 # ---------------------------------------------------------------------------
 
-name: inn-stego
+name: inn
 
 channels:
   - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge

@@ -108,13 +108,10 @@
         <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
           <i class="fa-solid fa-dice-d6 text-amber-600"></i>
         </div>
-        <h1 class="text-2xl font-bold text-slate-800">Logistic 混沌加密</h1>
+        <h1 class="text-2xl font-bold text-slate-800">混沌加密</h1>
         <span class="tag bg-amber-100 text-amber-700">CHAOS ENCRYPT</span>
         <span class="tag bg-slate-100 text-slate-600">步骤 1 / 4</span>
       </div>
-      <p class="text-slate-500 text-sm">
-        基于 Logistic 混沌映射对秘密图像进行像素置乱与扩散加密，使加密后图像呈现随机噪声特征，再送入INN隐写系统
-      </p>
     </div>
 
     <div class="grid grid-cols-3 gap-6">
@@ -418,7 +415,7 @@
         <div class="flex items-center gap-4">
           <button id="btnEncrypt" class="flex-1 py-3.5 bg-blue-600 text-black rounded-xl font-semibold text-base hover:bg-blue-700 transition-colors shadow-md flex items-center justify-center gap-2" style="background:#2563eb;color:#000;">
             <i class="fa-solid fa-bolt"></i>
-            开始 Logistic 混沌加密
+            Logistic 混沌加密
           </button>
           <button class="px-6 py-3.5 bg-white text-slate-600 border border-slate-200 rounded-xl font-medium hover:bg-slate-50 transition-colors">
             <i class="fa-solid fa-rotate-left mr-2"></i>重置
@@ -840,7 +837,7 @@ if (encryptBtn) {
       advanceStep(1);   // step 1 done, step 2 active so user can retry
       showToast('加密失败: ' + err.message, 'error');
     } finally {
-      setLoading(encryptBtn, false, '开始 Logistic 混沌加密');
+      setLoading(encryptBtn, false, 'Logistic 混沌加密');
     }
   });
 }

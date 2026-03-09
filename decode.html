@@ -244,6 +244,13 @@ let stegoFile    = null;
 let stegoKeyData = null;   // base64 string or null
 let recoveryImageData = null;  // pre-computed exact recovery from server session
 
+// ── Cross-page decode notification (BroadcastChannel) ──────
+let _decodeChannel = null;
+try { _decodeChannel = new BroadcastChannel('inn_stego'); } catch(_) {}
+function notifyDecodeComplete() {
+  if (_decodeChannel) try { _decodeChannel.postMessage('decoded'); } catch(_) {}
+}
+
 // ── Stego file upload ──────────────────────────────────────
 const stegoZone = document.querySelector('.upload-zone');
 if (stegoZone) {
@@ -374,6 +381,7 @@ if (decodeBtn) {
       recoveryImageData = null;   // consume once; user can re-decode via API
       showDecodeResult({ secret_image: precomputedRecovery, mode: 'server' });
       showToast('解码成功（服务端精确恢复）✓', 'success');
+      notifyDecodeComplete();
       return;
     }
 
@@ -389,6 +397,7 @@ if (decodeBtn) {
 
       showDecodeResult(data);
       showToast(`解码成功（${data.mode === 'exact' ? '精确模式' : '近似模式'}）✓`, 'success');
+      notifyDecodeComplete();
     } catch (err) {
       showToast('解码失败: ' + err.message, 'error');
     } finally {

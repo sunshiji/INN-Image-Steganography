@@ -185,23 +185,6 @@
             </div>
           </div>
 
-          <!-- Encryption Status Notice -->
-          <div class="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-            <i class="fa-solid fa-shield-halved text-amber-500 mt-0.5 text-lg"></i>
-            <div>
-              <p class="text-sm font-semibold text-amber-700">双重安全保护已启用</p>
-              <p class="text-xs text-amber-600 mt-1">
-                秘密图像已通过 <strong>Logistic混沌映射（r=3.9991, x₀=0.37291）</strong> 加密处理，
-                即使隐写图像被检测到，提取出的也是加密后的噪声图像，无法获取原始内容。
-              </p>
-              <div class="flex items-center gap-3 mt-2">
-                <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">加密强度：高</span>
-                <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">
-                  <i class="fa-solid fa-check mr-1"></i>混沌密钥已保存
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- Parameters (hidden: fixed values used in backend) -->
@@ -407,43 +390,32 @@
           <div id="weightsUploadMsg" hidden class="mt-2 text-xs hidden"></div>
         </div>
 
-        <!-- Recent Tasks -->
+        <!-- Session Stats (dynamic) -->
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
           <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
-            <i class="fa-solid fa-clock-rotate-left text-slate-400"></i> 近期任务
+            <i class="fa-solid fa-chart-bar text-indigo-400"></i> 使用统计
           </h3>
           <div class="space-y-3">
-            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-              <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <i class="fa-solid fa-circle-check text-emerald-500"></i>
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-xs font-medium text-slate-700 truncate">lena.png → secret1.jpg</p>
-                <p class="text-xs text-slate-400">2分钟前 · PSNR 42.1dB</p>
-              </div>
-              <button class="text-xs text-indigo-500 whitespace-nowrap">查看</button>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-500">本次会话编码次数</span>
+              <span id="statEncodeCount" class="font-extrabold text-indigo-600">0</span>
             </div>
-            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-              <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <i class="fa-solid fa-circle-check text-emerald-500"></i>
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-xs font-medium text-slate-700 truncate">baboon.png → logo.png</p>
-                <p class="text-xs text-slate-400">15分钟前 · PSNR 40.8dB</p>
-              </div>
-              <button class="text-xs text-indigo-500 whitespace-nowrap">查看</button>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-500">本次会话解码次数</span>
+              <span id="statDecodeCount" class="font-extrabold text-emerald-600">0</span>
             </div>
-            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-              <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-xs font-medium text-slate-700 truncate">city.jpg → portrait.jpg</p>
-                <p class="text-xs text-slate-400">1小时前 · 尺寸不匹配</p>
-              </div>
-              <button class="text-xs text-indigo-500 whitespace-nowrap">重试</button>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-500">累计总编码次数</span>
+              <span id="statTotalEncode" class="font-semibold text-slate-700">0</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-500">累计总解码次数</span>
+              <span id="statTotalDecode" class="font-semibold text-slate-700">0</span>
             </div>
           </div>
+          <button id="btnResetStats" class="mt-4 w-full py-1.5 bg-slate-50 text-slate-500 rounded-lg text-xs font-medium hover:bg-slate-100 transition-colors">
+            <i class="fa-solid fa-rotate-left mr-1"></i>重置统计
+          </button>
         </div>
 
       </div>
@@ -690,6 +662,7 @@ if (encodeBtn) {
 
       showEncodeResult(data);
       showToast('INN隐写编码成功 ✓', 'success');
+      incrementEncodeStat();
     } catch (err) {
       finishEncodeProgress(false);
       showToast('编码失败: ' + err.message, 'error');
@@ -898,6 +871,63 @@ document.querySelectorAll('button').forEach(btn => {
   // Recent tasks: 重试 → reload page
   if (t === '重试') btn.addEventListener('click', () => { window.location.reload(); });
 });
+
+// ── Session & cumulative stats ─────────────────────────────
+const STATS_KEY = 'inn_stego_stats';
+
+function loadStats() {
+  try { return JSON.parse(localStorage.getItem(STATS_KEY)) || {}; } catch(_) { return {}; }
+}
+function saveStats(s) {
+  try { localStorage.setItem(STATS_KEY, JSON.stringify(s)); } catch(_) {}
+}
+
+// Session-scoped counters (reset on page load)
+let sessionEncodeCount = 0;
+let sessionDecodeCount = 0;
+
+function incrementEncodeStat() {
+  sessionEncodeCount++;
+  const s = loadStats();
+  s.totalEncode = (s.totalEncode || 0) + 1;
+  saveStats(s);
+  renderStats();
+}
+
+function incrementDecodeStat() {
+  sessionDecodeCount++;
+  const s = loadStats();
+  s.totalDecode = (s.totalDecode || 0) + 1;
+  saveStats(s);
+  renderStats();
+}
+
+function renderStats() {
+  const s = loadStats();
+  const el = id => document.getElementById(id);
+  if (el('statEncodeCount')) el('statEncodeCount').textContent = sessionEncodeCount;
+  if (el('statDecodeCount')) el('statDecodeCount').textContent = sessionDecodeCount;
+  if (el('statTotalEncode')) el('statTotalEncode').textContent = s.totalEncode || 0;
+  if (el('statTotalDecode')) el('statTotalDecode').textContent = s.totalDecode || 0;
+}
+
+document.getElementById('btnResetStats')?.addEventListener('click', () => {
+  sessionEncodeCount = 0;
+  sessionDecodeCount = 0;
+  saveStats({});
+  renderStats();
+  showToast('统计已重置', 'success');
+});
+
+// Expose for decode page cross-page stat increment via BroadcastChannel
+let _encodePageChannel = null;
+try {
+  _encodePageChannel = new BroadcastChannel('inn_stego');
+  _encodePageChannel.onmessage = e => { if (e.data === 'decoded') { sessionDecodeCount++; renderStats(); } };
+} catch(_) {}
+window.addEventListener('unload', () => { if (_encodePageChannel) _encodePageChannel.close(); });
+
+renderStats();
 </script>
 </body>
 </html>
