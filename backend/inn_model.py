@@ -218,7 +218,7 @@ def pil_to_tensor(img: Image.Image) -> torch.Tensor:
 
 def tensor_to_pil(t: torch.Tensor) -> Image.Image:
     """Convert a tensor [1, 3, H, W] in [0,1] to a PIL Image."""
-    arr = t.squeeze(0).permute(1, 2, 0).detach().numpy()
+    arr = t.squeeze(0).permute(1, 2, 0).detach().cpu().numpy()
     arr = np.clip(arr, 0.0, 1.0)
     return Image.fromarray((arr * 255).astype(np.uint8))
 

@@ -387,7 +387,7 @@ def _pil_to_b64(img: Image.Image, fmt: str = "PNG") -> str:
 def _tensor_to_b64(t: torch.Tensor) -> str:
     """Serialise a float32 tensor to base64 for transport."""
     buf = io.BytesIO()
-    np.save(buf, t.detach().numpy())
+    np.save(buf, t.detach().cpu().numpy())
     return base64.b64encode(buf.getvalue()).decode("utf-8")
 
 
