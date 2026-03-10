@@ -646,7 +646,12 @@ function showUploadPreview(zone, file) {
   const reader = new FileReader();
   reader.onload = ev => {
     const inner = zone.querySelector('div');
-    if (inner) inner.style.backgroundImage = `url(${ev.target.result})`;
+    if (inner) {
+      inner.style.backgroundImage = `url(${ev.target.result})`;
+      inner.style.backgroundSize = 'contain';
+      inner.style.backgroundRepeat = 'no-repeat';
+      inner.style.backgroundPosition = 'center';
+    }
     const label = zone.querySelector('p.text-sm');
     if (label) { label.textContent = file.name; }
     const sub = zone.querySelector('p.text-xs');
@@ -1072,7 +1077,12 @@ document.querySelectorAll('button').forEach(btn => {
         if (uploadNoiseLbl) uploadNoiseLbl.classList.remove('hidden');
         if (secretZone) {
           const inner = secretZone.querySelector('div');
-          if (inner) inner.style.backgroundImage = '';
+          if (inner) {
+            inner.style.backgroundImage = '';
+            inner.style.backgroundSize = '';
+            inner.style.backgroundRepeat = '';
+            inner.style.backgroundPosition = '';
+          }
           const label = secretZone.querySelector('p.text-sm');
           if (label) label.textContent = '点击上传或拖拽图像至此';
           const sub = secretZone.querySelector('p.text-xs');
