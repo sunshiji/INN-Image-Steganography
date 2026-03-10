@@ -737,7 +737,7 @@ async function refreshModelStatus() {
     const nameEl   = document.getElementById('modelName');
     const archEl   = document.getElementById('modelArch');
     const wstatEl  = document.getElementById('modelWeightsStatus');
-    if (nameEl) nameEl.textContent = data.active_model === 'HiNet' ? 'HiNet（已加载权重）' : 'INN-Stego（内置）';
+    if (nameEl) nameEl.textContent = data.active_model === 'HiNet' ? 'RsaNet（已加载权重）' : 'INN-Stego（内置）';
     if (archEl) archEl.textContent = data.active_model === 'HiNet' ? 'Haar DWT + RRDB × 16' : 'Haar DWT + Coupling × 8';
     if (wstatEl) {
       if (data.hinet_weights_loaded) {
