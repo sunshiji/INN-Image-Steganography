@@ -157,7 +157,7 @@
           <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-5 flex items-start gap-3">
             <i class="fa-solid fa-circle-info text-amber-400 mt-0.5 flex-shrink-0"></i>
             <p class="text-sm text-amber-700">
-              若秘密图像在隐写前进行了 Logistic 混沌加密，请输入与加密时相同的密钥参数，执行解密以还原原始图像。
+              若秘密图像在隐写前进行了混沌加密，请输入与加密时相同的密钥参数，执行解密以还原原始图像。
             </p>
           </div>
           <!-- Logistic params grid -->
@@ -533,7 +533,7 @@ function showDecodeResult(data) {
     <div class="mt-3 pt-3 border-t border-slate-100">
       <p class="text-xs text-slate-400 mb-2 flex items-center gap-1">
         <i class="fa-solid fa-circle-info text-amber-400" aria-label="信息提示"></i>
-        若秘密图像在隐写前进行了 Logistic 混沌加密，可继续执行 Step 2 解密还原。
+        若秘密图像在隐写前进行了混沌加密，可继续执行 Step 2 解密还原。
       </p>
       <button id="showDecryptPanelBtn"
         class="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2"
@@ -728,7 +728,7 @@ function showChaosDecryptResult(data) {
         <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
           <i class="fa-solid fa-circle-check text-amber-500"></i>解密完成
         </h3>
-        <span class="text-xs bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-bold">Logistic 解密</span>
+        <span class="text-xs bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-bold">混沌解密</span>
       </div>
       <div class="text-center mb-4">
         <img src="${decImageUrl}"

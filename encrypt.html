@@ -241,10 +241,10 @@
         <!-- Logistic Map Parameter Configuration (hidden: fixed parameters used in backend) -->
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6" style="display:none">
           <h2 class="text-base font-bold text-slate-800 mb-2 flex items-center gap-2">
-            <i class="fa-solid fa-key text-amber-500"></i> Logistic 混沌密钥配置
+            <i class="fa-solid fa-key text-amber-500"></i> 混沌密钥配置
           </h2>
           <p class="text-sm text-slate-500 mb-5">
-            Logistic 映射：
+            混沌映射：
             <span class="formula-box inline-block ml-2">x<sub>n+1</sub> = r · x<sub>n</sub> · (1 − x<sub>n</sub>)</span>
             <span class="ml-2 text-xs text-slate-400">当 r ∈ (3.57, 4] 时系统呈完全混沌状态</span>
           </p>
@@ -426,7 +426,7 @@
         <div id="encryptProgressWrap" class="hidden bg-white rounded-2xl border border-amber-100 shadow-sm p-5">
           <div class="flex items-center justify-between text-xs mb-2">
             <span id="encryptProgressLabel" class="font-semibold text-amber-700">
-              <i class="fa-solid fa-spinner fa-spin mr-1"></i>正在执行 Logistic 混沌加密...
+              <i class="fa-solid fa-spinner fa-spin mr-1"></i>正在执行混沌加密...
             </span>
             <span id="encryptProgressPct" class="font-bold text-amber-600">0%</span>
           </div>
@@ -436,7 +436,7 @@
           <div class="grid grid-cols-3 gap-2 text-xs text-center">
             <div id="pstep1" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
               <p id="pstep1lbl" class="font-semibold text-slate-500">生成混沌序列</p>
-              <p class="text-slate-400">Logistic 迭代</p>
+              <p class="text-slate-400">混沌迭代</p>
             </div>
             <div id="pstep2" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
               <p id="pstep2lbl" class="font-semibold text-slate-500">像素置乱</p>
@@ -837,7 +837,7 @@ if (encryptBtn) {
       advanceStep(1);   // step 1 done, step 2 active so user can retry
       showToast('加密失败: ' + err.message, 'error');
     } finally {
-      setLoading(encryptBtn, false, 'Logistic 混沌加密');
+      setLoading(encryptBtn, false, '混沌加密');
     }
   });
 }
