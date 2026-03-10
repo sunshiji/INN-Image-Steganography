@@ -160,8 +160,8 @@
               若秘密图像在隐写前进行了混沌加密，请输入与加密时相同的密钥参数，执行解密以还原原始图像。
             </p>
           </div>
-          <!-- Logistic params grid -->
-          <div class="grid grid-cols-2 gap-5 mb-5">
+          <!-- Logistic params grid (hidden: parameters are fixed in backend) -->
+          <div class="grid grid-cols-2 gap-5 mb-5" style="display:none">
             <div>
               <label class="block text-sm font-semibold text-slate-600 mb-2">
                 混沌参数 r
@@ -214,6 +214,32 @@
             <i class="fa-solid fa-lock-open"></i>
             执行混沌解密
           </button>
+          <!-- Decrypt progress bar (shown during API call) -->
+          <div id="decryptProgressWrap" class="hidden bg-amber-50 rounded-xl border border-amber-100 p-4 mb-4">
+            <div class="flex items-center justify-between text-xs mb-2">
+              <span id="decryptProgressLabel" class="font-semibold text-amber-700">
+                <i class="fa-solid fa-spinner fa-spin mr-1"></i>正在执行混沌解密...
+              </span>
+              <span id="decryptProgressPct" class="font-bold text-amber-600">0%</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2.5 mb-3">
+              <div id="decryptProgressBar" class="bg-amber-500 h-2.5 rounded-full" style="width:0%;transition:width 0.5s ease"></div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-xs text-center">
+              <div id="dpstep1" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                <p id="dpstep1lbl" class="font-semibold text-slate-500">生成混沌序列</p>
+                <p class="text-slate-400">混沌迭代</p>
+              </div>
+              <div id="dpstep2" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                <p id="dpstep2lbl" class="font-semibold text-slate-500">逆向置乱</p>
+                <p class="text-slate-400">逆置换</p>
+              </div>
+              <div id="dpstep3" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                <p id="dpstep3lbl" class="font-semibold text-slate-500">逆扩散解密</p>
+                <p class="text-slate-400">XOR 操作</p>
+              </div>
+            </div>
+          </div>
           <!-- Result area (populated after decrypt) -->
           <div id="chaosDecryptResult" hidden></div>
         </div>
@@ -587,6 +613,14 @@ if (resetBtn) {
       panel.setAttribute('hidden', '');
       const cdResult = document.getElementById('chaosDecryptResult');
       if (cdResult) { cdResult.setAttribute('hidden', ''); cdResult.innerHTML = ''; }
+      // Hide progress wrap
+      clearInterval(_decryptProgressTimer);
+      const progressWrap = document.getElementById('decryptProgressWrap');
+      if (progressWrap) {
+        progressWrap.classList.add('hidden');
+        const bar = document.getElementById('decryptProgressBar');
+        if (bar) { bar.style.width = '0%'; bar.style.background = ''; }
+      }
       // Reset sliders to defaults
       const rSlider = document.getElementById('dR');
       const x0Slider = document.getElementById('dX0');
@@ -640,6 +674,91 @@ function showToast(msg, type) {
 // Default Logistic key params (must match HTML initial values)
 const _DECRYPT_DEFAULTS = { r: '3.9991', x0: '0.37291', n0: '500', rounds: '2' };
 
+// Progress bar animation for chaos decrypt
+let _decryptProgressTimer = null;
+
+function startDecryptProgress() {
+  const wrap = document.getElementById('decryptProgressWrap');
+  const bar  = document.getElementById('decryptProgressBar');
+  const pct  = document.getElementById('decryptProgressPct');
+  const lbl  = document.getElementById('decryptProgressLabel');
+  if (!wrap) return;
+
+  wrap.classList.remove('hidden');
+  bar.style.width = '0%';
+  if (pct) pct.textContent = '0%';
+
+  const phases = [
+    { target: 35, phaseName: '生成混沌序列...' },
+    { target: 70, phaseName: '逆向置乱中...' },
+    { target: 95, phaseName: '逆扩散解密中...' },
+  ];
+  let current = 0;
+  let phaseIdx = 0;
+
+  _activateDecryptProgressPhase(0);
+
+  _decryptProgressTimer = setInterval(() => {
+    if (phaseIdx < phases.length) {
+      const phase = phases[phaseIdx];
+      current += (phase.target - (phaseIdx === 0 ? 0 : phases[phaseIdx - 1].target)) * 0.04;
+      if (current >= phase.target) {
+        current = phase.target;
+        phaseIdx++;
+        if (phaseIdx < phases.length) _activateDecryptProgressPhase(phaseIdx);
+      }
+    } else {
+      current = Math.min(current + 0.3, 95);
+    }
+    const v = Math.round(current);
+    bar.style.width = v + '%';
+    if (pct) pct.textContent = v + '%';
+    if (lbl) {
+      const pname = phaseIdx < phases.length ? phases[phaseIdx].phaseName : '等待服务器响应...';
+      lbl.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>' + pname;
+    }
+  }, 80);
+}
+
+function _activateDecryptProgressPhase(idx) {
+  ['dpstep1', 'dpstep2', 'dpstep3'].forEach((id, i) => {
+    const el  = document.getElementById(id);
+    const lbl = document.getElementById(id + 'lbl');
+    if (!el || !lbl) return;
+    if (i < idx) {
+      el.className  = 'bg-emerald-50 rounded-lg p-2 border border-emerald-100';
+      lbl.className = 'font-semibold text-emerald-700';
+    } else if (i === idx) {
+      el.className  = 'bg-amber-50 rounded-lg p-2 border border-amber-200';
+      lbl.className = 'font-semibold text-amber-700';
+    } else {
+      el.className  = 'bg-slate-50 rounded-lg p-2 border border-slate-100';
+      lbl.className = 'font-semibold text-slate-400';
+    }
+  });
+}
+
+function finishDecryptProgress(success) {
+  clearInterval(_decryptProgressTimer);
+  const bar  = document.getElementById('decryptProgressBar');
+  const pct  = document.getElementById('decryptProgressPct');
+  const lbl  = document.getElementById('decryptProgressLabel');
+  const wrap = document.getElementById('decryptProgressWrap');
+  if (!bar) return;
+  if (success) {
+    bar.style.width = '100%';
+    if (pct) pct.textContent = '100%';
+    bar.style.background = '#10b981';
+    if (lbl) lbl.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i>解密完成！';
+    _activateDecryptProgressPhase(3);
+    setTimeout(() => { if (wrap) wrap.classList.add('hidden'); }, 1800);
+  } else {
+    bar.style.background = '#ef4444';
+    if (lbl) lbl.innerHTML = '<i class="fa-solid fa-circle-xmark mr-1"></i>解密失败';
+    setTimeout(() => { if (wrap) wrap.classList.add('hidden'); }, 2500);
+  }
+}
+
 // Slider live-value display
 document.addEventListener('DOMContentLoaded', () => {
   const sliders = [
@@ -669,6 +788,7 @@ if (chaosDecryptBtn) {
     chaosDecryptBtn.disabled = true;
     chaosDecryptBtn.style.opacity = '0.7';
     chaosDecryptBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>解密中...';
+    startDecryptProgress();
     try {
       // Build image File from stored base64
       const bytes = Uint8Array.from(atob(_recoveredSecretB64), c => c.charCodeAt(0));
@@ -692,7 +812,9 @@ if (chaosDecryptBtn) {
       const data = await resp.json();
       showChaosDecryptResult(data);
       showToast('混沌解密成功 ✓', 'success');
+      finishDecryptProgress(true);
     } catch (err) {
+      finishDecryptProgress(false);
       showToast('混沌解密失败: ' + err.message, 'error');
     } finally {
       chaosDecryptBtn.disabled = false;
