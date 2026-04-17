@@ -8,10 +8,10 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
   <style>
     body { font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f8fafc; }
-    .hero-gradient { background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #ede9fe 100%); }
-    .feature-card:hover { transform: translateY(-4px); transition: transform 0.25s ease, box-shadow 0.25s ease; box-shadow: 0 10px 30px rgba(99,102,241,0.12); }
+    .hero-gradient { background: linear-gradient(135deg, #fff7ed 0%, #fefce8 50%, #ffedd5 100%); }
+    .feature-card:hover { transform: translateY(-4px); transition: transform 0.25s ease, box-shadow 0.25s ease; box-shadow: 0 10px 30px rgba(249,115,22,0.12); }
     .feature-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
-    .step-line::after { content: ''; position: absolute; top: 50%; left: 100%; width: 80px; height: 2px; background: #c7d2fe; transform: translateY(-50%); }
+    .step-line::after { content: ''; position: absolute; top: 50%; left: 100%; width: 80px; height: 2px; background: #fed7aa; transform: translateY(-50%); }
     .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
   </style>
 </head>
@@ -21,22 +21,22 @@
   <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
     <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
+        <div class="w-9 h-9 rounded-xl bg-orange-600 flex items-center justify-center">
           <i class="fa-solid fa-eye-slash text-white text-sm"></i>
         </div>
         <div>
-          <span class="text-lg font-bold text-indigo-700">INN</span>
+          <span class="text-lg font-bold text-orange-700">INN</span>
           <span class="text-lg font-semibold text-slate-700"> 图像隐写系统</span>
         </div>
       </div>
       <nav class="flex items-center gap-6 text-sm font-medium text-slate-600">
-        <a href="/home.html" class="text-indigo-600 font-semibold">首页</a>
+        <a href="/home.html" class="text-orange-600 font-semibold">首页</a>
         <a href="/encrypt.html" class="hover:text-amber-600 transition-colors">混沌加密</a>
-        <a href="/encode.html" class="hover:text-indigo-600 transition-colors">隐写编码</a>
-        <a href="/decode.html" class="hover:text-indigo-600 transition-colors">隐写解码</a>
-        <a href="/gallery.html" class="hover:text-indigo-600 transition-colors">图库示例</a>
-        <a href="/settings.html" class="hover:text-indigo-600 transition-colors">系统设置</a>
-        <button class="ml-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+        <a href="/encode.html" class="hover:text-orange-600 transition-colors">隐写编码</a>
+        <a href="/decode.html" class="hover:text-orange-600 transition-colors">隐写解码</a>
+        <a href="/gallery.html" class="hover:text-orange-600 transition-colors">图库示例</a>
+        <a href="/settings.html" class="hover:text-orange-600 transition-colors">系统设置</a>
+        <button class="ml-2 px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 transition-colors">
           开始使用
         </button>
         <button onclick="doLogout()" class="ml-1 px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors">
@@ -49,23 +49,23 @@
   <!-- Hero Section -->
   <section class="hero-gradient py-20 px-6">
     <div class="max-w-6xl mx-auto text-center">
-      <div class="badge bg-indigo-100 text-indigo-700 mx-auto mb-6">
+      <div class="badge bg-orange-100 text-orange-700 mx-auto mb-6">
         <i class="fa-solid fa-microchip"></i>
         基于可逆神经网络（INN）技术
       </div>
       <h1 class="text-5xl font-extrabold text-slate-800 mb-6 leading-tight">
         智能图像隐写系统<br/>
-        <span class="text-indigo-600">安全 · 高保真 · 可逆</span>
+        <span class="text-orange-600">安全 · 高保真 · 可逆</span>
       </h1>
       <p class="text-lg text-slate-600 max-w-2xl mx-auto mb-10">
         利用可逆神经网络（Invertible Neural Network）将秘密图像无损隐藏于载体图像中，
         实现高容量、高安全性的图像信息隐写与完整恢复。
       </p>
       <div class="flex items-center justify-center gap-4">
-        <button class="px-8 py-3.5 bg-indigo-600 text-white rounded-xl font-semibold text-base hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200">
+        <button class="px-8 py-3.5 bg-orange-600 text-white rounded-xl font-semibold text-base hover:bg-orange-700 transition-colors shadow-md shadow-orange-200">
           <i class="fa-solid fa-play mr-2"></i>立即体验
         </button>
-        <button class="px-8 py-3.5 bg-white text-indigo-600 border border-indigo-200 rounded-xl font-semibold text-base hover:bg-indigo-50 transition-colors">
+        <button class="px-8 py-3.5 bg-white text-orange-600 border border-orange-200 rounded-xl font-semibold text-base hover:bg-orange-50 transition-colors">
           <i class="fa-solid fa-book-open mr-2"></i>查看文档
         </button>
       </div>
@@ -79,20 +79,20 @@
           <p class="mt-3 text-xs font-semibold text-slate-500 text-center">载体图像（Cover Image）</p>
         </div>
         <div class="text-slate-400 text-2xl flex flex-col items-center gap-2">
-          <i class="fa-solid fa-plus text-indigo-400 text-xl"></i>
+          <i class="fa-solid fa-plus text-orange-400 text-xl"></i>
         </div>
         <div class="bg-white rounded-2xl shadow-lg p-5 w-48 border border-slate-100">
-          <div class="w-full h-32 bg-gradient-to-br from-purple-100 to-violet-200 rounded-xl flex items-center justify-center">
-            <i class="fa-solid fa-lock text-purple-400 text-4xl"></i>
+          <div class="w-full h-32 bg-gradient-to-br from-amber-100 to-orange-200 rounded-xl flex items-center justify-center">
+            <i class="fa-solid fa-lock text-amber-500 text-4xl"></i>
           </div>
           <p class="mt-3 text-xs font-semibold text-slate-500 text-center">秘密图像（Secret Image）</p>
         </div>
         <div class="flex flex-col items-center gap-1">
-          <div class="w-16 h-0.5 bg-indigo-300"></div>
-          <div class="px-3 py-1.5 bg-indigo-600 rounded-lg">
+          <div class="w-16 h-0.5 bg-orange-300"></div>
+          <div class="px-3 py-1.5 bg-orange-600 rounded-lg">
             <i class="fa-solid fa-arrow-right text-white text-sm"></i>
           </div>
-          <p class="text-xs text-indigo-500 font-medium mt-1">INN编码</p>
+          <p class="text-xs text-orange-500 font-medium mt-1">INN编码</p>
         </div>
         <div class="bg-white rounded-2xl shadow-lg p-5 w-48 border border-slate-100">
           <div class="w-full h-32 bg-gradient-to-br from-emerald-100 to-teal-200 rounded-xl flex items-center justify-center">
@@ -108,19 +108,19 @@
   <div class="bg-white border-y border-slate-200 py-8">
     <div class="max-w-5xl mx-auto px-6 grid grid-cols-4 gap-8 text-center">
       <div>
-        <div class="text-3xl font-extrabold text-indigo-600">≥40dB</div>
+        <div class="text-3xl font-extrabold text-orange-600">≥40dB</div>
         <div class="text-sm text-slate-500 mt-1">峰值信噪比 PSNR</div>
       </div>
       <div>
-        <div class="text-3xl font-extrabold text-indigo-600">100%</div>
+        <div class="text-3xl font-extrabold text-orange-600">100%</div>
         <div class="text-sm text-slate-500 mt-1">秘密图像恢复率</div>
       </div>
       <div>
-        <div class="text-3xl font-extrabold text-indigo-600">≥0.99</div>
+        <div class="text-3xl font-extrabold text-orange-600">≥0.99</div>
         <div class="text-sm text-slate-500 mt-1">结构相似度 SSIM</div>
       </div>
       <div>
-        <div class="text-3xl font-extrabold text-indigo-600">实时</div>
+        <div class="text-3xl font-extrabold text-slate-600">实时</div>
         <div class="text-sm text-slate-500 mt-1">GPU加速推理</div>
       </div>
     </div>
@@ -147,14 +147,14 @@
           </div>
         </div>
         <div class="feature-card bg-white rounded-2xl p-7 border border-slate-100 shadow-sm">
-          <div class="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center mb-5">
-            <i class="fa-solid fa-key text-violet-600 text-xl"></i>
+          <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-5">
+            <i class="fa-solid fa-key text-amber-600 text-xl"></i>
           </div>
           <h3 class="text-lg font-bold text-slate-800 mb-2">隐写信息解码</h3>
           <p class="text-sm text-slate-500 leading-relaxed">
             从隐写图像中精确还原秘密图像，利用INN的可逆特性实现无损提取，恢复质量极高。
           </p>
-          <div class="mt-5 flex items-center gap-2 text-violet-600 text-sm font-medium">
+          <div class="mt-5 flex items-center gap-2 text-amber-600 text-sm font-medium">
             <span>前往解码</span><i class="fa-solid fa-arrow-right text-xs"></i>
           </div>
         </div>
@@ -219,34 +219,34 @@
       </div>
       <div class="flex items-start justify-between gap-4">
         <div class="flex-1 text-center relative">
-          <div class="w-14 h-14 bg-indigo-600 text-white rounded-2xl flex items-center justify-center mx-auto text-xl font-bold shadow-lg shadow-indigo-200 mb-4">1</div>
+          <div class="w-14 h-14 bg-orange-600 text-white rounded-2xl flex items-center justify-center mx-auto text-xl font-bold shadow-lg shadow-orange-200 mb-4">1</div>
           <h4 class="font-bold text-slate-700 mb-2">上传图像</h4>
           <p class="text-sm text-slate-500">分别上传载体图像和需要隐藏的秘密图像</p>
         </div>
-        <div class="flex items-center mt-6 text-indigo-300 text-xl">
+        <div class="flex items-center mt-6 text-orange-300 text-xl">
           <i class="fa-solid fa-chevron-right"></i>
           <i class="fa-solid fa-chevron-right -ml-2"></i>
         </div>
         <div class="flex-1 text-center relative">
-          <div class="w-14 h-14 bg-indigo-500 text-white rounded-2xl flex items-center justify-center mx-auto text-xl font-bold shadow-lg shadow-indigo-200 mb-4">2</div>
+          <div class="w-14 h-14 bg-orange-500 text-white rounded-2xl flex items-center justify-center mx-auto text-xl font-bold shadow-lg shadow-orange-200 mb-4">2</div>
           <h4 class="font-bold text-slate-700 mb-2">INN编码</h4>
           <p class="text-sm text-slate-500">可逆神经网络对图像进行前向变换，生成隐写图像</p>
         </div>
-        <div class="flex items-center mt-6 text-indigo-300 text-xl">
+        <div class="flex items-center mt-6 text-orange-300 text-xl">
           <i class="fa-solid fa-chevron-right"></i>
           <i class="fa-solid fa-chevron-right -ml-2"></i>
         </div>
         <div class="flex-1 text-center relative">
-          <div class="w-14 h-14 bg-violet-500 text-white rounded-2xl flex items-center justify-center mx-auto text-xl font-bold shadow-lg shadow-violet-200 mb-4">3</div>
+          <div class="w-14 h-14 bg-amber-600 text-white rounded-2xl flex items-center justify-center mx-auto text-xl font-bold shadow-lg shadow-amber-200 mb-4">3</div>
           <h4 class="font-bold text-slate-700 mb-2">INN解码</h4>
           <p class="text-sm text-slate-500">利用网络的可逆特性，对隐写图像执行逆变换</p>
         </div>
-        <div class="flex items-center mt-6 text-indigo-300 text-xl">
+        <div class="flex items-center mt-6 text-orange-300 text-xl">
           <i class="fa-solid fa-chevron-right"></i>
           <i class="fa-solid fa-chevron-right -ml-2"></i>
         </div>
         <div class="flex-1 text-center relative">
-          <div class="w-14 h-14 bg-emerald-500 text-white rounded-2xl flex items-center justify-center mx-auto text-xl font-bold shadow-lg shadow-emerald-200 mb-4">4</div>
+          <div class="w-14 h-14 bg-orange-700 text-white rounded-2xl flex items-center justify-center mx-auto text-xl font-bold shadow-lg shadow-orange-200 mb-4">4</div>
           <h4 class="font-bold text-slate-700 mb-2">完整恢复</h4>
           <p class="text-sm text-slate-500">精确还原秘密图像，保证视觉质量与内容完整性</p>
         </div>
@@ -256,38 +256,38 @@
       <div class="mt-14 bg-slate-50 rounded-2xl border border-slate-200 p-8">
         <h3 class="text-base font-bold text-slate-700 mb-6 text-center">INN 网络架构示意图</h3>
         <div class="flex items-center justify-center gap-4 flex-wrap">
-          <div class="bg-blue-100 border border-blue-200 rounded-xl px-5 py-4 text-center">
-            <i class="fa-solid fa-image text-blue-500 text-2xl mb-2 block"></i>
-            <div class="text-xs font-bold text-blue-700">Cover Image<br/><span class="font-normal text-blue-500">载体图像</span></div>
+          <div class="bg-orange-100 border border-orange-200 rounded-xl px-5 py-4 text-center">
+            <i class="fa-solid fa-image text-orange-500 text-2xl mb-2 block"></i>
+            <div class="text-xs font-bold text-orange-700">Cover Image<br/><span class="font-normal text-orange-500">载体图像</span></div>
           </div>
           <div class="flex flex-col items-center gap-1">
             <i class="fa-solid fa-arrow-right text-slate-400"></i>
           </div>
-          <div class="bg-indigo-100 border border-indigo-200 rounded-xl px-5 py-4 text-center min-w-24">
-            <i class="fa-solid fa-network-wired text-indigo-500 text-2xl mb-2 block"></i>
-            <div class="text-xs font-bold text-indigo-700">Haar Wavelet<br/><span class="font-normal text-indigo-500">小波变换</span></div>
+          <div class="bg-orange-50 border border-orange-200 rounded-xl px-5 py-4 text-center min-w-24">
+            <i class="fa-solid fa-network-wired text-orange-500 text-2xl mb-2 block"></i>
+            <div class="text-xs font-bold text-orange-700">Haar Wavelet<br/><span class="font-normal text-orange-500">小波变换</span></div>
           </div>
           <div class="flex flex-col items-center gap-1">
             <i class="fa-solid fa-arrow-right text-slate-400"></i>
           </div>
-          <div class="bg-violet-100 border border-violet-200 rounded-xl px-5 py-4 text-center min-w-24">
-            <i class="fa-solid fa-layer-group text-violet-500 text-2xl mb-2 block"></i>
-            <div class="text-xs font-bold text-violet-700">Coupling Layers<br/><span class="font-normal text-violet-500">耦合层堆叠</span></div>
+          <div class="bg-amber-100 border border-amber-200 rounded-xl px-5 py-4 text-center min-w-24">
+            <i class="fa-solid fa-layer-group text-amber-500 text-2xl mb-2 block"></i>
+            <div class="text-xs font-bold text-amber-700">Coupling Layers<br/><span class="font-normal text-amber-500">耦合层堆叠</span></div>
           </div>
           <div class="flex flex-col items-center gap-1">
             <i class="fa-solid fa-arrow-right text-slate-400"></i>
           </div>
-          <div class="bg-emerald-100 border border-emerald-200 rounded-xl px-5 py-4 text-center">
-            <i class="fa-solid fa-eye-slash text-emerald-500 text-2xl mb-2 block"></i>
-            <div class="text-xs font-bold text-emerald-700">Stego Image<br/><span class="font-normal text-emerald-500">隐写图像</span></div>
+          <div class="bg-orange-100 border border-orange-200 rounded-xl px-5 py-4 text-center">
+            <i class="fa-solid fa-eye-slash text-orange-500 text-2xl mb-2 block"></i>
+            <div class="text-xs font-bold text-orange-700">Stego Image<br/><span class="font-normal text-orange-500">隐写图像</span></div>
           </div>
           <div class="w-full flex items-center justify-center gap-4 mt-4">
-            <div class="bg-purple-100 border border-purple-200 rounded-xl px-5 py-4 text-center">
-              <i class="fa-solid fa-lock text-purple-500 text-2xl mb-2 block"></i>
-              <div class="text-xs font-bold text-purple-700">Secret Image<br/><span class="font-normal text-purple-500">秘密图像</span></div>
+            <div class="bg-amber-100 border border-amber-200 rounded-xl px-5 py-4 text-center">
+              <i class="fa-solid fa-lock text-amber-500 text-2xl mb-2 block"></i>
+              <div class="text-xs font-bold text-amber-700">Secret Image<br/><span class="font-normal text-amber-500">秘密图像</span></div>
             </div>
             <div class="text-xs text-slate-400 text-center bg-white border border-dashed border-slate-300 rounded-lg px-4 py-3">
-              <i class="fa-solid fa-arrows-rotate text-indigo-400 text-lg mb-1 block"></i>
+              <i class="fa-solid fa-arrows-rotate text-orange-400 text-lg mb-1 block"></i>
               双向可逆<br/>前向：隐写编码<br/>逆向：隐写解码
             </div>
           </div>
@@ -299,7 +299,7 @@
   <footer class="bg-slate-800 text-slate-400 py-10 px-6">
     <div class="max-w-6xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center">
+        <div class="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center">
           <i class="fa-solid fa-eye-slash text-white text-xs"></i>
         </div>
         <span class="font-semibold text-white">INN 图像隐写系统</span>

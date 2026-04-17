@@ -8,14 +8,14 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
   <style>
     body { font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
-    .upload-zone { border: 2px dashed #c7d2fe; transition: all 0.2s; }
-    .upload-zone:hover { border-color: #6366f1; background: #eef2ff; }
-    .upload-zone.has-image { border-style: solid; border-color: #6366f1; }
+    .upload-zone { border: 2px dashed #fed7aa; transition: all 0.2s; }
+    .upload-zone:hover { border-color: #ea580c; background: #fff7ed; }
+    .upload-zone.has-image { border-style: solid; border-color: #ea580c; }
     .progress-bar { transition: width 0.5s ease; }
-    .step-active { background: #6366f1; color: white; }
+    .step-active { background: #ea580c; color: white; }
     .step-done { background: #10b981; color: white; }
     .step-pending { background: #e2e8f0; color: #94a3b8; }
-    .param-slider::-webkit-slider-thumb { background: #6366f1; }
+    .param-slider::-webkit-slider-thumb { background: #ea580c; }
     .tag { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
   </style>
 </head>
@@ -25,27 +25,27 @@
   <header class="bg-white border-b border-slate-200 shadow-sm">
     <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
+        <div class="w-9 h-9 rounded-xl bg-orange-600 flex items-center justify-center">
           <i class="fa-solid fa-eye-slash text-white text-sm"></i>
         </div>
         <div>
-          <span class="text-lg font-bold text-indigo-700">INN</span>
+          <span class="text-lg font-bold text-orange-700">INN</span>
           <span class="text-lg font-semibold text-slate-700"> 图像隐写系统</span>
         </div>
       </div>
       <nav class="flex items-center gap-6 text-sm font-medium text-slate-600">
-        <a href="/home.html" class="hover:text-indigo-600 transition-colors">首页</a>
+        <a href="/home.html" class="hover:text-orange-600 transition-colors">首页</a>
         <a href="/encrypt.html" class="hover:text-amber-600 transition-colors">混沌加密</a>
-        <a href="/encode.html" class="text-indigo-600 font-semibold">隐写编码</a>
-        <a href="/decode.html" class="hover:text-indigo-600 transition-colors">隐写解码</a>
-        <a href="/gallery.html" class="hover:text-indigo-600 transition-colors">图库示例</a>
-        <a href="/settings.html" class="hover:text-indigo-600 transition-colors">系统设置</a>
+        <a href="/encode.html" class="text-orange-600 font-semibold">隐写编码</a>
+        <a href="/decode.html" class="hover:text-orange-600 transition-colors">隐写解码</a>
+        <a href="/gallery.html" class="hover:text-orange-600 transition-colors">图库示例</a>
+        <a href="/settings.html" class="hover:text-orange-600 transition-colors">系统设置</a>
       </nav>
     </div>
   </header>
 
   <!-- Pipeline Banner -->
-  <div class="bg-gradient-to-r from-indigo-50 to-violet-50 border-b border-indigo-100">
+  <div class="bg-gradient-to-r from-orange-50 to-orange-50 border-b border-orange-100">
     <div class="max-w-7xl mx-auto px-6 py-4">
       <div class="flex items-center justify-center gap-3 flex-wrap">
         <div class="flex items-center gap-2 bg-white border border-slate-200 text-slate-500 px-4 py-2 rounded-xl text-sm">
@@ -53,13 +53,13 @@
           <i class="fa-solid fa-lock-open text-amber-500 text-xs"></i>
           <span class="text-emerald-700 font-semibold">混沌加密</span>
         </div>
-        <div class="text-indigo-300 text-lg font-bold">→</div>
-        <div class="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl font-semibold text-sm shadow-sm shadow-indigo-200">
+        <div class="text-orange-300 text-lg font-bold">→</div>
+        <div class="flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-xl font-semibold text-sm shadow-sm shadow-orange-200">
           <div class="w-6 h-6 bg-white bg-opacity-25 rounded-lg flex items-center justify-center text-xs font-bold">2</div>
           <i class="fa-solid fa-file-image text-xs"></i>
           INN隐写编码
         </div>
-        <div class="text-indigo-300 text-lg font-bold">→</div>
+        <div class="text-orange-300 text-lg font-bold">→</div>
         <div class="flex items-center gap-2 bg-white border border-slate-200 text-slate-500 px-4 py-2 rounded-xl text-sm">
           <div class="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center text-xs font-bold text-slate-400">3</div>
           <i class="fa-solid fa-key text-xs"></i>
@@ -79,11 +79,11 @@
     <!-- Page Title -->
     <div class="mb-8">
       <div class="flex items-center gap-3 mb-2">
-        <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-          <i class="fa-solid fa-file-image text-indigo-600"></i>
+        <div class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+          <i class="fa-solid fa-file-image text-orange-600"></i>
         </div>
         <h1 class="text-2xl font-bold text-slate-800">INN 隐写编码</h1>
-        <span class="tag bg-indigo-100 text-indigo-700">ENCODE</span>
+        <span class="tag bg-orange-100 text-orange-700">ENCODE</span>
         <span class="tag bg-slate-100 text-slate-600">步骤 2 / 4</span>
       </div>
       <p class="text-slate-500 text-sm">将 <span class="font-semibold text-amber-600">混沌加密后</span>的秘密图像嵌入载体图像，生成携带加密隐写信息的隐写图像</p>
@@ -95,9 +95,9 @@
         <div class="flex-1 flex items-center">
           <div class="flex flex-col items-center">
             <div class="w-9 h-9 rounded-full step-active flex items-center justify-center text-sm font-bold shadow-md">1</div>
-            <span class="text-xs mt-2 font-medium text-indigo-600">上传图像</span>
+            <span class="text-xs mt-2 font-medium text-orange-600">上传图像</span>
           </div>
-          <div class="flex-1 h-0.5 bg-indigo-200 mx-3"></div>
+          <div class="flex-1 h-0.5 bg-orange-200 mx-3"></div>
         </div>
         <div class="flex-1 flex items-center">
           <div class="flex flex-col items-center">
@@ -127,7 +127,7 @@
         <!-- Upload Area -->
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
           <h2 class="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
-            <i class="fa-solid fa-upload text-indigo-500"></i> 上传图像
+            <i class="fa-solid fa-upload text-orange-500"></i> 上传图像
           </h2>
           <div class="grid grid-cols-2 gap-5">
             <!-- Cover Image Upload -->
@@ -149,7 +149,7 @@
                     <p class="text-sm font-medium text-slate-500">未选择文件</p>
                     <p class="text-xs text-slate-400" style="display:none"></p>
                   </div>
-                  <button class="text-xs text-indigo-500 hover:text-indigo-700 font-medium">重新上传</button>
+                  <button class="text-xs text-orange-500 hover:text-orange-700 font-medium">重新上传</button>
                 </div>
               </div>
             </div>
@@ -175,7 +175,7 @@
                     <p class="text-sm font-medium text-amber-600">未选择文件</p>
                     <p class="text-xs text-amber-500" style="display:none"></p>
                   </div>
-                  <button class="text-xs text-indigo-500 hover:text-indigo-700 font-medium border border-indigo-200 px-2 py-1 rounded-lg">重新上传</button>
+                  <button class="text-xs text-orange-500 hover:text-orange-700 font-medium border border-orange-200 px-2 py-1 rounded-lg">重新上传</button>
                 </div>
               </div>
               <div class="mt-2 flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
@@ -190,14 +190,14 @@
         <!-- Parameters (hidden: fixed values used in backend) -->
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6" style="display:none">
           <h2 class="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
-            <i class="fa-solid fa-sliders text-indigo-500"></i> 编码参数设置
+            <i class="fa-solid fa-sliders text-orange-500"></i> 编码参数设置
           </h2>
           <div class="grid grid-cols-2 gap-6">
             <div>
               <label class="block text-sm font-semibold text-slate-600 mb-3">隐藏强度</label>
               <div class="flex items-center gap-4">
-                <input type="range" min="1" max="10" value="7" class="flex-1 h-2 rounded-lg appearance-none bg-indigo-100 accent-indigo-600" />
-                <span class="w-10 text-center text-sm font-bold text-indigo-600 bg-indigo-50 rounded-lg py-1">7</span>
+                <input type="range" min="1" max="10" value="7" class="flex-1 h-2 rounded-lg appearance-none bg-orange-100 accent-orange-600" />
+                <span class="w-10 text-center text-sm font-bold text-orange-600 bg-orange-50 rounded-lg py-1">7</span>
               </div>
               <div class="flex justify-between text-xs text-slate-400 mt-1">
                 <span>低（更安全）</span><span>高（更隐蔽）</span>
@@ -205,7 +205,7 @@
             </div>
             <div>
               <label class="block text-sm font-semibold text-slate-600 mb-3">网络深度</label>
-              <select class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 bg-white focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none">
+              <select class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 bg-white focus:ring-2 focus:ring-orange-300 focus:border-orange-400 outline-none">
                 <option>标准（8层耦合）</option>
                 <option>轻量（4层耦合）</option>
                 <option>深度（16层耦合）</option>
@@ -214,19 +214,19 @@
             <div>
               <label class="block text-sm font-semibold text-slate-600 mb-3">量化精度</label>
               <div class="flex gap-3">
-                <label class="flex-1 flex items-center gap-2 bg-indigo-50 border-2 border-indigo-400 rounded-xl px-4 py-3 cursor-pointer">
-                  <input type="radio" name="quant" checked class="accent-indigo-600" />
-                  <span class="text-sm font-medium text-indigo-700">8-bit</span>
+                <label class="flex-1 flex items-center gap-2 bg-orange-50 border-2 border-orange-400 rounded-xl px-4 py-3 cursor-pointer">
+                  <input type="radio" name="quant" checked class="accent-orange-600" />
+                  <span class="text-sm font-medium text-orange-700">8-bit</span>
                 </label>
-                <label class="flex-1 flex items-center gap-2 border-2 border-slate-200 rounded-xl px-4 py-3 cursor-pointer hover:border-indigo-300">
-                  <input type="radio" name="quant" class="accent-indigo-600" />
+                <label class="flex-1 flex items-center gap-2 border-2 border-slate-200 rounded-xl px-4 py-3 cursor-pointer hover:border-orange-300">
+                  <input type="radio" name="quant" class="accent-orange-600" />
                   <span class="text-sm font-medium text-slate-600">16-bit</span>
                 </label>
               </div>
             </div>
             <div>
               <label class="block text-sm font-semibold text-slate-600 mb-3">输出格式</label>
-              <select class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 bg-white focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none">
+              <select class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 bg-white focus:ring-2 focus:ring-orange-300 focus:border-orange-400 outline-none">
                 <option>PNG（无损）</option>
                 <option>JPEG（高质量95）</option>
                 <option>BMP（原始）</option>
@@ -239,21 +239,21 @@
                 <label class="flex items-center gap-2 cursor-pointer">
                   <div class="relative inline-flex items-center">
                     <input type="checkbox" class="sr-only" checked />
-                    <div class="w-11 h-6 bg-indigo-600 rounded-full"></div>
+                    <div class="w-11 h-6 bg-orange-600 rounded-full"></div>
                     <div class="absolute right-1 w-4 h-4 bg-white rounded-full shadow"></div>
                   </div>
                   <span class="text-sm font-medium text-slate-700">启用GPU加速</span>
                 </label>
                 <span class="tag bg-emerald-100 text-emerald-700">推荐</span>
               </div>
-              <button class="text-sm text-slate-500 hover:text-indigo-600">恢复默认设置</button>
+              <button class="text-sm text-slate-500 hover:text-orange-600">恢复默认设置</button>
             </div>
           </div>
         </div>
 
         <!-- Action Buttons -->
         <div class="flex items-center gap-4">
-          <button id="encodeBtn" class="flex-1 py-3.5 bg-indigo-600 text-white rounded-xl font-semibold text-base hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 flex items-center justify-center gap-2">
+          <button id="encodeBtn" class="flex-1 py-3.5 bg-orange-600 text-white rounded-xl font-semibold text-base hover:bg-orange-700 transition-colors shadow-md shadow-orange-200 flex items-center justify-center gap-2">
             <i class="fa-solid fa-bolt"></i>
             开始隐写编码
           </button>
@@ -263,16 +263,16 @@
         </div>
 
         <!-- Encoding Progress (hidden by default; shown during API call) -->
-        <div id="encodeProgressWrap" hidden class="hidden bg-white rounded-2xl border border-indigo-100 shadow-sm p-6">
+        <div id="encodeProgressWrap" hidden class="hidden bg-white rounded-2xl border border-orange-100 shadow-sm p-6">
           <div class="flex items-center justify-between mb-3">
             <h3 id="encodeProgressLabel" class="font-bold text-slate-700 flex items-center gap-2 text-sm">
-              <i class="fa-solid fa-spinner fa-spin text-indigo-500"></i>
+              <i class="fa-solid fa-spinner fa-spin text-orange-500"></i>
               正在执行隐写编码...
             </h3>
-            <span id="encodeProgressPct" class="text-sm text-indigo-600 font-bold">0%</span>
+            <span id="encodeProgressPct" class="text-sm text-orange-600 font-bold">0%</span>
           </div>
-          <div class="w-full bg-indigo-100 rounded-full h-2.5 mb-4">
-            <div id="encodeProgressBar" class="progress-bar bg-indigo-600 h-2.5 rounded-full" style="width:0%"></div>
+          <div class="w-full bg-orange-100 rounded-full h-2.5 mb-4">
+            <div id="encodeProgressBar" class="progress-bar bg-orange-600 h-2.5 rounded-full" style="width:0%"></div>
           </div>
           <div class="grid grid-cols-4 gap-2 text-xs text-center">
             <div id="epstep1" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
@@ -300,41 +300,41 @@
       <div class="space-y-6">
 
         <!-- Quick Tips -->
-        <div class="bg-indigo-50 rounded-2xl border border-indigo-100 p-5">
-          <h3 class="font-bold text-indigo-800 mb-4 flex items-center gap-2">
-            <i class="fa-solid fa-lightbulb text-indigo-500"></i> 使用提示
+        <div class="bg-orange-50 rounded-2xl border border-orange-100 p-5">
+          <h3 class="font-bold text-orange-800 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-lightbulb text-orange-500"></i> 使用提示
           </h3>
-          <ul class="space-y-3 text-sm text-indigo-700">
+          <ul class="space-y-3 text-sm text-orange-700">
             <li class="flex items-start gap-2">
               <i class="fa-solid fa-shield-halved text-amber-500 mt-0.5 text-xs"></i>
               <span><strong>推荐先混沌加密：</strong>加密后的秘密图像被隐写，安全性双重保障</span>
             </li>
             <li class="flex items-start gap-2">
-              <i class="fa-solid fa-circle-dot text-indigo-400 mt-0.5 text-xs"></i>
+              <i class="fa-solid fa-circle-dot text-orange-400 mt-0.5 text-xs"></i>
               载体图像建议选择纹理丰富的自然图像，隐藏效果更佳
             </li>
             <li class="flex items-start gap-2">
-              <i class="fa-solid fa-circle-dot text-indigo-400 mt-0.5 text-xs"></i>
+              <i class="fa-solid fa-circle-dot text-orange-400 mt-0.5 text-xs"></i>
               秘密图像与载体图像尺寸一致时恢复质量最优
             </li>
             <li class="flex items-start gap-2">
-              <i class="fa-solid fa-circle-dot text-indigo-400 mt-0.5 text-xs"></i>
+              <i class="fa-solid fa-circle-dot text-orange-400 mt-0.5 text-xs"></i>
               隐藏强度越高，隐写图像可能引入轻微扰动
             </li>
             <li class="flex items-start gap-2">
-              <i class="fa-solid fa-circle-dot text-indigo-400 mt-0.5 text-xs"></i>
+              <i class="fa-solid fa-circle-dot text-orange-400 mt-0.5 text-xs"></i>
               建议使用PNG格式输出以保证无损存储
             </li>
           </ul>
-          <div class="mt-4 pt-4 border-t border-indigo-200">
-            <p class="text-xs font-bold text-indigo-700 mb-2">完整流程：</p>
-            <div class="flex items-center gap-1 text-xs text-indigo-600 flex-wrap">
+          <div class="mt-4 pt-4 border-t border-orange-200">
+            <p class="text-xs font-bold text-orange-700 mb-2">完整流程：</p>
+            <div class="flex items-center gap-1 text-xs text-orange-600 flex-wrap">
               <span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">混沌加密</span>
-              <i class="fa-solid fa-arrow-right text-indigo-300"></i>
-              <span class="bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded-full font-semibold">INN隐写</span>
-              <i class="fa-solid fa-arrow-right text-indigo-300"></i>
-              <span class="bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-semibold">解码提取</span>
-              <i class="fa-solid fa-arrow-right text-indigo-300"></i>
+              <i class="fa-solid fa-arrow-right text-orange-300"></i>
+              <span class="bg-orange-200 text-orange-800 px-2 py-0.5 rounded-full font-semibold">INN隐写</span>
+              <i class="fa-solid fa-arrow-right text-orange-300"></i>
+              <span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">解码提取</span>
+              <i class="fa-solid fa-arrow-right text-orange-300"></i>
               <span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">混沌解密</span>
             </div>
           </div>
@@ -343,7 +343,7 @@
         <!-- Model Info -->
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
           <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
-            <i class="fa-solid fa-brain text-violet-500"></i> 当前模型信息
+            <i class="fa-solid fa-brain text-orange-500"></i> 当前模型信息
           </h3>
           <div class="space-y-3">
             <div class="flex justify-between items-center text-sm">
@@ -368,19 +368,19 @@
         <!-- HiNet Weight Upload -->
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
           <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
-            <i class="fa-solid fa-upload text-violet-500"></i> 加载 HiNet 预训练权重
+            <i class="fa-solid fa-upload text-orange-500"></i> 加载 HiNet 预训练权重
           </h3>
           <p class="text-xs text-slate-500 mb-4">
             上传由 HiNetcp/train.py 训练得到的 <code class="bg-slate-100 px-1 rounded">.pt</code>
             权重文件，系统将切换至 HiNet 模型进行隐写编码/解码。
           </p>
-          <div id="weightsDropZone" class="border-2 border-dashed border-violet-200 rounded-xl p-4 text-center cursor-pointer hover:border-violet-400 hover:bg-violet-50 transition-all">
-            <i class="fa-solid fa-file-arrow-up text-violet-400 text-2xl mb-2"></i>
+          <div id="weightsDropZone" class="border-2 border-dashed border-orange-200 rounded-xl p-4 text-center cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-all">
+            <i class="fa-solid fa-file-arrow-up text-orange-400 text-2xl mb-2"></i>
             <p class="text-sm text-slate-500">点击或拖拽 <strong>.pt</strong> 权重文件至此</p>
-            <p id="weightsFileName" class="text-xs text-violet-600 mt-1 font-medium"></p>
+            <p id="weightsFileName" class="text-xs text-orange-600 mt-1 font-medium"></p>
           </div>
           <div class="mt-3 flex gap-2">
-            <button id="btnUploadWeights" class="flex-1 py-2 bg-violet-600 text-white rounded-xl text-xs font-semibold hover:bg-violet-700 transition-colors flex items-center justify-center gap-1">
+            <button id="btnUploadWeights" class="flex-1 py-2 bg-orange-600 text-white rounded-xl text-xs font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-1">
               <i class="fa-solid fa-cloud-arrow-up"></i>上传权重
             </button>
             <button id="btnRemoveWeights" class="flex-1 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-200 transition-colors flex items-center justify-center gap-1">
@@ -393,12 +393,12 @@
         <!-- Session Stats (dynamic) -->
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
           <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
-            <i class="fa-solid fa-chart-bar text-indigo-400"></i> 使用统计
+            <i class="fa-solid fa-chart-bar text-orange-400"></i> 使用统计
           </h3>
           <div class="space-y-3">
             <div class="flex justify-between items-center text-sm">
               <span class="text-slate-500">本次会话编码次数</span>
-              <span id="statEncodeCount" class="font-extrabold text-indigo-600">0</span>
+              <span id="statEncodeCount" class="font-extrabold text-orange-600">0</span>
             </div>
             <div class="flex justify-between items-center text-sm">
               <span class="text-slate-500">本次会话解码次数</span>
@@ -532,7 +532,7 @@ function startEncodeProgress() {
   wrap.removeAttribute('hidden'); wrap.classList.remove('hidden');
   bar.style.width = '0%';
   pct.textContent = '0%';
-  bar.className = 'progress-bar bg-indigo-600 h-2.5 rounded-full';
+  bar.className = 'progress-bar bg-orange-600 h-2.5 rounded-full';
 
   const phases = [
     { target: 20, stepId: 'epstep1', name: '图像预处理中...' },
@@ -563,7 +563,7 @@ function startEncodeProgress() {
     pct.textContent = v + '%';
     if (lbl) {
       const name = phaseIdx < phases.length ? phases[phaseIdx].name : '等待服务器响应...';
-      lbl.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-indigo-500 mr-1"></i>' + name;
+      lbl.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-orange-500 mr-1"></i>' + name;
     }
   }, 80);
 }
@@ -577,8 +577,8 @@ function _activateEncodePhase(idx) {
       el.className  = 'bg-emerald-50 rounded-lg p-2 border border-emerald-100';
       lbl.className = 'font-semibold text-emerald-700';
     } else if (i === idx) {
-      el.className  = 'bg-indigo-50 rounded-lg p-2 border border-indigo-200';
-      lbl.className = 'font-semibold text-indigo-700';
+      el.className  = 'bg-orange-50 rounded-lg p-2 border border-orange-200';
+      lbl.className = 'font-semibold text-orange-700';
     } else {
       el.className  = 'bg-slate-50 rounded-lg p-2 border border-slate-100';
       lbl.className = 'font-semibold text-slate-400';
@@ -685,10 +685,10 @@ function showEncodeResult(data) {
         <i class="fa-solid fa-circle-check text-emerald-500"></i>隐写编码完成
       </h3>
       <div class="flex items-center gap-3 text-sm">
-        <span class="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full font-semibold">
+        <span class="bg-orange-50 text-orange-700 px-3 py-1 rounded-full font-semibold">
           PSNR: ${m.psnr_cover_stego} dB
         </span>
-        <span class="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full font-semibold">
+        <span class="bg-orange-50 text-orange-700 px-3 py-1 rounded-full font-semibold">
           SSIM: ${m.ssim_cover_stego}
         </span>
       </div>
@@ -701,7 +701,7 @@ function showEncodeResult(data) {
       </div>
     </div>
     <div class="flex gap-3">
-      <button id="downloadStegoBtn" class="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold">
+      <button id="downloadStegoBtn" class="flex-1 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold">
         <i class="fa-solid fa-download mr-1"></i>下载隐写图像
       </button>
       <button id="downloadKeyBtn" class="flex-1 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold">

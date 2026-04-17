@@ -8,11 +8,11 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
   <style>
     body { font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
-    .toggle-on { background: #6366f1; }
+    .toggle-on { background: #d97706; }
     .toggle-off { background: #e2e8f0; }
-    .setting-section { border-left: 3px solid #e0e7ff; }
-    .setting-section:hover { border-left-color: #6366f1; }
-    .nav-item.active { background: #eef2ff; color: #6366f1; font-weight: 600; }
+    .setting-section { border-left: 3px solid #fde68a; }
+    .setting-section:hover { border-left-color: #d97706; }
+    .nav-item.active { background: #fffbeb; color: #d97706; font-weight: 600; }
     .nav-item:hover { background: #f8fafc; }
     .tag { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
   </style>
@@ -23,21 +23,21 @@
   <header class="bg-white border-b border-slate-200 shadow-sm">
     <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
+        <div class="w-9 h-9 rounded-xl bg-orange-600 flex items-center justify-center">
           <i class="fa-solid fa-eye-slash text-white text-sm"></i>
         </div>
         <div>
-          <span class="text-lg font-bold text-indigo-700">INN</span>
+          <span class="text-lg font-bold text-orange-700">INN</span>
           <span class="text-lg font-semibold text-slate-700"> 图像隐写系统</span>
         </div>
       </div>
       <nav class="flex items-center gap-6 text-sm font-medium text-slate-600">
-        <a href="/home.html" class="hover:text-indigo-600 transition-colors">首页</a>
+        <a href="/home.html" class="hover:text-orange-600 transition-colors">首页</a>
         <a href="/encrypt.html" class="hover:text-amber-600 transition-colors">混沌加密</a>
-        <a href="/encode.html" class="hover:text-indigo-600 transition-colors">隐写编码</a>
-        <a href="/decode.html" class="hover:text-indigo-600 transition-colors">隐写解码</a>
-        <a href="/gallery.html" class="hover:text-indigo-600 transition-colors">图库示例</a>
-        <a href="/settings.html" class="text-indigo-600 font-semibold">系统设置</a>
+        <a href="/encode.html" class="hover:text-orange-600 transition-colors">隐写编码</a>
+        <a href="/decode.html" class="hover:text-orange-600 transition-colors">隐写解码</a>
+        <a href="/gallery.html" class="hover:text-orange-600 transition-colors">图库示例</a>
+        <a href="/settings.html" class="text-orange-600 font-semibold">系统设置</a>
       </nav>
     </div>
   </header>
@@ -102,7 +102,7 @@
               <span class="font-medium text-slate-700">2.1/8.0 GB</span>
             </div>
             <div class="w-full bg-slate-100 rounded-full h-1.5">
-              <div class="bg-indigo-500 h-1.5 rounded-full" style="width: 26%"></div>
+              <div class="bg-orange-500 h-1.5 rounded-full" style="width: 26%"></div>
             </div>
             <div class="flex items-center justify-between text-xs">
               <span class="text-slate-500">版本</span>
@@ -119,7 +119,7 @@
         <div id="sec-model" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
           <div class="flex items-center justify-between mb-6">
             <h2 class="font-bold text-slate-800 flex items-center gap-2">
-              <i class="fa-solid fa-brain text-indigo-500"></i> 模型配置
+              <i class="fa-solid fa-brain text-orange-500"></i> 模型配置
             </h2>
             <span class="tag bg-emerald-100 text-emerald-700">
               <i class="fa-solid fa-circle-check mr-1"></i>已加载
@@ -130,18 +130,18 @@
           <div class="setting-section pl-5 pb-5 mb-5">
             <h3 class="text-sm font-bold text-slate-700 mb-4">模型选择</h3>
             <div class="grid grid-cols-3 gap-4">
-              <label class="flex flex-col gap-2 p-4 border-2 border-indigo-400 rounded-xl cursor-pointer bg-indigo-50">
-                <input type="radio" name="model" checked class="accent-indigo-600" />
+              <label class="flex flex-col gap-2 p-4 border-2 border-orange-400 rounded-xl cursor-pointer bg-orange-50">
+                <input type="radio" name="model" checked class="accent-orange-600" />
                 <div>
-                  <p class="font-bold text-indigo-700 text-sm">INN-Stego v2.1</p>
-                  <p class="text-xs text-indigo-600 mt-1">标准版 · 8层耦合 · 推荐</p>
+                  <p class="font-bold text-orange-700 text-sm">INN-Stego v2.1</p>
+                  <p class="text-xs text-orange-600 mt-1">标准版 · 8层耦合 · 推荐</p>
                   <div class="flex items-center gap-1 mt-2">
-                    <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">PSNR ~42dB</span>
+                    <span class="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">PSNR ~42dB</span>
                   </div>
                 </div>
               </label>
-              <label class="flex flex-col gap-2 p-4 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-indigo-200">
-                <input type="radio" name="model" class="accent-indigo-600" />
+              <label class="flex flex-col gap-2 p-4 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-orange-200">
+                <input type="radio" name="model" class="accent-orange-600" />
                 <div>
                   <p class="font-bold text-slate-700 text-sm">INN-Lite v2.1</p>
                   <p class="text-xs text-slate-500 mt-1">轻量版 · 4层耦合 · 快速</p>
@@ -150,8 +150,8 @@
                   </div>
                 </div>
               </label>
-              <label class="flex flex-col gap-2 p-4 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-indigo-200">
-                <input type="radio" name="model" class="accent-indigo-600" />
+              <label class="flex flex-col gap-2 p-4 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-orange-200">
+                <input type="radio" name="model" class="accent-orange-600" />
                 <div>
                   <p class="font-bold text-slate-700 text-sm">INN-Pro v2.1</p>
                   <p class="text-xs text-slate-500 mt-1">深度版 · 16层耦合 · 高质</p>
@@ -169,9 +169,9 @@
             <div class="flex gap-3">
               <div class="flex-1 relative">
                 <i class="fa-solid fa-folder text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 text-sm"></i>
-                <input type="text" value="./models/inn_stego_v2.1.pth" class="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-200 outline-none font-mono text-slate-600" />
+                <input type="text" value="./models/inn_stego_v2.1.pth" class="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-orange-200 outline-none font-mono text-slate-600" />
               </div>
-              <button class="px-4 py-2.5 bg-indigo-50 text-indigo-600 rounded-xl text-sm font-medium hover:bg-indigo-100 transition-colors border border-indigo-200">
+              <button class="px-4 py-2.5 bg-orange-50 text-orange-600 rounded-xl text-sm font-medium hover:bg-orange-100 transition-colors border border-orange-200">
                 <i class="fa-solid fa-folder-open mr-2"></i>浏览
               </button>
             </div>
@@ -183,15 +183,15 @@
             <div class="grid grid-cols-3 gap-5">
               <div>
                 <label class="block text-xs font-semibold text-slate-500 mb-2">耦合层数</label>
-                <input type="number" value="8" min="2" max="32" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-200 outline-none" />
+                <input type="number" value="8" min="2" max="32" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-orange-200 outline-none" />
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-500 mb-2">隐藏通道数</label>
-                <input type="number" value="64" min="16" max="256" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-200 outline-none" />
+                <input type="number" value="64" min="16" max="256" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-orange-200 outline-none" />
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-500 mb-2">小波变换级别</label>
-                <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-indigo-200 outline-none">
+                <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-orange-200 outline-none">
                   <option>Haar (1级)</option>
                   <option selected>Haar (2级)</option>
                   <option>DB2 (2级)</option>
@@ -204,25 +204,25 @@
         <!-- Compute Environment -->
         <div id="sec-env" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
           <h2 class="font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <i class="fa-solid fa-microchip text-violet-500"></i> 运行环境
+            <i class="fa-solid fa-microchip text-amber-500"></i> 运行环境
           </h2>
 
           <div class="grid grid-cols-2 gap-6">
             <div class="setting-section pl-5">
               <h3 class="text-sm font-bold text-slate-700 mb-4">计算设备</h3>
               <div class="space-y-3">
-                <label class="flex items-center justify-between p-3 border-2 border-indigo-300 rounded-xl cursor-pointer bg-indigo-50">
+                <label class="flex items-center justify-between p-3 border-2 border-orange-300 rounded-xl cursor-pointer bg-orange-50">
                   <div class="flex items-center gap-3">
-                    <input type="radio" name="device" checked class="accent-indigo-600" />
+                    <input type="radio" name="device" checked class="accent-orange-600" />
                     <div>
-                      <p class="text-sm font-semibold text-indigo-700">NVIDIA GPU (CUDA)</p>
-                      <p class="text-xs text-indigo-500">RTX 3090 · 24GB VRAM</p>
+                      <p class="text-sm font-semibold text-orange-700">NVIDIA GPU (CUDA)</p>
+                      <p class="text-xs text-orange-500">RTX 3090 · 24GB VRAM</p>
                     </div>
                   </div>
                   <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">在线</span>
                 </label>
                 <label class="flex items-center gap-3 p-3 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-slate-300">
-                  <input type="radio" name="device" class="accent-indigo-600" />
+                  <input type="radio" name="device" class="accent-orange-600" />
                   <div>
                     <p class="text-sm font-semibold text-slate-600">CPU (PyTorch)</p>
                     <p class="text-xs text-slate-400">Intel i9-12900K · 较慢</p>
@@ -237,16 +237,16 @@
                 <div>
                   <div class="flex justify-between text-sm mb-2">
                     <label class="font-medium text-slate-600">工作进程数（num_workers）</label>
-                    <span class="font-bold text-indigo-600">4</span>
+                    <span class="font-bold text-orange-600">4</span>
                   </div>
-                  <input type="range" min="0" max="16" value="4" class="w-full h-2 rounded-lg appearance-none bg-indigo-100 accent-indigo-600" />
+                  <input type="range" min="0" max="16" value="4" class="w-full h-2 rounded-lg appearance-none bg-orange-100 accent-orange-600" />
                 </div>
                 <div>
                   <div class="flex justify-between text-sm mb-2">
                     <label class="font-medium text-slate-600">批处理大小（batch_size）</label>
-                    <span class="font-bold text-indigo-600">8</span>
+                    <span class="font-bold text-orange-600">8</span>
                   </div>
-                  <input type="range" min="1" max="32" value="8" class="w-full h-2 rounded-lg appearance-none bg-indigo-100 accent-indigo-600" />
+                  <input type="range" min="1" max="32" value="8" class="w-full h-2 rounded-lg appearance-none bg-orange-100 accent-orange-600" />
                 </div>
                 <div class="flex items-center justify-between">
                   <div>
@@ -272,27 +272,27 @@
             <div>
               <label class="block text-xs font-semibold text-slate-500 mb-2">默认隐藏强度</label>
               <div class="flex items-center gap-2">
-                <input type="range" min="1" max="10" value="7" class="flex-1 h-2 rounded-lg appearance-none bg-indigo-100 accent-indigo-600" />
-                <span class="text-sm font-bold text-indigo-600 w-6">7</span>
+                <input type="range" min="1" max="10" value="7" class="flex-1 h-2 rounded-lg appearance-none bg-orange-100 accent-orange-600" />
+                <span class="text-sm font-bold text-orange-600 w-6">7</span>
               </div>
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-500 mb-2">默认输出格式</label>
-              <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-indigo-200 outline-none">
+              <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-orange-200 outline-none">
                 <option selected>PNG（无损）</option>
                 <option>JPEG（高质量）</option>
               </select>
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-500 mb-2">量化精度</label>
-              <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-indigo-200 outline-none">
+              <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-orange-200 outline-none">
                 <option selected>8-bit</option>
                 <option>16-bit</option>
               </select>
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-500 mb-2">最大输入分辨率</label>
-              <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-indigo-200 outline-none">
+              <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-orange-200 outline-none">
                 <option>1024×1024</option>
                 <option selected>2048×2048</option>
                 <option>4096×4096</option>
@@ -342,21 +342,21 @@
             <div class="flex items-center gap-3">
               <label class="w-32 text-sm font-medium text-slate-600 flex-shrink-0">模型目录</label>
               <div class="flex-1 flex gap-2">
-                <input type="text" value="./models/" class="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono text-slate-600 bg-slate-50 focus:ring-2 focus:ring-indigo-200 outline-none" />
+                <input type="text" value="./models/" class="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono text-slate-600 bg-slate-50 focus:ring-2 focus:ring-orange-200 outline-none" />
                 <button class="px-3 py-2 bg-slate-100 text-slate-600 rounded-xl text-sm hover:bg-slate-200 transition-colors">浏览</button>
               </div>
             </div>
             <div class="flex items-center gap-3">
               <label class="w-32 text-sm font-medium text-slate-600 flex-shrink-0">输出目录</label>
               <div class="flex-1 flex gap-2">
-                <input type="text" value="./outputs/" class="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono text-slate-600 bg-slate-50 focus:ring-2 focus:ring-indigo-200 outline-none" />
+                <input type="text" value="./outputs/" class="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono text-slate-600 bg-slate-50 focus:ring-2 focus:ring-orange-200 outline-none" />
                 <button class="px-3 py-2 bg-slate-100 text-slate-600 rounded-xl text-sm hover:bg-slate-200 transition-colors">浏览</button>
               </div>
             </div>
             <div class="flex items-center gap-3">
               <label class="w-32 text-sm font-medium text-slate-600 flex-shrink-0">日志目录</label>
               <div class="flex-1 flex gap-2">
-                <input type="text" value="./logs/" class="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono text-slate-600 bg-slate-50 focus:ring-2 focus:ring-indigo-200 outline-none" />
+                <input type="text" value="./logs/" class="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono text-slate-600 bg-slate-50 focus:ring-2 focus:ring-orange-200 outline-none" />
                 <button class="px-3 py-2 bg-slate-100 text-slate-600 rounded-xl text-sm hover:bg-slate-200 transition-colors">浏览</button>
               </div>
             </div>
@@ -365,7 +365,7 @@
 
         <!-- Action Buttons -->
         <div class="flex items-center gap-4">
-          <button class="px-8 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200">
+          <button class="px-8 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors shadow-md shadow-orange-200">
             <i class="fa-solid fa-floppy-disk mr-2"></i>保存所有设置
           </button>
           <button class="px-6 py-3 bg-white text-slate-600 border border-slate-200 rounded-xl font-medium hover:bg-slate-50 transition-colors">
@@ -407,7 +407,7 @@ document.querySelectorAll('.nav-item').forEach(link => {
   link.addEventListener('click', e => {
     e.preventDefault();
     document.querySelectorAll('.nav-item').forEach(l => {
-      l.classList.remove('active', 'bg-indigo-50', 'text-indigo-700', 'font-semibold');
+      l.classList.remove('active', 'bg-orange-50', 'text-orange-700', 'font-semibold');
       l.classList.add('text-slate-600');
     });
     link.classList.add('active');
