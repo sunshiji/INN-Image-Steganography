@@ -90,6 +90,10 @@ router.beforeEach(async (to, _from, next) => {
   const userStore = useUserStore()
   document.title = to.meta.title ? `${to.meta.title} - INN 图像隐写系统` : 'INN 图像隐写系统'
   
+  if (!userStore.initialized) {
+    await userStore.initialize()
+  }
+  
   if (to.meta.requiresAuth === false) {
     if (to.path === '/login' && userStore.isLoggedIn) {
       next('/')

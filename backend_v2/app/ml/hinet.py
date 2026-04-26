@@ -4,7 +4,7 @@ HiNet 隐写模型 - 基于可逆神经网络的图像隐写
 """
 import os
 import threading
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Tuple, Dict, Any, List
 
 import numpy as np
 import torch

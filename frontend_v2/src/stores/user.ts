@@ -15,8 +15,9 @@ export interface User {
 export const useUserStore = defineStore('user', () => {
   const token = ref<string | null>(localStorage.getItem('token'))
   const user = ref<User | null>(null)
+  const initialized = ref(false)
 
-  const isLoggedIn = computed(() => !!token.value)
+  const isLoggedIn = computed(() => !!token.value && initialized.value)
   const isAdmin = computed(() => user.value?.isAdmin ?? false)
 
   async function login(username: string, password: string) {
@@ -54,18 +55,22 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  function initialize() {
+  async function initialize() {
     if (token.value) {
-      fetchUserInfo().catch(() => {
+      try {
+        await fetchUserInfo()
+      } catch {
         token.value = null
         localStorage.removeItem('token')
-      })
+      }
     }
+    initialized.value = true
   }
 
   return {
     token,
     user,
+    initialized,
     isLoggedIn,
     isAdmin,
     login,
