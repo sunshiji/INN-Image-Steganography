@@ -146,12 +146,9 @@
         
         <el-divider>执行参数</el-divider>
         
-        <el-code
-          v-if="currentDetail.parameters"
-          :code="currentDetail.parameters"
-          language="json"
-          :high-light="true"
-        />
+        <div v-if="currentDetail.parameters" class="code-block">
+          <pre><code>{{ currentDetail.parameters }}</code></pre>
+        </div>
         <el-empty v-else description="无参数数据" />
         
         <el-divider v-if="currentDetail.error_message">错误信息</el-divider>
@@ -347,5 +344,25 @@ onMounted(() => {
   font-size: 12px;
   color: #9ca3af;
   margin-top: 8px;
+}
+
+.code-block {
+  background-color: #1f2937;
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 0;
+}
+
+.code-block code {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #e5e7eb;
+  white-space: pre;
 }
 </style>
