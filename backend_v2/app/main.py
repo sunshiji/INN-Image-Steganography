@@ -9,7 +9,6 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -23,28 +22,9 @@ from app.routers import (
     training_router
 )
 from app.schemas import HealthResponse
-from app.utils.security import get_password_hash, verify_password
+from app.utils.security import get_password_hash, verify_password, needs_migration
 
 settings = get_settings()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def _legacy_verify_password(plain_password: str, hashed_password: str) -> bool:
-    """
-    旧版密码验证（无 SHA-256 预处理）
-    
-    用于迁移旧格式的密码哈希
-    """
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def _legacy_get_password_hash(password: str) -> str:
-    """
-    旧版密码哈希（无 SHA-256 预处理）
-    
-    用于检测旧格式的密码
-    """
-    return pwd_context.hash(password)
 
 
 def init_admin_user():
@@ -52,12 +32,11 @@ def init_admin_user():
     初始化管理员账户
     
     处理逻辑：
-    1. 如果 admin 用户不存在 -> 创建
+    1. 如果 admin 用户不存在 -> 使用新格式（SHA-256 + bcrypt）创建
     2. 如果 admin 用户存在：
-       a. 尝试用新逻辑（SHA-256 + bcrypt）验证
-       b. 如果失败，尝试用旧逻辑（纯 bcrypt）验证
-       c. 如果旧逻辑验证成功 -> 迁移到新格式
-       d. 如果都失败但配置了 FORCE_RESET_ADMIN=true -> 强制重置
+       a. 使用 verify_password 验证（自动支持新旧格式）
+       b. 如果验证成功且密码是旧格式 -> 自动迁移到新格式
+       c. 如果验证失败 -> 提示用户重置密码
     """
     db: Session = SessionLocal()
     try:
@@ -80,20 +59,17 @@ def init_admin_user():
             print(f"[INN-Stego] 管理员账户创建成功: {admin_username}")
         else:
             if verify_password(admin_password, admin_user.hashed_password):
-                print(f"[INN-Stego] 管理员账户已存在且密码验证通过: {admin_username}")
+                if needs_migration(admin_password, admin_user.hashed_password):
+                    print(f"[INN-Stego] 检测到旧格式密码，正在迁移: {admin_username}")
+                    admin_user.hashed_password = get_password_hash(admin_password)
+                    db.commit()
+                    print(f"[INN-Stego] 管理员密码已迁移到新格式: {admin_username}")
+                else:
+                    print(f"[INN-Stego] 管理员账户已存在且密码验证通过: {admin_username}")
             else:
-                try:
-                    if _legacy_verify_password(admin_password, admin_user.hashed_password):
-                        print(f"[INN-Stego] 检测到旧格式密码，正在迁移: {admin_username}")
-                        admin_user.hashed_password = get_password_hash(admin_password)
-                        db.commit()
-                        print(f"[INN-Stego] 管理员密码已迁移到新格式: {admin_username}")
-                    else:
-                        print(f"[INN-Stego] 警告: 管理员账户密码与配置不匹配: {admin_username}")
-                        print(f"[INN-Stego] 如果需要重置密码，请删除数据库文件: data/app.db")
-                        print(f"[INN-Stego] 或设置环境变量 FORCE_RESET_ADMIN=true 后重启")
-                except Exception as e:
-                    print(f"[INN-Stego] 密码验证时出错: {e}")
+                print(f"[INN-Stego] 警告: 管理员账户密码与配置不匹配: {admin_username}")
+                print(f"[INN-Stego] 如果需要重置密码，请删除数据库文件: data/app.db")
+                print(f"[INN-Stego] 或设置环境变量 FORCE_RESET_ADMIN=true 后重启")
         
         db.commit()
     except Exception as e:
