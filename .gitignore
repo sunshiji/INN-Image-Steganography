@@ -28,3 +28,40 @@ Thumbs.db
 # Test artifacts
 /tmp/
 *.log
+
+# ========== 前端依赖 ==========
+# npm / pnpm / yarn
+node_modules/
+.pnpm-store/
+.yarn/
+
+# 前端构建输出
+dist/
+dist-ssr/
+*.local
+
+# ========== 后端数据 ==========
+# 环境变量文件（包含敏感信息）
+backend_v2/.env
+.env
+
+# 数据库文件
+backend_v2/data/
+*.db
+*.sqlite
+*.sqlite3
+
+# 上传的文件和模型
+backend_v2/data/uploads/
+backend_v2/data/models/
+backend_v2/data/datasets/
+
+# ========== 其他 ==========
+# 日志文件
+logs/
+*.log
+
+# 临时文件
+*.tmp
+*.temp
+.cache/

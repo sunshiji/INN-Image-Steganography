@@ -108,23 +108,6 @@ def login(form_data: UserLogin, db: Session = Depends(get_db)):
     """
     user = db.query(User).filter(User.username == form_data.username).first()
     
-    if not user:
-        if form_data.username == settings.ADMIN_USERNAME:
-            admin_user = db.query(User).filter(User.username == settings.ADMIN_USERNAME).first()
-            if not admin_user:
-                admin_user = User(
-                    username=settings.ADMIN_USERNAME,
-                    hashed_password=get_password_hash(settings.ADMIN_PASSWORD),
-                    is_active=True,
-                    is_admin=True
-                )
-                db.add(admin_user)
-                db.commit()
-                db.refresh(admin_user)
-                user = admin_user
-            else:
-                user = admin_user
-    
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
