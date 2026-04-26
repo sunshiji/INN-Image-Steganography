@@ -1,13 +1,13 @@
 """
 模型训练管理 API 路由
-支持 Web 界面启动训练、监控进度、管理数据集
+支持 Web 界面启动训练、监控进度、管理数据集、上传和切换模型权重
 """
 import os
 import shutil
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status, Query
 from fastapi.responses import FileResponse, StreamingResponse
@@ -20,7 +20,9 @@ from app.models import User, TrainingJob, TrainingStatus
 from app.routers.auth import get_current_active_user
 from app.ml import (
     HiNetTrainer, TrainingConfig,
-    get_training_status, list_all_training_status
+    get_training_status, list_all_training_status,
+    get_current_model_info, clear_model_cache, list_available_models,
+    get_hinet_model
 )
 from app.schemas import TrainingJobResponse, TrainingProgress
 
@@ -38,6 +40,8 @@ class TrainingStartRequest(BaseModel):
     val_freq: int = 20
     save_freq: int = 20
     dataset_path: Optional[str] = None
+    pretrained_model_name: Optional[str] = None
+    load_optimizer_state: bool = True
 
 
 def ensure_directories():
@@ -105,6 +109,8 @@ async def start_training(
         val_freq: 验证频率
         save_freq: 保存频率
         dataset_path: 数据集路径 (可选，默认使用标准数据集)
+        pretrained_model_name: 预训练模型文件名 (可选，用于继续训练)
+        load_optimizer_state: 是否加载优化器状态 (默认 True)
     """
     ensure_directories()
     
@@ -116,6 +122,16 @@ async def start_training(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"训练数据集不存在: {train_path}"
         )
+    
+    pretrained_weights_path = None
+    if request.pretrained_model_name:
+        pretrained_weights_path = os.path.join(settings.MODEL_DIR, request.pretrained_model_name)
+        if not os.path.exists(pretrained_weights_path):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"预训练模型不存在: {request.pretrained_model_name}"
+            )
+        print(f"[Training] Will use pretrained model: {pretrained_weights_path}")
     
     job = TrainingJob(
         user_id=current_user.id,
@@ -137,7 +153,9 @@ async def start_training(
         batch_size=request.batch_size,
         learning_rate=request.learning_rate,
         val_freq=request.val_freq,
-        save_freq=request.save_freq
+        save_freq=request.save_freq,
+        pretrained_weights_path=pretrained_weights_path,
+        load_optimizer_state=request.load_optimizer_state
     )
     
     trainer = HiNetTrainer(
@@ -385,3 +403,145 @@ async def delete_model(
     model_path.unlink()
     
     return {"message": f"模型 {model_name} 已删除"}
+
+
+@router.post("/models/upload")
+async def upload_model(
+    name: str = Form(..., description="模型名称（不含扩展名）"),
+    model_file: UploadFile = File(..., description="模型权重文件 (.pt 或 .pth)"),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    上传预训练模型权重文件
+    
+    支持的格式:
+    - 由 HiNetcp/train.py 训练的模型: {'net': state_dict, 'opt': ...}
+    - 原始 state_dict 格式
+    """
+    ensure_directories()
+    
+    if not (model_file.filename.endswith('.pt') or model_file.filename.endswith('.pth')):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="只支持 .pt 或 .pth 格式的模型文件"
+        )
+    
+    ext = Path(model_file.filename).suffix
+    save_name = f"{name}{ext}" if not name.endswith(ext) else name
+    save_path = Path(settings.MODEL_DIR) / save_name
+    
+    if save_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"模型名称 {save_name} 已存在"
+        )
+    
+    content = await model_file.read()
+    
+    try:
+        import torch
+        import io
+        ckpt = torch.load(io.BytesIO(content), map_location='cpu', weights_only=False)
+        
+        is_valid = False
+        if isinstance(ckpt, dict):
+            if 'net' in ckpt:
+                is_valid = True
+                print(f"[Model Upload] Detected HiNetcp format with 'net' key")
+            else:
+                is_valid = any('conv' in k.lower() or 'weight' in k.lower() for k in ckpt.keys())
+        
+        if not is_valid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="无效的模型文件格式，请确保是 HiNet 训练的权重文件"
+            )
+        
+        with open(save_path, 'wb') as f:
+            f.write(content)
+        
+        stat = save_path.stat()
+        return {
+            "message": f"模型 {save_name} 上传成功",
+            "name": save_name,
+            "path": str(save_path),
+            "size_bytes": stat.st_size,
+            "size_mb": round(stat.st_size / (1024 * 1024), 2)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"模型文件解析失败: {str(e)}"
+        )
+
+
+@router.get("/models/info/current")
+async def get_current_model_info_api(
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    获取当前加载的模型信息
+    """
+    return get_current_model_info()
+
+
+@router.post("/models/switch")
+async def switch_model(
+    model_name: str = Form(..., description="要切换的模型文件名"),
+    force_reload: bool = Form(default=True, description="是否强制重新加载"),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    切换当前使用的模型权重
+    
+    参数:
+        model_name: 模型文件名（如 model_best.pt）
+        force_reload: 是否强制重新加载（即使已缓存）
+    """
+    model_path = Path(settings.MODEL_DIR) / model_name
+    
+    if not model_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"模型文件 {model_name} 不存在"
+        )
+    
+    try:
+        model = get_hinet_model(str(model_path), force_reload=force_reload)
+        
+        return {
+            "message": f"已切换到模型: {model_name}",
+            "current_model": model_name,
+            "device": str(model.device),
+            "weights_loaded": model.is_weights_loaded
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"切换模型失败: {str(e)}"
+        )
+
+
+@router.post("/models/cache/clear")
+async def clear_model_cache_api(
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    清除模型缓存（释放GPU/CPU内存）
+    """
+    clear_model_cache()
+    return {"message": "模型缓存已清除"}
+
+
+@router.get("/models/available")
+async def list_available_models_api(
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    列出所有可用的模型权重文件
+    """
+    models = list_available_models()
+    return {"models": models}

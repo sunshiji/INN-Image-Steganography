@@ -40,11 +40,17 @@ export interface PipelineDecodeDecryptResponse {
 export const steganographyApi = {
   async encode(
     coverFile: File,
-    secretFile: File
+    secretFile: File,
+    params: {
+      modelName?: string
+      forceReload?: boolean
+    } = {}
   ): Promise<EncodeResponse> {
     const formData = new FormData()
     formData.append('cover', coverFile)
     formData.append('secret', secretFile)
+    if (params.modelName) formData.append('model_name', params.modelName)
+    if (params.forceReload) formData.append('force_reload', 'true')
 
     const response = await api.post('/steganography/encode', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
@@ -54,13 +60,19 @@ export const steganographyApi = {
 
   async decode(
     stegoFile: File,
-    stegoKey?: string
+    stegoKey?: string,
+    params: {
+      modelName?: string
+      forceReload?: boolean
+    } = {}
   ): Promise<DecodeResponse> {
     const formData = new FormData()
     formData.append('stego', stegoFile)
     if (stegoKey) {
       formData.append('stego_key', stegoKey)
     }
+    if (params.modelName) formData.append('model_name', params.modelName)
+    if (params.forceReload) formData.append('force_reload', 'true')
 
     const response = await api.post('/steganography/decode', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
@@ -76,6 +88,8 @@ export const steganographyApi = {
       x0?: number
       n0?: number
       rounds?: number
+      modelName?: string
+      forceReload?: boolean
     } = {}
   ): Promise<PipelineEncryptEncodeResponse> {
     const formData = new FormData()
@@ -85,6 +99,8 @@ export const steganographyApi = {
     if (params.x0) formData.append('x0', params.x0.toString())
     if (params.n0) formData.append('n0', params.n0.toString())
     if (params.rounds) formData.append('rounds', params.rounds.toString())
+    if (params.modelName) formData.append('model_name', params.modelName)
+    if (params.forceReload) formData.append('force_reload', 'true')
 
     const response = await api.post('/steganography/pipeline/encrypt-encode', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
@@ -100,6 +116,8 @@ export const steganographyApi = {
       x0?: number
       n0?: number
       rounds?: number
+      modelName?: string
+      forceReload?: boolean
     } = {}
   ): Promise<PipelineDecodeDecryptResponse> {
     const formData = new FormData()
@@ -109,6 +127,8 @@ export const steganographyApi = {
     if (params.x0) formData.append('x0', params.x0.toString())
     if (params.n0) formData.append('n0', params.n0.toString())
     if (params.rounds) formData.append('rounds', params.rounds.toString())
+    if (params.modelName) formData.append('model_name', params.modelName)
+    if (params.forceReload) formData.append('force_reload', 'true')
 
     const response = await api.post('/steganography/pipeline/decode-decrypt', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }

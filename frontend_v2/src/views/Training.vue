@@ -96,6 +96,43 @@
               </el-col>
             </el-row>
             
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="预训练模型">
+                  <el-select
+                    v-model="trainConfig.pretrained_model_name"
+                    placeholder="选择预训练模型（可选）"
+                    class="full-width"
+                    clearable
+                  >
+                    <el-option label="不使用预训练模型" value="" />
+                    <el-option
+                      v-for="model in pretrainedModels"
+                      :key="model.name"
+                      :label="`${model.name} (${model.size_mb} MB)`"
+                      :value="model.name"
+                    />
+                  </el-select>
+                  <div class="form-hint">
+                    选择已上传的模型权重继续训练，支持 HiNetcp 格式
+                  </div>
+                </el-form-item>
+              </el-col>
+              
+              <el-col :span="12">
+                <el-form-item label="加载优化器状态">
+                  <el-switch
+                    v-model="trainConfig.load_optimizer_state"
+                    active-text="是"
+                    inactive-text="否"
+                  />
+                  <div class="form-hint mt-2">
+                    加载优化器状态可实现断点续训，恢复之前的训练进度
+                  </div>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            
             <el-form-item>
               <el-button
                 type="primary"
@@ -221,7 +258,7 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { trainingApi, type DatasetInfo, type TrainingJobInfo } from '@/api/training'
+import { trainingApi, type DatasetInfo, type TrainingJobInfo, type ModelInfo } from '@/api/training'
 
 const activeTab = ref<string>('config')
 const configFormRef = ref<FormInstance>()
@@ -231,6 +268,7 @@ const loadingJobs = ref(false)
 const datasets = ref<DatasetInfo[]>([])
 const jobs = ref<TrainingJobInfo[]>([])
 const currentJob = ref<TrainingJobInfo | null>(null)
+const pretrainedModels = ref<ModelInfo[]>([])
 
 const trainConfig = reactive({
   job_name: 'HiNet Training',
@@ -239,7 +277,9 @@ const trainConfig = reactive({
   learning_rate: 0.00001,
   val_freq: 20,
   save_freq: 20,
-  dataset_path: ''
+  dataset_path: '',
+  pretrained_model_name: '',
+  load_optimizer_state: false
 })
 
 const trainRules: FormRules = {
@@ -298,6 +338,15 @@ const fetchJobs = async () => {
   }
 }
 
+const fetchPretrainedModels = async () => {
+  try {
+    const result = await trainingApi.listModels()
+    pretrainedModels.value = result.models || []
+  } catch (error) {
+    console.error('获取预训练模型列表失败:', error)
+  }
+}
+
 const handleDatasetChange = () => {
   // 可以在这里添加数据集详情加载
 }
@@ -310,7 +359,7 @@ const handleStartTraining = async () => {
     
     starting.value = true
     try {
-      const job = await trainingApi.startTraining({
+      const trainingParams: any = {
         job_name: trainConfig.job_name,
         epochs: trainConfig.epochs,
         batch_size: trainConfig.batch_size,
@@ -318,7 +367,14 @@ const handleStartTraining = async () => {
         val_freq: trainConfig.val_freq,
         save_freq: trainConfig.save_freq,
         dataset_path: trainConfig.dataset_path
-      })
+      }
+      
+      if (trainConfig.pretrained_model_name) {
+        trainingParams.pretrained_model_name = trainConfig.pretrained_model_name
+        trainingParams.load_optimizer_state = trainConfig.load_optimizer_state
+      }
+      
+      const job = await trainingApi.startTraining(trainingParams)
       
       currentJob.value = job
       activeTab.value = 'jobs'
@@ -353,11 +409,14 @@ const handleResetConfig = () => {
   trainConfig.val_freq = 20
   trainConfig.save_freq = 20
   trainConfig.dataset_path = ''
+  trainConfig.pretrained_model_name = ''
+  trainConfig.load_optimizer_state = false
 }
 
 onMounted(() => {
   fetchDatasets()
   fetchJobs()
+  fetchPretrainedModels()
 })
 </script>
 

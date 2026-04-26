@@ -4,9 +4,47 @@
       <template #header>
         <div class="card-header">
           <span>隐写编码</span>
-          <el-tag type="primary">HiNet</el-tag>
+          <div class="header-tags">
+            <el-tag v-if="currentModelInfo?.weights_loaded" type="success">
+              已加载模型: {{ currentModelName }}
+            </el-tag>
+            <el-tag v-else type="info">
+              使用默认模型
+            </el-tag>
+            <el-tag v-if="currentModelInfo?.device" type="primary">
+              {{ currentModelInfo.device }}
+            </el-tag>
+          </div>
         </div>
       </template>
+      
+      <el-form label-width="120px" class="config-form">
+        <el-form-item label="选择模型">
+          <el-select
+            v-model="selectedModel"
+            placeholder="选择模型权重（可选）"
+            style="width: 300px"
+            @change="handleModelChange"
+          >
+            <el-option label="默认模型（随机初始化）" value="" />
+            <el-option
+              v-for="model in models"
+              :key="model.name"
+              :label="`${model.name} (${model.size_mb} MB)`"
+              :value="model.name"
+            />
+          </el-select>
+          <el-button
+            type="primary"
+            link
+            @click="fetchModels"
+            :icon="Refresh"
+            style="margin-left: 12px"
+          >
+            刷新模型列表
+          </el-button>
+        </el-form-item>
+      </el-form>
       
       <el-row :gutter="20">
         <el-col :span="12">
@@ -224,9 +262,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { steganographyApi } from '@/api/steganography'
+import { trainingApi, type ModelInfo, type CurrentModelInfo } from '@/api/training'
 
 const coverImage = ref<string>('')
 const secretImage = ref<string>('')
@@ -236,6 +275,47 @@ const coverFile = ref<File | null>(null)
 const secretFile = ref<File | null>(null)
 const encoding = ref(false)
 const stegoKey = ref<string>('')
+
+const models = ref<ModelInfo[]>([])
+const selectedModel = ref<string>('')
+const currentModelInfo = ref<CurrentModelInfo | null>(null)
+
+const currentModelName = computed(() => {
+  if (!currentModelInfo.value?.current_weights_path) return ''
+  const path = currentModelInfo.value.current_weights_path
+  const match = path.match(/[/\\]([^/\\]+)\.(pt|pth|ckpt)$/i)
+  return match ? match[1] : path.split(/[/\\]/).pop() || ''
+})
+
+const fetchModels = async () => {
+  try {
+    const result = await trainingApi.listModels()
+    models.value = result.models || []
+  } catch (error) {
+    console.error('获取模型列表失败:', error)
+  }
+}
+
+const fetchCurrentModelInfo = async () => {
+  try {
+    currentModelInfo.value = await trainingApi.getCurrentModelInfo()
+  } catch (error) {
+    console.error('获取当前模型信息失败:', error)
+  }
+}
+
+const handleModelChange = async (modelName: string) => {
+  if (modelName) {
+    try {
+      await trainingApi.switchModel(modelName, true)
+      ElMessage.success(`已切换到模型: ${modelName}`)
+      fetchCurrentModelInfo()
+    } catch (error: any) {
+      const message = error.response?.data?.detail || '切换模型失败'
+      ElMessage.error(message)
+    }
+  }
+}
 
 const metrics = ref<{
   psnr_cover_stego: number
@@ -279,7 +359,12 @@ const handleEncode = async () => {
   
   encoding.value = true
   try {
-    const result = await steganographyApi.encode(coverFile.value, secretFile.value)
+    const params: { modelName?: string; forceReload?: boolean } = {}
+    if (selectedModel.value) {
+      params.modelName = selectedModel.value
+    }
+    
+    const result = await steganographyApi.encode(coverFile.value, secretFile.value, params)
     
     stegoImage.value = `data:image/png;base64,${result.stego_image}`
     recoveryImage.value = `data:image/png;base64,${result.recovery_image}`
@@ -315,6 +400,11 @@ const handleDownloadStego = () => {
   link.click()
   document.body.removeChild(link)
 }
+
+onMounted(() => {
+  fetchModels()
+  fetchCurrentModelInfo()
+})
 </script>
 
 <style scoped>
@@ -335,6 +425,17 @@ const handleDownloadStego = () => {
   justify-content: space-between;
   align-items: center;
   font-weight: 600;
+}
+
+.header-tags {
+  display: flex;
+  gap: 12px;
+}
+
+.config-form {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .section-title {

@@ -4,7 +4,8 @@
 """
 import io
 import base64
-from typing import Optional
+import os
+from typing import Optional, Dict, Any
 
 import numpy as np
 import torch
@@ -14,7 +15,10 @@ from PIL import Image
 from app.config import get_settings
 from app.models import User
 from app.routers.auth import get_current_active_user
-from app.ml import get_hinet_model, is_model_loaded, encrypt_image, decrypt_image
+from app.ml import (
+    get_hinet_model, is_model_loaded, encrypt_image, decrypt_image,
+    get_current_model_info, clear_model_cache, list_available_models
+)
 from app.utils import (
     bytes_to_pil, pil_to_b64, b64_to_pil,
     pil_to_tensor, tensor_to_pil,
@@ -27,16 +31,33 @@ settings = get_settings()
 router = APIRouter(prefix="/api/steganography", tags=["隐写"])
 
 
-def get_model():
-    """获取 HiNet 模型实例"""
-    weights_path = settings.HINET_WEIGHTS_PATH
-    return get_hinet_model(weights_path)
+def get_model(model_name: Optional[str] = None, force_reload: bool = False):
+    """
+    获取 HiNet 模型实例
+    
+    参数:
+        model_name: 模型文件名（如 model_best.pt），如果为None则使用默认配置
+        force_reload: 是否强制重新加载
+    """
+    if model_name:
+        weights_path = os.path.join(settings.MODEL_DIR, model_name)
+        if not os.path.exists(weights_path):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"模型不存在: {model_name}"
+            )
+        return get_hinet_model(weights_path, force_reload=force_reload)
+    else:
+        weights_path = settings.HINET_WEIGHTS_PATH
+        return get_hinet_model(weights_path, force_reload=force_reload)
 
 
 @router.post("/encode", response_model=EncodeResponse)
 async def encode(
     cover: UploadFile = File(..., description="载体图像"),
     secret: UploadFile = File(..., description="秘密图像"),
+    model_name: Optional[str] = Form(default=None, description="模型文件名（可选，默认使用配置中的模型）"),
+    force_reload: bool = Form(default=False, description="是否强制重新加载模型"),
     current_user: User = Depends(get_current_active_user)
 ):
     """
@@ -47,6 +68,8 @@ async def encode(
     参数:
         cover: 载体图像
         secret: 秘密图像
+        model_name: 模型文件名（如 model_best.pt，可选，默认使用配置中的模型）
+        force_reload: 是否强制重新加载模型
     
     返回:
         stego_image: 隐写图像 (base64)
@@ -55,7 +78,7 @@ async def encode(
         metrics: 质量指标 (PSNR、SSIM)
     """
     try:
-        model = get_model()
+        model = get_model(model_name, force_reload=force_reload)
         
         cover_bytes = await cover.read()
         secret_bytes = await secret.read()
@@ -101,6 +124,8 @@ async def encode(
 async def decode(
     stego: UploadFile = File(..., description="隐写图像"),
     stego_key: Optional[str] = Form(default=None, description="解码密钥 (可选)"),
+    model_name: Optional[str] = Form(default=None, description="模型文件名（可选，默认使用配置中的模型）"),
+    force_reload: bool = Form(default=False, description="是否强制重新加载模型"),
     current_user: User = Depends(get_current_active_user)
 ):
     """
@@ -111,13 +136,15 @@ async def decode(
     参数:
         stego: 隐写图像
         stego_key: 解码密钥 (可选，提供时为精确解码，否则为近似解码)
+        model_name: 模型文件名（如 model_best.pt，可选，默认使用配置中的模型）
+        force_reload: 是否强制重新加载模型
     
     返回:
         secret_image: 恢复的秘密图像 (base64)
         mode: 解码模式 ("exact" 或 "approximate")
     """
     try:
-        model = get_model()
+        model = get_model(model_name, force_reload=force_reload)
         
         stego_bytes = await stego.read()
         stego_pil = ensure_even(bytes_to_pil(stego_bytes))
@@ -161,6 +188,8 @@ async def pipeline_encrypt_encode(
     x0: float = Form(default=0.37291),
     n0: int = Form(default=500),
     rounds: int = Form(default=2),
+    model_name: Optional[str] = Form(default=None, description="模型文件名（可选，默认使用配置中的模型）"),
+    force_reload: bool = Form(default=False, description="是否强制重新加载模型"),
     current_user: User = Depends(get_current_active_user)
 ):
     """
@@ -170,6 +199,8 @@ async def pipeline_encrypt_encode(
         cover: 载体图像
         secret: 秘密图像
         r, x0, n0, rounds: Logistic 加密参数
+        model_name: 模型文件名（如 model_best.pt，可选）
+        force_reload: 是否强制重新加载模型
     
     返回:
         encrypted_secret: 加密后的秘密图像
@@ -180,7 +211,7 @@ async def pipeline_encrypt_encode(
         inn_metrics: 隐写质量指标
     """
     try:
-        model = get_model()
+        model = get_model(model_name, force_reload=force_reload)
         
         cover_bytes = await cover.read()
         secret_bytes = await secret.read()
@@ -239,6 +270,8 @@ async def pipeline_decode_decrypt(
     x0: float = Form(default=0.37291),
     n0: int = Form(default=500),
     rounds: int = Form(default=2),
+    model_name: Optional[str] = Form(default=None, description="模型文件名（可选，默认使用配置中的模型）"),
+    force_reload: bool = Form(default=False, description="是否强制重新加载模型"),
     current_user: User = Depends(get_current_active_user)
 ):
     """
@@ -248,6 +281,8 @@ async def pipeline_decode_decrypt(
         stego: 隐写图像
         stego_key: 隐写解码密钥 (可选)
         r, x0, n0, rounds: Logistic 解密参数
+        model_name: 模型文件名（如 model_best.pt，可选）
+        force_reload: 是否强制重新加载模型
     
     返回:
         extracted_encrypted: 提取的加密图像
@@ -255,7 +290,7 @@ async def pipeline_decode_decrypt(
         mode: 解码模式
     """
     try:
-        model = get_model()
+        model = get_model(model_name, force_reload=force_reload)
         
         stego_bytes = await stego.read()
         stego_pil = ensure_even(bytes_to_pil(stego_bytes))

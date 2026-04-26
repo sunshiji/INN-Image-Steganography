@@ -28,7 +28,15 @@ export interface ModelInfo {
   name: string
   path: string
   size_bytes: number
+  size_mb: number
   modified_at: string
+}
+
+export interface CurrentModelInfo {
+  current_weights_path: string | null
+  cached_models: string[]
+  device: string | null
+  weights_loaded: boolean
 }
 
 export const trainingApi = {
@@ -50,6 +58,8 @@ export const trainingApi = {
     val_freq: number
     save_freq: number
     dataset_path?: string
+    pretrained_model_name?: string
+    load_optimizer_state?: boolean
   }): Promise<TrainingJobInfo> {
     const response = await api.post('/training/start', params)
     return response.data
@@ -94,7 +104,52 @@ export const trainingApi = {
     return response.data
   },
 
+  async listAvailableModels(): Promise<{ models: ModelInfo[] }> {
+    const response = await api.get('/training/models/available')
+    return response.data
+  },
+
   async deleteModel(name: string): Promise<void> {
     await api.delete(`/training/models/${name}`)
+  },
+
+  async uploadModel(
+    name: string,
+    modelFile: File
+  ): Promise<{ message: string; name: string; path: string; size_bytes: number; size_mb: number }> {
+    const formData = new FormData()
+    formData.append('name', name)
+    formData.append('model_file', modelFile)
+
+    const response = await api.post('/training/models/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return response.data
+  },
+
+  async getCurrentModelInfo(): Promise<CurrentModelInfo> {
+    const response = await api.get('/training/models/info/current')
+    return response.data
+  },
+
+  async switchModel(modelName: string, forceReload: boolean = true): Promise<{
+    message: string
+    current_model: string
+    device: string
+    weights_loaded: boolean
+  }> {
+    const formData = new FormData()
+    formData.append('model_name', modelName)
+    formData.append('force_reload', forceReload ? 'true' : 'false')
+
+    const response = await api.post('/training/models/switch', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return response.data
+  },
+
+  async clearModelCache(): Promise<{ message: string }> {
+    const response = await api.post('/training/models/cache/clear')
+    return response.data
   }
 }

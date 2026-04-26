@@ -5,8 +5,11 @@
         <div class="card-header">
           <span>模型管理</span>
           <div class="header-actions">
-            <el-tag :type="activeModel ? 'success' : 'info'">
-              {{ activeModel ? '已加载模型' : '使用默认模型' }}
+            <el-tag :type="currentModelInfo?.weights_loaded ? 'success' : 'info'">
+              {{ currentModelInfo?.weights_loaded ? '已加载模型' : '使用默认模型' }}
+            </el-tag>
+            <el-tag v-if="currentModelInfo?.device" type="primary">
+              {{ currentModelInfo.device }}
             </el-tag>
           </div>
         </div>
@@ -22,14 +25,18 @@
           HiNet 模型支持两种模式：
           <br />1. <strong>默认模式：</strong>使用随机初始化的权重，无需训练即可使用（适合测试）
           <br />2. <strong>训练模式：</strong>使用您自己的数据集训练的模型，效果更佳
+          <br />
+          <el-link type="primary" @click="fetchCurrentModelInfo">
+            刷新当前模型状态
+          </el-link>
         </template>
       </el-alert>
       
       <el-table :data="models" v-loading="loading" stripe empty-text="暂无已训练模型">
         <el-table-column prop="name" label="模型名称" />
-        <el-table-column prop="size_bytes" label="文件大小" width="120">
+        <el-table-column prop="size_mb" label="文件大小" width="120">
           <template #default="{ row }">
-            {{ formatSize(row.size_bytes) }}
+            {{ row.size_mb }} MB
           </template>
         </el-table-column>
         <el-table-column prop="modified_at" label="修改时间" width="180">
@@ -37,7 +44,17 @@
             {{ formatTime(row.modified_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="300" fixed="right">
+        <el-table-column label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag v-if="isActiveModel(row.name)" type="success" size="small">
+              当前激活
+            </el-tag>
+            <el-tag v-else type="info" size="small">
+              未激活
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="320" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="handleDownload(row)" :icon="Download">
               下载
@@ -46,6 +63,7 @@
               size="small"
               type="primary"
               :disabled="isActiveModel(row.name)"
+              :loading="switchingModel === row.name"
               @click="handleSetActive(row)"
               :icon="Check"
             >
@@ -68,8 +86,19 @@
       <template #header>
         <div class="card-header">
           <span>上传模型权重</span>
+          <el-tag type="warning">HiNetcp 格式兼容</el-tag>
         </div>
       </template>
+      
+      <el-form label-width="100px" class="upload-form">
+        <el-form-item label="模型名称">
+          <el-input
+            v-model="newModelName"
+            placeholder="请输入模型名称（不含扩展名）"
+            style="width: 300px"
+          />
+        </el-form-item>
+      </el-form>
       
       <el-upload
         class="upload-area"
@@ -114,12 +143,35 @@
         <template #default>
           <ul class="requirements">
             <li>必须是 PyTorch 保存的权重文件（.pt/.pth/.ckpt 格式）</li>
-            <li>推荐使用本系统训练脚本生成的模型文件</li>
-            <li>权重文件应包含 'net' 键的 state_dict</li>
+            <li>推荐使用本系统训练脚本生成的模型文件，或 HiNetcp 项目训练的模型</li>
+            <li>权重文件应包含 'net' 键的 state_dict（与 HiNetcp 格式一致）</li>
             <li>示例：<code>torch.save({'net': net.state_dict(), 'opt': ...}, 'model.pt')</code></li>
           </ul>
         </template>
       </el-alert>
+    </el-card>
+    
+    <el-card class="section-card mt-4">
+      <template #header>
+        <div class="card-header">
+          <span>模型缓存管理</span>
+        </div>
+      </template>
+      
+      <div class="cache-info">
+        <p>
+          <strong>缓存的模型：</strong>
+          <el-tag v-if="currentModelInfo?.cached_models?.length" type="info" class="ml-2">
+            {{ currentModelInfo.cached_models.join(', ') }}
+          </el-tag>
+          <el-tag v-else type="info" class="ml-2">
+            无
+          </el-tag>
+        </p>
+        <el-button type="warning" @click="handleClearCache" :icon="Refresh">
+          清除模型缓存（释放内存）
+        </el-button>
+      </div>
     </el-card>
     
     <el-card class="section-card mt-4">
@@ -168,13 +220,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { trainingApi, type ModelInfo } from '@/api/training'
+import { trainingApi, type ModelInfo, type CurrentModelInfo } from '@/api/training'
 
 const loading = ref(false)
 const uploadingModel = ref(false)
+const switchingModel = ref<string>('')
 const models = ref<ModelInfo[]>([])
 const selectedModelFile = ref<File | null>(null)
-const activeModel = ref<string>('')
+const newModelName = ref<string>('')
+const currentModelInfo = ref<CurrentModelInfo | null>(null)
 
 const fetchModels = async () => {
   loading.value = true
@@ -188,19 +242,28 @@ const fetchModels = async () => {
   }
 }
 
+const fetchCurrentModelInfo = async () => {
+  try {
+    currentModelInfo.value = await trainingApi.getCurrentModelInfo()
+  } catch (error) {
+    console.error('获取当前模型信息失败:', error)
+  }
+}
+
 const formatSize = (bytes: number) => {
   if (bytes < 1024) return bytes + ' B'
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB'
   return (bytes / (1024 * 1024)).toFixed(2) + ' MB'
 }
 
-const formatTime = (time: string) => {
+const formatTime = (time: string | number) => {
   if (!time) return '-'
   return new Date(time).toLocaleString('zh-CN')
 }
 
 const isActiveModel = (name: string) => {
-  return activeModel.value === name
+  if (!currentModelInfo.value?.current_weights_path) return false
+  return currentModelInfo.value.current_weights_path.includes(name)
 }
 
 const handleModelFileChange = (file: any) => {
@@ -211,29 +274,67 @@ const handleModelFileChange = (file: any) => {
       return
     }
     selectedModelFile.value = file.raw
+    if (!newModelName.value) {
+      newModelName.value = file.name.replace(/\.(pt|pth|ckpt)$/i, '')
+    }
   }
 }
 
 const handleUploadModel = async () => {
   if (!selectedModelFile.value) return
   
+  if (!newModelName.value.trim()) {
+    ElMessage.warning('请输入模型名称')
+    return
+  }
+  
   uploadingModel.value = true
   try {
-    ElMessage.success('模型上传功能需要后端支持，请使用训练模块训练模型')
+    const result = await trainingApi.uploadModel(
+      newModelName.value.trim(),
+      selectedModelFile.value
+    )
+    
+    ElMessage.success(`模型 ${result.name} 上传成功`)
     selectedModelFile.value = null
+    newModelName.value = ''
+    fetchModels()
+  } catch (error: any) {
+    const message = error.response?.data?.detail || '上传失败'
+    ElMessage.error(message)
   } finally {
     uploadingModel.value = false
   }
 }
 
-const handleDownload = (model: ModelInfo) => {
-  ElMessage.info('模型下载功能开发中')
+const handleDownload = async (model: ModelInfo) => {
+  try {
+    const response = await fetch(`/api/training/models/${encodeURIComponent(model.name)}`, {
+      credentials: 'include'
+    })
+    if (response.ok) {
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = model.name
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      ElMessage.success('下载开始')
+    } else {
+      ElMessage.error('下载失败')
+    }
+  } catch (error) {
+    ElMessage.error('下载失败')
+  }
 }
 
 const handleSetActive = async (model: ModelInfo) => {
   try {
     await ElMessageBox.confirm(
-      `确定要将 "${model.name}" 设为当前激活模型吗？`,
+      `确定要将 "${model.name}" 设为当前激活模型吗？\n这将切换隐写/解码操作使用的模型权重。`,
       '提示',
       {
         confirmButtonText: '确定',
@@ -242,12 +343,19 @@ const handleSetActive = async (model: ModelInfo) => {
       }
     )
     
-    activeModel.value = model.name
-    ElMessage.success('模型已激活')
-  } catch (error) {
+    switchingModel.value = model.name
+    
+    const result = await trainingApi.switchModel(model.name, true)
+    
+    ElMessage.success(result.message)
+    fetchCurrentModelInfo()
+  } catch (error: any) {
     if (error !== 'cancel') {
-      ElMessage.error('操作失败')
+      const message = error.response?.data?.detail || '操作失败'
+      ElMessage.error(message)
     }
+  } finally {
+    switchingModel.value = ''
   }
 }
 
@@ -266,6 +374,7 @@ const handleDelete = async (model: ModelInfo) => {
     await trainingApi.deleteModel(model.name)
     ElMessage.success('删除成功')
     fetchModels()
+    fetchCurrentModelInfo()
   } catch (error: any) {
     if (error !== 'cancel') {
       const message = error.response?.data?.detail || '删除失败'
@@ -274,8 +383,32 @@ const handleDelete = async (model: ModelInfo) => {
   }
 }
 
+const handleClearCache = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要清除模型缓存吗？这将释放 GPU/CPU 内存，下次使用模型时需要重新加载。',
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'info'
+      }
+    )
+    
+    const result = await trainingApi.clearModelCache()
+    ElMessage.success(result.message)
+    fetchCurrentModelInfo()
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      const message = error.response?.data?.detail || '操作失败'
+      ElMessage.error(message)
+    }
+  }
+}
+
 onMounted(() => {
   fetchModels()
+  fetchCurrentModelInfo()
 })
 </script>
 
@@ -292,6 +425,10 @@ onMounted(() => {
   margin-top: 20px;
 }
 
+.ml-2 {
+  margin-left: 8px;
+}
+
 .section-card {
   border-radius: 12px;
 }
@@ -306,6 +443,10 @@ onMounted(() => {
 .header-actions {
   display: flex;
   gap: 12px;
+}
+
+.upload-form {
+  margin-bottom: 16px;
 }
 
 .upload-area {
@@ -374,6 +515,12 @@ onMounted(() => {
 
 .requirements li {
   margin-bottom: 4px;
+}
+
+.cache-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .dataset-card {

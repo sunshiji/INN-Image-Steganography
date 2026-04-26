@@ -107,6 +107,9 @@ class TrainingConfig:
         self.val_freq = kwargs.get('val_freq', 20)
         self.save_freq = kwargs.get('save_freq', 20)
         
+        self.pretrained_weights_path = kwargs.get('pretrained_weights_path', None)
+        self.load_optimizer_state = kwargs.get('load_optimizer_state', True)
+        
         self.betas = (0.5, 0.999)
         self.weight_decay = 1e-6
         self.weight_step = 50
@@ -121,7 +124,7 @@ class TrainingConfig:
 class HiNetTrainer:
     """
     HiNet 模型训练器
-    支持后台训练、进度监控、中断恢复
+    支持后台训练、进度监控、中断恢复、加载预训练权重
     """
     
     def __init__(self, job_id: int, config: TrainingConfig, 
@@ -144,6 +147,9 @@ class HiNetTrainer:
         self.best_ssim = 0.0
         self.best_loss = float('inf')
         
+        self.pretrained_loaded = False
+        self.pretrained_path = config.pretrained_weights_path
+        
         self.loss_history: List[float] = []
         self.psnr_history: List[float] = []
         self.ssim_history: List[float] = []
@@ -159,6 +165,77 @@ class HiNetTrainer:
             _training_status[self.job_id].update(kwargs)
             _training_status[self.job_id]['last_update'] = time.time()
     
+    def _load_pretrained_weights(self, net, optim=None):
+        """
+        加载预训练权重
+        支持 HiNetcp 格式: {'net': state_dict, 'opt': optimizer_state, ...}
+        """
+        if not self.config.pretrained_weights_path:
+            return net, optim
+        
+        weights_path = self.config.pretrained_weights_path
+        
+        if not os.path.exists(weights_path):
+            print(f"[Trainer] Pretrained weights not found: {weights_path}")
+            return net, optim
+        
+        print(f"[Trainer] Loading pretrained weights from: {weights_path}")
+        
+        try:
+            ckpt = torch.load(weights_path, map_location=self.device, weights_only=False)
+            
+            state_dict = None
+            opt_state = None
+            
+            if isinstance(ckpt, dict):
+                if 'net' in ckpt:
+                    state_dict = ckpt['net']
+                    print("[Trainer] Found 'net' key in checkpoint")
+                else:
+                    state_dict = ckpt
+                
+                if 'opt' in ckpt and optim is not None and self.config.load_optimizer_state:
+                    opt_state = ckpt['opt']
+                    print("[Trainer] Found 'opt' key in checkpoint (optimizer state)")
+            else:
+                state_dict = ckpt
+            
+            if state_dict is not None:
+                state_dict = {
+                    (k[len("module."):] if k.startswith("module.") else k): v
+                    for k, v in state_dict.items()
+                    if "tmp_var" not in k
+                }
+                
+                if hasattr(net, 'module'):
+                    remapped = {"module.model." + k: v for k, v in state_dict.items()}
+                else:
+                    remapped = {"model." + k: v for k, v in state_dict.items()}
+                
+                missing, unexpected = net.load_state_dict(remapped, strict=False)
+                
+                if missing:
+                    print(f"[Trainer] {len(missing)} missing key(s): {missing[:5]}")
+                if unexpected:
+                    print(f"[Trainer] {len(unexpected)} unexpected key(s): {unexpected[:5]}")
+                
+                self.pretrained_loaded = True
+                print(f"[Trainer] Pretrained weights loaded successfully")
+            
+            if opt_state is not None and optim is not None:
+                try:
+                    optim.load_state_dict(opt_state)
+                    print("[Trainer] Optimizer state loaded from checkpoint")
+                except Exception as e:
+                    print(f"[Trainer] Failed to load optimizer state: {e}")
+            
+        except Exception as e:
+            print(f"[Trainer] Failed to load pretrained weights: {e}")
+            import traceback
+            traceback.print_exc()
+        
+        return net, optim
+
     def _init_model(self):
         """初始化模型、优化器、损失函数"""
         from app.ml.hinet import _DWT, _IWT
@@ -181,6 +258,9 @@ class HiNetTrainer:
             eps=1e-6,
             weight_decay=self.config.weight_decay
         )
+        
+        if self.config.pretrained_weights_path:
+            net, optim = self._load_pretrained_weights(net, optim)
         
         scheduler = StepLR(optim, self.config.weight_step, gamma=self.config.gamma)
         
