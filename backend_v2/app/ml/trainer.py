@@ -20,7 +20,7 @@ from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
 
 from app.config import get_settings
-from app.ml.hinet import HiNetSteganography, _Model, _Hinet, INVBlock, ResidualDenseBlockOut
+from app.ml.hinet import HiNetSteganography, _Model, _Hinet, _INVBlock, _ResidualDenseBlockOut
 from app.ml.hinet import _DWT, _IWT, _CLAMP, _C, _SPLIT
 from app.utils.metrics import psnr as calculate_psnr
 
