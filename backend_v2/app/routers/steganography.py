@@ -5,15 +5,20 @@
 import io
 import base64
 import os
+import json
+from datetime import datetime
 from typing import Optional, Dict, Any
 
 import numpy as np
 import torch
 from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException, status
+from fastapi.responses import StreamingResponse
 from PIL import Image
+from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.models import User
+from app.database import get_db
+from app.models import User, Task, TaskType
 from app.routers.auth import get_current_active_user
 from app.ml import (
     get_hinet_model, is_model_loaded, encrypt_image, decrypt_image,
@@ -23,12 +28,52 @@ from app.utils import (
     bytes_to_pil, pil_to_b64, b64_to_pil,
     pil_to_tensor, tensor_to_pil,
     resize_if_needed, ensure_even, resize_to_match,
-    psnr, ssim
+    psnr, ssim,
+    save_image_to_file, get_task_output_dir, create_task_record_data
 )
 from app.schemas import EncodeResponse, DecodeResponse
 
 settings = get_settings()
 router = APIRouter(prefix="/api/steganography", tags=["隐写"])
+
+
+def save_task_to_db(
+    db: Session,
+    task_type: TaskType,
+    user_id: Optional[int],
+    parameters: dict,
+    metrics: dict,
+    key_data: Optional[str] = None,
+    cover_image_path: Optional[str] = None,
+    secret_image_path: Optional[str] = None,
+    output_image_path: Optional[str] = None,
+    status: str = "completed",
+    error_message: Optional[str] = None
+) -> Task:
+    """
+    保存任务记录到数据库
+    """
+    task_data = create_task_record_data(
+        task_type=task_type.value,
+        user_id=user_id,
+        parameters=parameters,
+        metrics=metrics,
+        key_data=key_data,
+        cover_image_path=cover_image_path,
+        secret_image_path=secret_image_path,
+        output_image_path=output_image_path,
+        status=status,
+        error_message=error_message
+    )
+    
+    task = Task(**task_data)
+    task.completed_at = datetime.utcnow()
+    
+    db.add(task)
+    db.commit()
+    db.refresh(task)
+    
+    return task
 
 
 def get_model(model_name: Optional[str] = None, force_reload: bool = False):
@@ -58,7 +103,9 @@ async def encode(
     secret: UploadFile = File(..., description="秘密图像"),
     model_name: Optional[str] = Form(default=None, description="模型文件名（可选，默认使用配置中的模型）"),
     force_reload: bool = Form(default=False, description="是否强制重新加载模型"),
-    current_user: User = Depends(get_current_active_user)
+    save_to_history: bool = Form(default=True, description="是否保存到历史记录"),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
 ):
     """
     隐写编码
@@ -70,12 +117,14 @@ async def encode(
         secret: 秘密图像
         model_name: 模型文件名（如 model_best.pt，可选，默认使用配置中的模型）
         force_reload: 是否强制重新加载模型
+        save_to_history: 是否保存到历史记录
     
     返回:
         stego_image: 隐写图像 (base64)
         stego_key: 解码密钥 (噪声张量 z 的 base64)
         recovery_image: 预计算的恢复图像 (用于验证)
         metrics: 质量指标 (PSNR、SSIM)
+        task_id: 任务ID（如果保存到历史记录）
     """
     try:
         model = get_model(model_name, force_reload=force_reload)
@@ -106,12 +155,50 @@ async def encode(
         
         noise_b64 = _tensor_to_b64(noise_t)
         
-        return EncodeResponse(
-            stego_image=pil_to_b64(stego_pil),
-            stego_key=noise_b64,
-            recovery_image=pil_to_b64(secret_rev_pil),
-            metrics=metrics
-        )
+        task_id = None
+        if save_to_history:
+            output_dir = get_task_output_dir(current_user.id)
+            
+            cover_image_path = save_image_to_file(
+                cover_pil, output_dir, prefix="encode_cover"
+            )
+            secret_image_path = save_image_to_file(
+                secret_pil, output_dir, prefix="encode_secret"
+            )
+            output_image_path = save_image_to_file(
+                stego_pil, output_dir, prefix="encode_stego"
+            )
+            
+            parameters = {
+                "model_name": model_name,
+                "force_reload": force_reload,
+                "cover_filename": cover.filename,
+                "secret_filename": secret.filename
+            }
+            
+            task = save_task_to_db(
+                db=db,
+                task_type=TaskType.ENCODE,
+                user_id=current_user.id,
+                parameters=parameters,
+                metrics=metrics,
+                key_data=noise_b64,
+                cover_image_path=cover_image_path,
+                secret_image_path=secret_image_path,
+                output_image_path=output_image_path
+            )
+            task_id = task.id
+        
+        result = {
+            "stego_image": pil_to_b64(stego_pil),
+            "stego_key": noise_b64,
+            "recovery_image": pil_to_b64(secret_rev_pil),
+            "metrics": metrics
+        }
+        if task_id:
+            result["task_id"] = task_id
+        
+        return result
     
     except Exception as e:
         raise HTTPException(
@@ -126,7 +213,9 @@ async def decode(
     stego_key: Optional[str] = Form(default=None, description="解码密钥 (可选)"),
     model_name: Optional[str] = Form(default=None, description="模型文件名（可选，默认使用配置中的模型）"),
     force_reload: bool = Form(default=False, description="是否强制重新加载模型"),
-    current_user: User = Depends(get_current_active_user)
+    save_to_history: bool = Form(default=True, description="是否保存到历史记录"),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
 ):
     """
     隐写解码
@@ -138,10 +227,12 @@ async def decode(
         stego_key: 解码密钥 (可选，提供时为精确解码，否则为近似解码)
         model_name: 模型文件名（如 model_best.pt，可选，默认使用配置中的模型）
         force_reload: 是否强制重新加载模型
+        save_to_history: 是否保存到历史记录
     
     返回:
         secret_image: 恢复的秘密图像 (base64)
         mode: 解码模式 ("exact" 或 "approximate")
+        task_id: 任务ID（如果保存到历史记录）
     """
     try:
         model = get_model(model_name, force_reload=force_reload)
@@ -166,10 +257,45 @@ async def decode(
         secret_pil = tensor_to_pil(secret_t)
         mode = "exact" if noise_t is not None else "approximate"
         
-        return DecodeResponse(
-            secret_image=pil_to_b64(secret_pil),
-            mode=mode
-        )
+        task_id = None
+        if save_to_history:
+            output_dir = get_task_output_dir(current_user.id)
+            
+            input_image_path = save_image_to_file(
+                stego_pil, output_dir, prefix="decode_input"
+            )
+            output_image_path = save_image_to_file(
+                secret_pil, output_dir, prefix="decode_output"
+            )
+            
+            parameters = {
+                "model_name": model_name,
+                "force_reload": force_reload,
+                "mode": mode,
+                "has_key": stego_key is not None,
+                "stego_filename": stego.filename
+            }
+            
+            task = save_task_to_db(
+                db=db,
+                task_type=TaskType.DECODE,
+                user_id=current_user.id,
+                parameters=parameters,
+                metrics={},
+                key_data=stego_key,
+                cover_image_path=input_image_path,
+                output_image_path=output_image_path
+            )
+            task_id = task.id
+        
+        result = {
+            "secret_image": pil_to_b64(secret_pil),
+            "mode": mode
+        }
+        if task_id:
+            result["task_id"] = task_id
+        
+        return result
     
     except HTTPException:
         raise
@@ -190,7 +316,9 @@ async def pipeline_encrypt_encode(
     rounds: int = Form(default=2),
     model_name: Optional[str] = Form(default=None, description="模型文件名（可选，默认使用配置中的模型）"),
     force_reload: bool = Form(default=False, description="是否强制重新加载模型"),
-    current_user: User = Depends(get_current_active_user)
+    save_to_history: bool = Form(default=True, description="是否保存到历史记录"),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
 ):
     """
     流水线：混沌加密 + 隐写编码（一键完成）
@@ -201,6 +329,7 @@ async def pipeline_encrypt_encode(
         r, x0, n0, rounds: Logistic 加密参数
         model_name: 模型文件名（如 model_best.pt，可选）
         force_reload: 是否强制重新加载模型
+        save_to_history: 是否保存到历史记录
     
     返回:
         encrypted_secret: 加密后的秘密图像
@@ -209,6 +338,7 @@ async def pipeline_encrypt_encode(
         stego_key: 隐写解码密钥
         encrypt_metrics: 加密质量指标
         inn_metrics: 隐写质量指标
+        task_id: 任务ID（如果保存到历史记录）
     """
     try:
         model = get_model(model_name, force_reload=force_reload)
@@ -246,14 +376,65 @@ async def pipeline_encrypt_encode(
             "ssim_cover_stego": round(ssim(cover_arr, stego_arr), 4),
         }
         
-        return {
+        stego_key = _tensor_to_b64(noise_t)
+        
+        task_id = None
+        if save_to_history:
+            output_dir = get_task_output_dir(current_user.id)
+            
+            cover_image_path = save_image_to_file(
+                cover_pil, output_dir, prefix="pipeline_cover"
+            )
+            secret_image_path = save_image_to_file(
+                secret_pil, output_dir, prefix="pipeline_secret"
+            )
+            output_image_path = save_image_to_file(
+                stego_pil, output_dir, prefix="pipeline_stego"
+            )
+            
+            combined_key = {
+                "chaos_key": chaos_key,
+                "stego_key": stego_key
+            }
+            
+            parameters = {
+                "r": r,
+                "x0": x0,
+                "n0": n0,
+                "rounds": rounds,
+                "model_name": model_name,
+                "force_reload": force_reload,
+                "cover_filename": cover.filename,
+                "secret_filename": secret.filename
+            }
+            
+            combined_metrics = {**encrypt_metrics, **inn_metrics}
+            
+            task = save_task_to_db(
+                db=db,
+                task_type=TaskType.PIPELINE_ENCRYPT_ENCODE,
+                user_id=current_user.id,
+                parameters=parameters,
+                metrics=combined_metrics,
+                key_data=json.dumps(combined_key),
+                cover_image_path=cover_image_path,
+                secret_image_path=secret_image_path,
+                output_image_path=output_image_path
+            )
+            task_id = task.id
+        
+        result = {
             "encrypted_secret": pil_to_b64(enc_pil),
             "stego_image": pil_to_b64(stego_pil),
             "chaos_key": chaos_key,
-            "stego_key": _tensor_to_b64(noise_t),
+            "stego_key": stego_key,
             "encrypt_metrics": encrypt_metrics,
             "inn_metrics": inn_metrics
         }
+        if task_id:
+            result["task_id"] = task_id
+        
+        return result
     
     except Exception as e:
         raise HTTPException(
@@ -272,7 +453,9 @@ async def pipeline_decode_decrypt(
     rounds: int = Form(default=2),
     model_name: Optional[str] = Form(default=None, description="模型文件名（可选，默认使用配置中的模型）"),
     force_reload: bool = Form(default=False, description="是否强制重新加载模型"),
-    current_user: User = Depends(get_current_active_user)
+    save_to_history: bool = Form(default=True, description="是否保存到历史记录"),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
 ):
     """
     流水线：隐写解码 + 混沌解密（一键完成）
@@ -283,11 +466,13 @@ async def pipeline_decode_decrypt(
         r, x0, n0, rounds: Logistic 解密参数
         model_name: 模型文件名（如 model_best.pt，可选）
         force_reload: 是否强制重新加载模型
+        save_to_history: 是否保存到历史记录
     
     返回:
         extracted_encrypted: 提取的加密图像
         decrypted_secret: 最终解密的秘密图像
         mode: 解码模式
+        task_id: 任务ID（如果保存到历史记录）
     """
     try:
         model = get_model(model_name, force_reload=force_reload)
@@ -317,16 +502,94 @@ async def pipeline_decode_decrypt(
         
         mode = "exact" if noise_t is not None else "approximate"
         
-        return {
+        task_id = None
+        if save_to_history:
+            output_dir = get_task_output_dir(current_user.id)
+            
+            input_image_path = save_image_to_file(
+                stego_pil, output_dir, prefix="pipeline_decode_input"
+            )
+            output_image_path = save_image_to_file(
+                dec_pil, output_dir, prefix="pipeline_decode_output"
+            )
+            
+            parameters = {
+                "r": r,
+                "x0": x0,
+                "n0": n0,
+                "rounds": rounds,
+                "model_name": model_name,
+                "force_reload": force_reload,
+                "mode": mode,
+                "has_key": stego_key is not None,
+                "stego_filename": stego.filename
+            }
+            
+            task = save_task_to_db(
+                db=db,
+                task_type=TaskType.PIPELINE_DECODE_DECRYPT,
+                user_id=current_user.id,
+                parameters=parameters,
+                metrics={},
+                key_data=stego_key,
+                cover_image_path=input_image_path,
+                output_image_path=output_image_path
+            )
+            task_id = task.id
+        
+        result = {
             "extracted_encrypted": pil_to_b64(secret_enc_pil),
             "decrypted_secret": pil_to_b64(dec_pil),
             "mode": mode
         }
+        if task_id:
+            result["task_id"] = task_id
+        
+        return result
     
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"流水线处理失败: {str(e)}"
+        )
+
+
+@router.post("/key/download")
+async def download_key_direct(
+    key: str = Form(..., description="密钥数据 (可以是JSON字符串或base64字符串)"),
+    task_type: str = Form(default="encode", description="任务类型")
+):
+    """
+    直接下载密钥（无需保存到历史记录）
+    特别适用于大尺寸的隐写密钥
+    
+    参数:
+        key: 密钥数据
+        task_type: 任务类型
+    
+    返回:
+        密钥文件下载
+    """
+    try:
+        key_str = key
+        
+        key_bytes = key_str.encode("utf-8")
+        key_io = io.BytesIO(key_bytes)
+        
+        timestamp = int(datetime.utcnow().timestamp())
+        
+        return StreamingResponse(
+            key_io,
+            media_type="text/plain",
+            headers={
+                "Content-Disposition": f"attachment; filename={task_type}_key_{timestamp}.txt"
+            }
+        )
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"生成密钥文件失败: {str(e)}"
         )
 
 

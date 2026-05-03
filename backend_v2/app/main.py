@@ -19,7 +19,8 @@ from app.routers import (
     auth_router,
     encrypt_router,
     steganography_router,
-    training_router
+    training_router,
+    history_router
 )
 from app.schemas import HealthResponse
 from app.utils.security import get_password_hash, verify_password, needs_migration
@@ -121,6 +122,7 @@ app.include_router(auth_router)
 app.include_router(encrypt_router)
 app.include_router(steganography_router)
 app.include_router(training_router)
+app.include_router(history_router)
 
 
 @app.exception_handler(Exception)

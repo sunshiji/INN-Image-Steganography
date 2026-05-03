@@ -250,8 +250,11 @@
       </el-alert>
       
       <div class="key-actions mt-4">
+        <el-button type="warning" @click="handleDownloadKey" :icon="Download">
+          下载密钥文件 (推荐)
+        </el-button>
         <el-button type="primary" @click="handleCopyKey" :icon="DocumentCopy">
-          复制密钥 (Base64)
+          复制密钥 (可能较大，会卡顿)
         </el-button>
         <el-button type="success" @click="handleDownloadStego" :icon="Download">
           下载隐写图像
@@ -266,6 +269,7 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { steganographyApi } from '@/api/steganography'
 import { trainingApi, type ModelInfo, type CurrentModelInfo } from '@/api/training'
+import { historyApi } from '@/api/history'
 
 const coverImage = ref<string>('')
 const secretImage = ref<string>('')
@@ -399,6 +403,29 @@ const handleDownloadStego = () => {
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
+}
+
+const handleDownloadKey = async () => {
+  if (!stegoKey.value) return
+  
+  try {
+    const keySize = Math.round(stegoKey.value.length / 1024)
+    ElMessage.info(`密钥大小约 ${keySize} KB，正在生成下载文件...`)
+    
+    await historyApi.downloadKeyDirect(stegoKey.value, 'encode')
+    ElMessage.success('密钥文件下载成功')
+  } catch (error: any) {
+    const blob = new Blob([stegoKey.value], { type: 'text/plain' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `stego_key_${Date.now()}.txt`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('密钥文件下载成功')
+  }
 }
 
 onMounted(() => {

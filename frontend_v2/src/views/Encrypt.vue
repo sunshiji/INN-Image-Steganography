@@ -146,6 +146,9 @@
             <el-button type="primary" @click="handleCopyKey" :icon="DocumentCopy">
               复制密钥
             </el-button>
+            <el-button type="warning" @click="handleDownloadKey" :icon="Download">
+              下载密钥文件
+            </el-button>
           </div>
         </el-col>
       </el-row>
@@ -211,6 +214,7 @@
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { encryptApi } from '@/api/encrypt'
+import { historyApi } from '@/api/history'
 
 const originalImage = ref<string>('')
 const encryptedImage = ref<string>('')
@@ -304,6 +308,28 @@ const handleCopyKey = () => {
   }).catch(() => {
     ElMessage.error('复制失败，请手动复制')
   })
+}
+
+const handleDownloadKey = async () => {
+  if (!currentKey.value) return
+  
+  try {
+    const keyText = JSON.stringify(currentKey.value)
+    await historyApi.downloadKeyDirect(keyText, 'encrypt')
+    ElMessage.success('密钥文件下载成功')
+  } catch (error: any) {
+    const keyText = JSON.stringify(currentKey.value, null, 2)
+    const blob = new Blob([keyText], { type: 'application/json' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `encrypt_key_${Date.now()}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('密钥文件下载成功')
+  }
 }
 </script>
 
