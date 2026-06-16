@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>注册新用户 — INN 图像隐写系统</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #e0e7ff 0%, #f0f9ff 50%, #ede9fe 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    input:focus { outline: none; }
+  </style>
+</head>
+<body>
+
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-10 border border-indigo-50 mx-4">
+
+    <!-- Logo / Brand -->
+    <div class="flex items-center justify-center gap-3 mb-8">
+      <div class="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+        <i class="fa-solid fa-eye-slash text-white text-xl"></i>
+      </div>
+      <div>
+        <p class="text-xl font-bold text-indigo-700 leading-tight">INN 图像隐写系统</p>
+        <p class="text-xs text-slate-400 leading-tight">Invertible Neural Network Steganography</p>
+      </div>
+    </div>
+
+    <h2 class="text-2xl font-bold text-slate-800 text-center mb-1">注册新用户</h2>
+    <p class="text-sm text-slate-400 text-center mb-7">需要管理员提供的邀请码（SECRET_KEY）方可注册</p>
+
+    <!-- Alert messages -->
+    <div id="alert-msg" class="hidden mb-5 px-4 py-3 rounded-xl border text-sm font-medium flex items-start gap-2">
+      <i id="alert-icon" class="mt-0.5 flex-shrink-0"></i>
+      <span id="alert-text"></span>
+    </div>
+
+    <!-- Register form -->
+    <form id="register-form" onsubmit="doRegister(event)" novalidate>
+
+      <!-- Username -->
+      <div class="mb-4">
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="reg-username">用户名</label>
+        <div class="relative">
+          <i class="fa-solid fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+          <input id="reg-username" type="text" autocomplete="username" required
+            class="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-slate-50"
+            placeholder="2–32 个字符" />
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="mb-4">
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="reg-password">密码</label>
+        <div class="relative">
+          <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+          <input id="reg-password" type="password" autocomplete="new-password" required
+            class="w-full pl-10 pr-10 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-slate-50"
+            placeholder="至少 6 位字符" />
+          <button type="button" onclick="togglePwd('reg-password','eye1')"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+            <i class="fa-solid fa-eye text-sm" id="eye1"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Confirm Password -->
+      <div class="mb-4">
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="reg-confirm">确认密码</label>
+        <div class="relative">
+          <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+          <input id="reg-confirm" type="password" autocomplete="new-password" required
+            class="w-full pl-10 pr-10 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-slate-50"
+            placeholder="再次输入密码" />
+          <button type="button" onclick="togglePwd('reg-confirm','eye2')"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+            <i class="fa-solid fa-eye text-sm" id="eye2"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Invite Code -->
+      <div class="mb-7">
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="reg-invite">邀请码（SECRET_KEY）</label>
+        <div class="relative">
+          <i class="fa-solid fa-ticket absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+          <input id="reg-invite" type="password" autocomplete="off" required
+            class="w-full pl-10 pr-10 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-slate-50"
+            placeholder="向管理员索取" />
+          <button type="button" onclick="togglePwd('reg-invite','eye3')"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+            <i class="fa-solid fa-eye text-sm" id="eye3"></i>
+          </button>
+        </div>
+        <p class="mt-1.5 text-xs text-slate-400">
+          <i class="fa-solid fa-circle-info mr-1 text-indigo-300"></i>
+          邀请码为服务器的 <code class="bg-slate-100 px-1 rounded">SECRET_KEY</code> 环境变量值，由管理员提供
+        </p>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" id="reg-btn"
+        class="w-full py-2.5 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 active:bg-indigo-800 transition-colors flex items-center justify-center gap-2 shadow-md shadow-indigo-200">
+        <i class="fa-solid fa-user-plus"></i>
+        注 册
+      </button>
+    </form>
+
+    <!-- Back to login -->
+    <div class="text-center mt-5">
+      <a href="/login" class="text-sm text-indigo-500 hover:text-indigo-700 font-medium transition-colors">
+        <i class="fa-solid fa-arrow-left mr-1"></i>返回登录页
+      </a>
+    </div>
+
+  </div>
+
+  <script>
+    async function doRegister(e) {
+      e.preventDefault();
+      clearAlert();
+
+      const username   = document.getElementById('reg-username').value.trim();
+      const password   = document.getElementById('reg-password').value;
+      const confirm    = document.getElementById('reg-confirm').value;
+      const inviteCode = document.getElementById('reg-invite').value;
+
+      if (!username || !password || !confirm || !inviteCode) {
+        showAlert('error', '请填写所有字段');
+        return;
+      }
+      if (password !== confirm) {
+        showAlert('error', '两次输入的密码不一致');
+        return;
+      }
+      if (password.length < 6) {
+        showAlert('error', '密码至少需要 6 位字符');
+        return;
+      }
+
+      const btn = document.getElementById('reg-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 注册中…';
+
+      try {
+        const resp = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, invite_code: inviteCode }),
+          credentials: 'same-origin',
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+          showAlert('success', data.message || '注册成功！');
+          document.getElementById('register-form').reset();
+          setTimeout(() => { window.location.href = '/login'; }, 1800);
+        } else {
+          showAlert('error', data.error || '注册失败，请重试');
+        }
+      } catch (err) {
+        showAlert('error', '网络错误，请稍后重试');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> 注 册';
+      }
+    }
+
+    function showAlert(type, msg) {
+      const box  = document.getElementById('alert-msg');
+      const icon = document.getElementById('alert-icon');
+      const text = document.getElementById('alert-text');
+      if (type === 'success') {
+        box.className  = 'mb-5 px-4 py-3 rounded-xl border text-sm font-medium flex items-start gap-2 bg-green-50 border-green-200 text-green-700';
+        icon.className = 'fa-solid fa-circle-check mt-0.5 flex-shrink-0';
+      } else {
+        box.className  = 'mb-5 px-4 py-3 rounded-xl border text-sm font-medium flex items-start gap-2 bg-red-50 border-red-200 text-red-600';
+        icon.className = 'fa-solid fa-circle-exclamation mt-0.5 flex-shrink-0';
+      }
+      text.textContent = msg;
+      box.classList.remove('hidden');
+    }
+
+    function clearAlert() {
+      document.getElementById('alert-msg').classList.add('hidden');
+    }
+
+    function togglePwd(inputId, eyeId) {
+      const inp = document.getElementById(inputId);
+      const eye = document.getElementById(eyeId);
+      if (inp.type === 'password') {
+        inp.type = 'text';
+        eye.className = 'fa-solid fa-eye-slash text-sm';
+      } else {
+        inp.type = 'password';
+        eye.className = 'fa-solid fa-eye text-sm';
+      }
+    }
+  </script>
+
+</body>
+</html>

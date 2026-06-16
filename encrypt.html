@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>混沌加密 - INN图像隐写系统</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    body { font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+    .upload-zone { border: 2px dashed #fde68a; transition: all 0.2s; }
+    .upload-zone:hover { border-color: #f59e0b; background: #fffbeb; }
+    .upload-zone.has-image { border-style: solid; border-color: #f59e0b; }
+    .chaos-pixel { display: inline-block; width: 6px; height: 6px; border-radius: 1px; }
+    .logistic-curve { stroke: #f59e0b; fill: none; stroke-width: 2; }
+    .tag { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
+    .progress-bar { transition: width 0.5s ease; }
+    .step-active { background: #f59e0b; color: white; }
+    .step-done { background: #10b981; color: white; }
+    .step-pending { background: #e2e8f0; color: #94a3b8; }
+    .param-highlight { border-color: #f59e0b !important; background: #fffbeb !important; }
+    .formula-box {
+      background: #fffbeb;
+      border: 1.5px solid #fde68a;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.92rem;
+      color: #92400e;
+      font-weight: 600;
+    }
+    .chaos-map-cell {
+      width: 9px; height: 9px;
+      display: inline-block;
+      border-radius: 1px;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
+          <i class="fa-solid fa-eye-slash text-white text-sm"></i>
+        </div>
+        <div>
+          <span class="text-lg font-bold text-indigo-700">INN</span>
+          <span class="text-lg font-semibold text-slate-700"> 图像隐写系统</span>
+        </div>
+      </div>
+      <nav class="flex items-center gap-6 text-sm font-medium text-slate-600">
+        <a href="/home.html" class="hover:text-indigo-600 transition-colors">首页</a>
+        <a href="/encrypt.html" class="text-amber-600 font-semibold">混沌加密</a>
+        <a href="/encode.html" class="hover:text-indigo-600 transition-colors">隐写编码</a>
+        <a href="/decode.html" class="hover:text-indigo-600 transition-colors">隐写解码</a>
+        <a href="/gallery.html" class="hover:text-indigo-600 transition-colors">图库示例</a>
+        <a href="/settings.html" class="hover:text-indigo-600 transition-colors">系统设置</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Pipeline Banner -->
+  <div class="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
+    <div class="max-w-7xl mx-auto px-6 py-4">
+      <div class="flex items-center justify-center gap-3 flex-wrap">
+        <!-- Step 1 (current) -->
+        <div class="flex items-center gap-2 bg-amber-500 text-white px-4 py-2 rounded-xl font-semibold text-sm shadow-sm shadow-amber-200">
+          <div class="w-6 h-6 bg-white bg-opacity-25 rounded-lg flex items-center justify-center text-xs font-bold">1</div>
+          <i class="fa-solid fa-lock-open text-xs"></i>
+          混沌加密
+        </div>
+        <div class="text-amber-300 text-lg font-bold">→</div>
+        <!-- Step 2 -->
+        <div class="flex items-center gap-2 bg-white border border-slate-200 text-slate-500 px-4 py-2 rounded-xl text-sm">
+          <div class="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center text-xs font-bold text-slate-400">2</div>
+          <i class="fa-solid fa-file-image text-xs"></i>
+          INN隐写编码
+        </div>
+        <div class="text-slate-300 text-lg font-bold">→</div>
+        <!-- Step 3 -->
+        <div class="flex items-center gap-2 bg-white border border-slate-200 text-slate-500 px-4 py-2 rounded-xl text-sm">
+          <div class="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center text-xs font-bold text-slate-400">3</div>
+          <i class="fa-solid fa-key text-xs"></i>
+          INN隐写解码
+        </div>
+        <div class="text-slate-300 text-lg font-bold">→</div>
+        <!-- Step 4 -->
+        <div class="flex items-center gap-2 bg-white border border-slate-200 text-slate-500 px-4 py-2 rounded-xl text-sm">
+          <div class="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center text-xs font-bold text-slate-400">4</div>
+          <i class="fa-solid fa-lock text-xs"></i>
+          混沌解密还原
+        </div>
+        <div class="ml-4 px-3 py-1.5 bg-amber-100 border border-amber-200 rounded-xl">
+          <p class="text-xs text-amber-700 font-semibold">
+            <i class="fa-solid fa-shield-halved mr-1"></i>双重安全：加密 + 隐写
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Page Title -->
+    <div class="mb-8">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+          <i class="fa-solid fa-dice-d6 text-amber-600"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-800">混沌加密</h1>
+        <span class="tag bg-amber-100 text-amber-700">CHAOS ENCRYPT</span>
+        <span class="tag bg-slate-100 text-slate-600">步骤 1 / 4</span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-6">
+      <!-- Left: Upload + Params -->
+      <div class="col-span-2 space-y-6">
+
+        <!-- Progress Steps -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <div class="flex items-center justify-between">
+            <div class="flex-1 flex items-center">
+              <div class="flex flex-col items-center">
+                <div id="step1" class="w-9 h-9 rounded-full step-active flex items-center justify-center text-sm font-bold shadow">1</div>
+                <span id="step1lbl" class="text-xs mt-2 font-medium text-amber-600">上传图像</span>
+              </div>
+              <div id="line12" class="flex-1 h-0.5 bg-amber-200 mx-3"></div>
+            </div>
+            <div class="flex-1 flex items-center">
+              <div class="flex flex-col items-center">
+                <div id="step2" class="w-9 h-9 rounded-full step-pending flex items-center justify-center text-sm font-bold">2</div>
+                <span id="step2lbl" class="text-xs mt-2 font-medium text-slate-400">密钥配置</span>
+              </div>
+              <div id="line23" class="flex-1 h-0.5 bg-slate-200 mx-3"></div>
+            </div>
+            <div class="flex-1 flex items-center">
+              <div class="flex flex-col items-center">
+                <div id="step3" class="w-9 h-9 rounded-full step-pending flex items-center justify-center text-sm font-bold">3</div>
+                <span id="step3lbl" class="text-xs mt-2 font-medium text-slate-400">执行加密</span>
+              </div>
+              <div id="line34" class="flex-1 h-0.5 bg-slate-200 mx-3"></div>
+            </div>
+            <div class="flex flex-col items-center">
+              <div id="step4" class="w-9 h-9 rounded-full step-pending flex items-center justify-center text-sm font-bold">4</div>
+              <span id="step4lbl" class="text-xs mt-2 font-medium text-slate-400">送入隐写</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <h2 class="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
+            <i class="fa-solid fa-upload text-amber-500"></i> 上传待加密图像（秘密图像）
+          </h2>
+          <div class="grid grid-cols-2 gap-5">
+            <!-- Input: Secret Image -->
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-3">
+                原始秘密图像 <span class="text-red-400">*</span>
+              </label>
+              <div class="upload-zone has-image rounded-xl p-4 text-center cursor-pointer">
+                <div class="w-full h-44 rounded-lg flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-100 border border-amber-200">
+                  <!-- Simulated original image (structured) -->
+                  <div class="grid gap-1" style="grid-template-columns:repeat(6,1fr)">
+                    <div class="w-8 h-8 bg-rose-300 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-orange-200 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-amber-300 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-rose-200 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-orange-300 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-amber-200 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-amber-400 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-rose-300 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-orange-200 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-amber-300 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-rose-400 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-orange-300 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-orange-300 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-amber-200 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-rose-300 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-orange-400 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-amber-200 rounded-sm"></div>
+                    <div class="w-8 h-8 bg-rose-300 rounded-sm"></div>
+                  </div>
+                  <div class="absolute top-2 right-2 bg-emerald-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
+                    <i class="fa-solid fa-check text-xs"></i>
+                  </div>
+                  <div class="absolute top-2 left-2 bg-amber-600 text-white text-xs px-2 py-0.5 rounded-lg font-medium">原始</div>
+                </div>
+                <div class="mt-3 flex items-center justify-between">
+                  <div class="text-left">
+                    <p class="text-sm font-medium text-slate-700">secret_image.png</p>
+                    <p class="text-xs text-slate-400">512×512 · 0.8 MB · PNG</p>
+                  </div>
+                  <button class="text-xs text-amber-500 hover:text-amber-700 font-medium">重新上传</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Output Preview: Encrypted Image -->
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-3">
+                加密后图像（预览）
+                <span class="ml-2 text-xs font-normal text-slate-400">执行加密后生成</span>
+              </label>
+              <div id="encryptedUploadPreviewWrap" class="rounded-xl p-4 border-2 border-dashed border-emerald-300 bg-emerald-50">
+                <div id="encryptedUploadPreviewDiv" class="w-full h-44 rounded-lg flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-slate-800 to-gray-900 border border-slate-700">
+                  <!-- Simulated encrypted image: random noise appearance -->
+                  <div id="encryptedUploadNoise" class="absolute inset-0 p-1">
+                    <div class="grid gap-0" style="grid-template-columns:repeat(32,1fr); height:100%;">
+                      <!-- 32x20 noise simulation -->
+                      <div class="chaos-map-cell bg-gray-600"></div><div class="chaos-map-cell bg-white opacity-20"></div><div class="chaos-map-cell bg-gray-800"></div><div class="chaos-map-cell bg-slate-400 opacity-50"></div>
+                      <div class="chaos-map-cell bg-white opacity-30"></div><div class="chaos-map-cell bg-gray-700"></div><div class="chaos-map-cell bg-slate-300 opacity-40"></div><div class="chaos-map-cell bg-gray-900"></div>
+                      <div class="chaos-map-cell bg-slate-500 opacity-60"></div><div class="chaos-map-cell bg-gray-600"></div><div class="chaos-map-cell bg-white opacity-10"></div><div class="chaos-map-cell bg-gray-800"></div>
+                      <div class="chaos-map-cell bg-gray-700"></div><div class="chaos-map-cell bg-slate-400 opacity-70"></div><div class="chaos-map-cell bg-gray-900"></div><div class="chaos-map-cell bg-white opacity-25"></div>
+                      <div class="chaos-map-cell bg-gray-600"></div><div class="chaos-map-cell bg-slate-300 opacity-50"></div><div class="chaos-map-cell bg-gray-800"></div><div class="chaos-map-cell bg-gray-700"></div>
+                      <div class="chaos-map-cell bg-white opacity-15"></div><div class="chaos-map-cell bg-slate-500 opacity-60"></div><div class="chaos-map-cell bg-gray-900"></div><div class="chaos-map-cell bg-gray-600"></div>
+                      <div class="chaos-map-cell bg-slate-400 opacity-40"></div><div class="chaos-map-cell bg-gray-800"></div><div class="chaos-map-cell bg-white opacity-35"></div><div class="chaos-map-cell bg-gray-700"></div>
+                      <div class="chaos-map-cell bg-gray-900"></div><div class="chaos-map-cell bg-slate-300 opacity-55"></div><div class="chaos-map-cell bg-gray-600"></div><div class="chaos-map-cell bg-white opacity-20"></div>
+                    </div>
+                  </div>
+                  <img id="encryptedUploadImg" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg" alt="加密图像">
+                  <div class="absolute top-2 left-2 bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-lg font-medium">加密</div>
+                  <div id="encryptedUploadNoiseLbl" class="absolute bottom-2 right-2 text-xs text-slate-400 bg-black bg-opacity-50 px-2 py-0.5 rounded-lg">随机噪声外观</div>
+                </div>
+                <div class="mt-3 flex items-center justify-between">
+                  <div class="text-left">
+                    <p id="encryptedUploadName" class="text-sm font-medium text-slate-700">secret_encrypted.png</p>
+                    <p id="encryptedUploadMeta" class="text-xs text-slate-400">512×512 · 已加密 · PNG</p>
+                  </div>
+                  <button id="btnSaveEncrypted" class="text-xs text-emerald-600 font-semibold bg-emerald-100 px-3 py-1 rounded-lg">
+                    <i class="fa-solid fa-download mr-1"></i>保存加密图像
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Logistic Map Parameter Configuration (hidden: fixed parameters used in backend) -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6" style="display:none">
+          <h2 class="text-base font-bold text-slate-800 mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-key text-amber-500"></i> 混沌密钥配置
+          </h2>
+          <p class="text-sm text-slate-500 mb-5">
+            混沌映射：
+            <span class="formula-box inline-block ml-2">x<sub>n+1</sub> = r · x<sub>n</sub> · (1 − x<sub>n</sub>)</span>
+            <span class="ml-2 text-xs text-slate-400">当 r ∈ (3.57, 4] 时系统呈完全混沌状态</span>
+          </p>
+
+          <div class="grid grid-cols-2 gap-6">
+            <!-- Left: Key Parameters -->
+            <div class="space-y-5">
+              <!-- r parameter -->
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <label class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    混沌参数 <code class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-xs">r</code>
+                    <span class="tag bg-amber-100 text-amber-700">混沌控制参数</span>
+                  </label>
+                  <span class="text-sm font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-lg font-mono">3.9991</span>
+                </div>
+                <input type="range" min="3.57" max="4.0" step="0.0001" value="3.9991"
+                  class="w-full h-2.5 rounded-lg appearance-none bg-amber-100 accent-amber-500 cursor-pointer" />
+                <div class="flex justify-between text-xs text-slate-400 mt-1">
+                  <span>3.57（混沌临界）</span>
+                  <span>4.0（完全混沌）</span>
+                </div>
+              </div>
+
+              <!-- x0 parameter -->
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <label class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    初始值 <code class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-xs">x₀</code>
+                    <span class="tag bg-slate-100 text-slate-600">密钥种子</span>
+                  </label>
+                  <span class="text-sm font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-lg font-mono">0.37291</span>
+                </div>
+                <input type="range" min="0.001" max="0.999" step="0.00001" value="0.37291"
+                  class="w-full h-2.5 rounded-lg appearance-none bg-amber-100 accent-amber-500 cursor-pointer" />
+                <div class="flex justify-between text-xs text-slate-400 mt-1">
+                  <span>0.001</span>
+                  <span>0.999</span>
+                </div>
+              </div>
+
+              <!-- Iterations -->
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <label class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    预迭代次数 <code class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-xs">N₀</code>
+                    <span class="tag bg-slate-100 text-slate-600">丢弃前N₀个值</span>
+                  </label>
+                  <span class="text-sm font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-lg font-mono">500</span>
+                </div>
+                <input type="range" min="100" max="2000" step="100" value="500"
+                  class="w-full h-2.5 rounded-lg appearance-none bg-amber-100 accent-amber-500 cursor-pointer" />
+                <div class="flex justify-between text-xs text-slate-400 mt-1">
+                  <span>100（最少）</span>
+                  <span>2000（最安全）</span>
+                </div>
+              </div>
+
+              <!-- Encryption Rounds -->
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">
+                  加密轮数
+                  <span class="ml-2 text-xs font-normal text-slate-400">（置乱+扩散循环次数）</span>
+                </label>
+                <div class="flex gap-3">
+                  <label class="flex-1 flex items-center gap-2 border-2 border-slate-200 rounded-xl px-3 py-2.5 cursor-pointer hover:border-amber-300">
+                    <input type="radio" name="rounds" class="accent-amber-500" />
+                    <span class="text-sm text-slate-600">1轮（快速）</span>
+                  </label>
+                  <label class="flex-1 flex items-center gap-2 border-2 border-amber-400 bg-amber-50 rounded-xl px-3 py-2.5 cursor-pointer">
+                    <input type="radio" name="rounds" checked class="accent-amber-500" />
+                    <span class="text-sm font-medium text-amber-700">2轮（推荐）</span>
+                  </label>
+                  <label class="flex-1 flex items-center gap-2 border-2 border-slate-200 rounded-xl px-3 py-2.5 cursor-pointer hover:border-amber-300">
+                    <input type="radio" name="rounds" class="accent-amber-500" />
+                    <span class="text-sm text-slate-600">3轮（高安全）</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Encryption Method & Key Display -->
+            <div class="space-y-5">
+              <!-- Encryption Method -->
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-3">加密模式</label>
+                <div class="space-y-3">
+                  <label class="flex items-start gap-3 p-4 border-2 border-amber-400 bg-amber-50 rounded-xl cursor-pointer">
+                    <input type="radio" name="method" checked class="accent-amber-500 mt-0.5" />
+                    <div>
+                      <p class="text-sm font-bold text-amber-800">置乱 + 扩散（双层加密）</p>
+                      <p class="text-xs text-amber-700 mt-1">先用混沌序列置乱像素位置，再用另一混沌序列对像素值进行异或扩散。安全性最高。</p>
+                    </div>
+                  </label>
+                  <label class="flex items-start gap-3 p-3 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-amber-200">
+                    <input type="radio" name="method" class="accent-amber-500 mt-0.5" />
+                    <div>
+                      <p class="text-sm font-bold text-slate-600">仅扩散（XOR异或）</p>
+                      <p class="text-xs text-slate-500 mt-1">仅用混沌序列对像素值进行异或运算，速度更快，安全性适中。</p>
+                    </div>
+                  </label>
+                  <label class="flex items-start gap-3 p-3 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-amber-200">
+                    <input type="radio" name="method" class="accent-amber-500 mt-0.5" />
+                    <div>
+                      <p class="text-sm font-bold text-slate-600">仅置乱（位置混淆）</p>
+                      <p class="text-xs text-slate-500 mt-1">仅打乱像素位置顺序，不改变像素值，适合对视觉混淆要求较高的场景。</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Auto-generated Key Preview -->
+              <div class="bg-slate-900 rounded-xl p-4">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+                  <i class="fa-solid fa-terminal text-green-400"></i> 生成的密钥序列（前20位）
+                </p>
+                <div class="font-mono text-xs text-green-400 leading-relaxed break-all">
+                  0.37291 → 0.93412 → 0.24538 → 0.73891<br/>
+                  0.77241 → 0.69032 → 0.85218 → 0.50523<br/>
+                  0.99741 → 0.01037 → 0.04102 → 0.15739<br/>
+                  0.53081 → 0.99571 → 0.01701 → 0.06700<br/>
+                  0.24962 → 0.74862 → 0.75328 → 0.74239
+                </div>
+                <div class="mt-3 border-t border-slate-700 pt-3 grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span class="text-slate-500">密钥长度</span>
+                    <span class="text-green-400 font-mono ml-2">262144 值</span>
+                  </div>
+                  <div>
+                    <span class="text-slate-500">密钥空间</span>
+                    <span class="text-green-400 font-mono ml-2">2¹²⁸ bits</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Key Save Options -->
+              <div class="bg-amber-50 rounded-xl border border-amber-200 p-4">
+                <p class="text-sm font-bold text-amber-800 mb-3 flex items-center gap-2">
+                  <i class="fa-solid fa-floppy-disk text-amber-600"></i> 密钥保存
+                </p>
+                <div class="space-y-2">
+                  <label class="flex items-center gap-2 text-sm text-amber-700 cursor-pointer">
+                    <input id="chkSaveKeyFile" type="checkbox" checked class="accent-amber-500" />
+                    保存密钥文件（解密时需要）
+                  </label>
+                  <label class="flex items-center gap-2 text-sm text-amber-700 cursor-pointer">
+                    <input id="chkSaveKeyHash" type="checkbox" class="accent-amber-500" />
+                    同时保存密钥的SHA-256校验值
+                  </label>
+                </div>
+                <div class="mt-3 flex gap-2">
+                  <button class="flex-1 py-2 bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold hover:bg-amber-200 transition-colors">
+                    <i class="fa-solid fa-rotate mr-1"></i>随机生成密钥
+                  </button>
+                  <button class="flex-1 py-2 bg-white text-amber-700 border border-amber-200 rounded-lg text-xs font-semibold hover:bg-amber-50 transition-colors">
+                    <i class="fa-solid fa-folder-open mr-1"></i>导入密钥文件
+                  </button>
+                </div>
+                <button id="btnSaveKey" class="mt-3 w-full py-2 bg-blue-600 text-black rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-1" style="background:#2563eb;color:#000;">
+                  <i class="fa-solid fa-download"></i>保存密钥文件
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-4">
+          <button id="btnEncrypt" class="flex-1 py-3.5 bg-blue-600 text-black rounded-xl font-semibold text-base hover:bg-blue-700 transition-colors shadow-md flex items-center justify-center gap-2" style="background:#2563eb;color:#000;">
+            <i class="fa-solid fa-bolt"></i>
+            开始 混沌加密
+          </button>
+          <button class="px-6 py-3.5 bg-white text-slate-600 border border-slate-200 rounded-xl font-medium hover:bg-slate-50 transition-colors">
+            <i class="fa-solid fa-rotate-left mr-2"></i>重置
+          </button>
+        </div>
+
+        <!-- Encryption Progress Bar (shown during API call) -->
+        <div id="encryptProgressWrap" class="hidden bg-white rounded-2xl border border-amber-100 shadow-sm p-5">
+          <div class="flex items-center justify-between text-xs mb-2">
+            <span id="encryptProgressLabel" class="font-semibold text-amber-700">
+              <i class="fa-solid fa-spinner fa-spin mr-1"></i>正在执行混沌加密...
+            </span>
+            <span id="encryptProgressPct" class="font-bold text-amber-600">0%</span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-2.5 mb-3">
+            <div id="encryptProgressBar" class="progress-bar bg-amber-500 h-2.5 rounded-full" style="width:0%"></div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-xs text-center">
+            <div id="pstep1" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
+              <p id="pstep1lbl" class="font-semibold text-slate-500">生成混沌序列</p>
+              <p class="text-slate-400">混沌迭代</p>
+            </div>
+            <div id="pstep2" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
+              <p id="pstep2lbl" class="font-semibold text-slate-500">像素置乱</p>
+              <p class="text-slate-400">Arnold 置换</p>
+            </div>
+            <div id="pstep3" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
+              <p id="pstep3lbl" class="font-semibold text-slate-500">扩散加密</p>
+              <p class="text-slate-400">XOR 操作</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Encryption Result / Processing -->
+        <div id="encryptResult" class="hidden bg-white rounded-2xl border border-emerald-100 shadow-sm p-6">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-circle-check text-emerald-500"></i>
+              加密完成
+            </h2>
+            <div class="flex items-center gap-2">
+              <span class="tag bg-emerald-100 text-emerald-700"><i class="fa-solid fa-check mr-1"></i>成功</span>
+              <span class="text-xs text-slate-400">耗时 0.43 秒</span>
+            </div>
+          </div>
+
+          <!-- Before / After Comparison -->
+          <div class="grid grid-cols-2 gap-6 mb-5">
+            <div>
+              <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">原始图像（加密前）</p>
+              <div id="resultOrigDiv" class="bg-gradient-to-br from-amber-50 to-orange-100 rounded-xl h-36 flex items-center justify-center border border-amber-100 relative overflow-hidden">
+                <!-- Structured appearance -->
+                <div class="grid gap-1" style="grid-template-columns:repeat(5,1fr)">
+                  <div class="w-9 h-9 bg-rose-300 rounded-sm"></div><div class="w-9 h-9 bg-orange-200 rounded-sm"></div><div class="w-9 h-9 bg-amber-300 rounded-sm"></div><div class="w-9 h-9 bg-rose-200 rounded-sm"></div><div class="w-9 h-9 bg-orange-300 rounded-sm"></div>
+                  <div class="w-9 h-9 bg-amber-400 rounded-sm"></div><div class="w-9 h-9 bg-rose-300 rounded-sm"></div><div class="w-9 h-9 bg-orange-200 rounded-sm"></div><div class="w-9 h-9 bg-amber-300 rounded-sm"></div><div class="w-9 h-9 bg-rose-400 rounded-sm"></div>
+                  <div class="w-9 h-9 bg-orange-300 rounded-sm"></div><div class="w-9 h-9 bg-amber-200 rounded-sm"></div><div class="w-9 h-9 bg-rose-300 rounded-sm"></div><div class="w-9 h-9 bg-orange-400 rounded-sm"></div><div class="w-9 h-9 bg-amber-200 rounded-sm"></div>
+                </div>
+                <div class="absolute top-2 left-2 bg-amber-600 text-white text-xs px-2 py-0.5 rounded font-medium">原始</div>
+              </div>
+              <p class="text-xs text-slate-400 mt-2 text-center">像素有规律、可辨识内容</p>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">加密图像（混沌噪声）</p>
+              <div id="encryptedAfterDiv" class="bg-slate-900 rounded-xl h-36 flex items-center justify-center relative overflow-hidden border border-slate-700">
+                <!-- Noise appearance -->
+                <div class="absolute inset-0 p-1 flex flex-wrap gap-px content-start">
+                  <div class="chaos-map-cell bg-white opacity-60"></div><div class="chaos-map-cell bg-gray-700"></div><div class="chaos-map-cell bg-white opacity-20"></div><div class="chaos-map-cell bg-slate-400 opacity-70"></div><div class="chaos-map-cell bg-gray-900"></div><div class="chaos-map-cell bg-white opacity-40"></div>
+                  <div class="chaos-map-cell bg-gray-600"></div><div class="chaos-map-cell bg-white opacity-10"></div><div class="chaos-map-cell bg-slate-500 opacity-80"></div><div class="chaos-map-cell bg-gray-800"></div><div class="chaos-map-cell bg-white opacity-30"></div><div class="chaos-map-cell bg-gray-700"></div>
+                  <div class="chaos-map-cell bg-slate-300 opacity-50"></div><div class="chaos-map-cell bg-gray-900"></div><div class="chaos-map-cell bg-white opacity-65"></div><div class="chaos-map-cell bg-gray-600"></div><div class="chaos-map-cell bg-slate-400 opacity-45"></div><div class="chaos-map-cell bg-gray-800"></div>
+                  <div class="chaos-map-cell bg-white opacity-25"></div><div class="chaos-map-cell bg-gray-700"></div><div class="chaos-map-cell bg-slate-500 opacity-75"></div><div class="chaos-map-cell bg-gray-900"></div><div class="chaos-map-cell bg-white opacity-15"></div><div class="chaos-map-cell bg-gray-600"></div>
+                  <div class="chaos-map-cell bg-slate-300 opacity-60"></div><div class="chaos-map-cell bg-gray-800"></div><div class="chaos-map-cell bg-white opacity-35"></div><div class="chaos-map-cell bg-slate-400 opacity-55"></div><div class="chaos-map-cell bg-gray-700"></div><div class="chaos-map-cell bg-white opacity-45"></div>
+                  <div class="chaos-map-cell bg-gray-900"></div><div class="chaos-map-cell bg-slate-500 opacity-30"></div><div class="chaos-map-cell bg-white opacity-70"></div><div class="chaos-map-cell bg-gray-600"></div><div class="chaos-map-cell bg-slate-300 opacity-40"></div><div class="chaos-map-cell bg-gray-800"></div>
+                </div>
+                <div class="absolute top-2 left-2 bg-emerald-500 text-white text-xs px-2 py-0.5 rounded font-medium">加密</div>
+              </div>
+              <p class="text-xs text-slate-400 mt-2 text-center">视觉上无法辨识原始内容</p>
+            </div>
+          </div>
+
+          <!-- Security Metrics -->
+          <div class="grid grid-cols-4 gap-3 mb-5">
+            <div class="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100">
+              <p class="text-xs text-emerald-600 mb-1">信息熵</p>
+              <p class="text-base font-extrabold text-emerald-700">7.9973</p>
+              <p class="text-xs text-emerald-500">接近最大值8</p>
+            </div>
+            <div class="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100">
+              <p class="text-xs text-emerald-600 mb-1">相关系数</p>
+              <p class="text-base font-extrabold text-emerald-700">0.0023</p>
+              <p class="text-xs text-emerald-500">邻像素无相关</p>
+            </div>
+            <div class="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100">
+              <p class="text-xs text-emerald-600 mb-1">NPCR</p>
+              <p class="text-base font-extrabold text-emerald-700">99.61%</p>
+              <p class="text-xs text-emerald-500">像素变化率</p>
+            </div>
+            <div class="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100">
+              <p class="text-xs text-emerald-600 mb-1">UACI</p>
+              <p class="text-base font-extrabold text-emerald-700">33.46%</p>
+              <p class="text-xs text-emerald-500">均一变化强度</p>
+            </div>
+          </div>
+
+          <!-- Next Step: Go to Steganography -->
+          <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                <i class="fa-solid fa-arrow-right text-indigo-600"></i>
+              </div>
+              <div>
+                <p class="font-semibold text-indigo-800 text-sm">加密完成，下一步：INN 隐写编码</p>
+                <p class="text-xs text-indigo-600 mt-0.5">加密后的图像已自动传入隐写编码模块作为秘密图像输入</p>
+              </div>
+            </div>
+            <button id="btnGoEncode" class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200">
+              <i class="fa-solid fa-file-image mr-2"></i>进入隐写编码 →
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Sidebar -->
+      <div class="space-y-6">
+
+        <!-- Security Level Indicator -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-shield-halved text-emerald-500"></i> 当前安全评估
+          </h3>
+          <div class="mb-4 text-center">
+            <div class="relative w-24 h-24 mx-auto mb-2">
+              <svg viewBox="0 0 36 36" class="w-24 h-24 -rotate-90">
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e2e8f0" stroke-width="3"></circle>
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#10b981" stroke-width="3"
+                  stroke-dasharray="87 100" stroke-linecap="round"></circle>
+              </svg>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-lg font-extrabold text-emerald-700">87</span>
+              </div>
+            </div>
+            <p class="font-bold text-emerald-700">安全评分</p>
+          </div>
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-500">密钥空间</span>
+              <span class="text-emerald-600 font-semibold">极大 ✓</span>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-500">信息熵</span>
+              <span class="text-emerald-600 font-semibold">7.997/8.0 ✓</span>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-500">抗暴力破解</span>
+              <span class="text-emerald-600 font-semibold">强 ✓</span>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-500">抗统计分析</span>
+              <span class="text-emerald-600 font-semibold">强 ✓</span>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-500">抗差分攻击</span>
+              <span class="text-emerald-600 font-semibold">强 ✓</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+<!-- Lightbox modal for click-to-zoom image viewing -->
+<div id="lbOverlay" class="hidden fixed inset-0 bg-black z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-label="图像放大查看" style="background:rgba(0,0,0,0.85);cursor:zoom-out">
+  <div class="relative flex flex-col items-center" style="max-width:90vw;max-height:95vh">
+    <button id="lbClose" aria-label="关闭" title="关闭（Esc）" style="position:absolute;top:-14px;right:-14px;background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:50%;width:32px;height:32px;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10">×</button>
+    <img id="lbImg" src="" alt="" style="max-width:90vw;max-height:80vh;object-fit:contain;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,0.6)">
+    <p id="lbCaption" style="color:rgba(255,255,255,0.7);margin-top:10px;font-size:0.82rem;font-weight:600;letter-spacing:0.03em"></p>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   Encrypt page — JS backend wiring
+   API: POST /api/encrypt
+   ═══════════════════════════════════════════════════════════ */
+const API = '';
+
+// ── Upload zone ────────────────────────────────────────────
+// Use the first upload-zone (the secret image input)
+const allZones = document.querySelectorAll('.upload-zone');
+const secretZone = allZones[0];   // first upload zone = secret image
+
+let selectedFile = null;
+let lastEncryptedB64 = null;
+let lastKey = null;
+
+// Make the upload zone clickable
+if (secretZone) {
+  secretZone.style.cursor = 'pointer';
+  secretZone.addEventListener('click', () => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*';
+    inp.onchange = e => {
+      selectedFile = e.target.files[0];
+      if (!selectedFile) return;
+      showUploadPreview(secretZone, selectedFile);
+      advanceStep(1);   // file chosen → step 1 done, step 2 active
+    };
+    inp.click();
+  });
+
+  // Drag & drop
+  secretZone.addEventListener('dragover', e => { e.preventDefault(); secretZone.classList.add('param-highlight'); });
+  secretZone.addEventListener('dragleave', () => secretZone.classList.remove('param-highlight'));
+  secretZone.addEventListener('drop', e => {
+    e.preventDefault();
+    secretZone.classList.remove('param-highlight');
+    selectedFile = e.dataTransfer.files[0];
+    if (selectedFile) {
+      showUploadPreview(secretZone, selectedFile);
+      advanceStep(1);
+    }
+  });
+}
+
+function showUploadPreview(zone, file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const inner = zone.querySelector('div');
+    if (inner) {
+      inner.style.backgroundImage = `url(${ev.target.result})`;
+      inner.style.backgroundSize = 'contain';
+      inner.style.backgroundRepeat = 'no-repeat';
+      inner.style.backgroundPosition = 'center';
+    }
+    const label = zone.querySelector('p.text-sm');
+    if (label) { label.textContent = file.name; }
+    const sub = zone.querySelector('p.text-xs');
+    if (sub) { sub.textContent = `${(file.size/1024).toFixed(1)} KB`; }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Step indicator helpers ─────────────────────────────────
+function setStepClass(id, cls) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('step-active', 'step-done', 'step-pending');
+  el.classList.add(cls);
+}
+function setStepLabel(id, text, colorClass) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'text-xs mt-2 font-medium ' + colorClass;
+}
+function setLine(id, state) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const cls = state === 'done' ? 'bg-emerald-300' : state === 'active' ? 'bg-amber-200' : 'bg-slate-200';
+  el.className = 'flex-1 h-0.5 mx-3 ' + cls;
+}
+
+// advanceStep(n) marks steps 1..n as done, n+1 as active
+function advanceStep(n) {
+  const stepIds   = ['step1','step2','step3','step4'];
+  const labelIds  = ['step1lbl','step2lbl','step3lbl','step4lbl'];
+  const lineIds   = ['line12','line23','line34'];
+  const labels    = ['上传图像','密钥配置','执行加密','送入隐写'];
+
+  for (let i = 0; i < 4; i++) {
+    if (i < n) {
+      // done
+      setStepClass(stepIds[i], 'step-done');
+      document.getElementById(stepIds[i]).innerHTML = '✓';
+      setStepLabel(labelIds[i], labels[i], 'text-emerald-600');
+    } else if (i === n) {
+      // active
+      setStepClass(stepIds[i], 'step-active');
+      document.getElementById(stepIds[i]).textContent = String(i + 1);
+      setStepLabel(labelIds[i], labels[i], 'text-amber-600');
+    } else {
+      // pending
+      setStepClass(stepIds[i], 'step-pending');
+      document.getElementById(stepIds[i]).textContent = String(i + 1);
+      setStepLabel(labelIds[i], labels[i], 'text-slate-400');
+    }
+  }
+  // connector lines: line i connects step i+1 to step i+2
+  for (let i = 0; i < 3; i++) {
+    setLine(lineIds[i], i < n - 1 ? 'done' : i === n - 1 ? 'active' : 'pending');
+  }
+}
+
+// ── Progress bar animation ─────────────────────────────────
+let _progressTimer = null;
+
+function startProgress() {
+  const wrap  = document.getElementById('encryptProgressWrap');
+  const bar   = document.getElementById('encryptProgressBar');
+  const pct   = document.getElementById('encryptProgressPct');
+  const lbl   = document.getElementById('encryptProgressLabel');
+  if (!wrap) return;
+
+  wrap.classList.remove('hidden');
+  bar.style.width = '0%';
+  pct.textContent = '0%';
+
+  // Progress steps: 0-35% gen sequence, 35-70% scramble, 70-95% diffuse, 95-100% finalise
+  const phases = [
+    { target: 35, steplbl: 'pstep1lbl', phaseName: '生成混沌序列...', color: 'text-amber-700' },
+    { target: 70, steplbl: 'pstep2lbl', phaseName: '像素置乱中...',   color: 'text-amber-700' },
+    { target: 95, steplbl: 'pstep3lbl', phaseName: '扩散加密中...',   color: 'text-amber-700' },
+  ];
+  let current = 0;
+  let phaseIdx = 0;
+
+  // highlight first phase
+  _activateProgressPhase(0);
+
+  _progressTimer = setInterval(() => {
+    if (phaseIdx < phases.length) {
+      const phase = phases[phaseIdx];
+      current += (phase.target - (phaseIdx === 0 ? 0 : phases[phaseIdx-1].target)) * 0.04;
+      if (current >= phase.target) {
+        current = phase.target;
+        phaseIdx++;
+        if (phaseIdx < phases.length) _activateProgressPhase(phaseIdx);
+      }
+    } else {
+      current = Math.min(current + 0.3, 95);
+    }
+    const v = Math.round(current);
+    bar.style.width = v + '%';
+    pct.textContent = v + '%';
+    if (lbl) {
+      const pname = phaseIdx < phases.length ? phases[phaseIdx].phaseName : '等待服务器响应...';
+      lbl.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>' + pname;
+    }
+  }, 80);
+}
+
+function _activateProgressPhase(idx) {
+  ['pstep1','pstep2','pstep3'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    const lbl = document.getElementById(id + 'lbl');
+    if (!el || !lbl) return;
+    if (i < idx) {
+      el.className = 'bg-emerald-50 rounded-lg p-2 border border-emerald-100';
+      lbl.className = 'font-semibold text-emerald-700';
+    } else if (i === idx) {
+      el.className = 'bg-amber-50 rounded-lg p-2 border border-amber-200';
+      lbl.className = 'font-semibold text-amber-700';
+    } else {
+      el.className = 'bg-slate-50 rounded-lg p-2 border border-slate-100';
+      lbl.className = 'font-semibold text-slate-400';
+    }
+  });
+}
+
+function finishProgress(success) {
+  clearInterval(_progressTimer);
+  const bar = document.getElementById('encryptProgressBar');
+  const pct = document.getElementById('encryptProgressPct');
+  const lbl = document.getElementById('encryptProgressLabel');
+  const wrap = document.getElementById('encryptProgressWrap');
+  if (!bar) return;
+  if (success) {
+    bar.style.width = '100%';
+    if (pct) pct.textContent = '100%';
+    if (bar) bar.classList.replace('bg-amber-500', 'bg-emerald-500');
+    if (lbl) lbl.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i>加密完成！';
+    _activateProgressPhase(3);   // all phases green
+    setTimeout(() => { if (wrap) wrap.classList.add('hidden'); }, 1800);
+  } else {
+    if (bar) bar.classList.replace('bg-amber-500', 'bg-red-500');
+    if (lbl) lbl.innerHTML = '<i class="fa-solid fa-circle-xmark mr-1"></i>加密失败';
+    setTimeout(() => { if (wrap) wrap.classList.add('hidden'); }, 2500);
+  }
+}
+
+// ── Encrypt button ─────────────────────────────────────────
+const encryptBtn = document.getElementById('btnEncrypt');
+if (encryptBtn) {
+  encryptBtn.addEventListener('click', async () => {
+    if (!selectedFile) {
+      alert('请先上传秘密图像！');
+      return;
+    }
+    advanceStep(2);   // step 2 done, step 3 (执行加密) active
+    setLoading(encryptBtn, true, '加密中...');
+    startProgress();
+    try {
+      const fd = new FormData();
+      fd.append('image',  selectedFile);
+      fd.append('r',      document.querySelector('input[type=range]')?.value || '3.9991');
+      fd.append('x0',     document.querySelectorAll('input[type=range]')[1]?.value || '0.37291');
+      fd.append('n0',     document.querySelectorAll('input[type=range]')[2]?.value || '500');
+      const roundsEl = document.querySelector('input[name=rounds]:checked');
+      let rounds = '2';
+      if (roundsEl) {
+        const txt = roundsEl.parentElement.textContent;
+        if (txt.includes('1')) rounds = '1';
+        else if (txt.includes('3')) rounds = '3';
+      }
+      fd.append('rounds', rounds);
+
+      const resp = await fetch(`${API}/api/encrypt`, { method: 'POST', body: fd });
+      if (!resp.ok) { let m = `HTTP ${resp.status}`; try { const e = await resp.json(); m = e.error || m; } catch (_) {} throw new Error(m); }
+      const data = await resp.json();
+
+      lastEncryptedB64 = data.encrypted_image;
+      lastKey = data.key;
+
+      finishProgress(true);
+      advanceStep(3);   // step 3 done, step 4 (送入隐写) active
+      // Show encrypted image in the right column
+      showEncryptedResult(data);
+      showToast('混沌加密成功 ✓', 'success');
+
+    } catch (err) {
+      finishProgress(false);
+      advanceStep(1);   // step 1 done, step 2 active so user can retry
+      showToast('加密失败: ' + err.message, 'error');
+    } finally {
+      setLoading(encryptBtn, false, '混沌加密');
+    }
+  });
+}
+
+function showEncryptedResult(data) {
+  const dataUrl = `data:image/png;base64,${data.encrypted_image}`;
+
+  // ── Upload-section output preview: replace noise with real image ──
+  const uploadImg = document.getElementById('encryptedUploadImg');
+  const uploadNoise = document.getElementById('encryptedUploadNoise');
+  const uploadNoiseLbl = document.getElementById('encryptedUploadNoiseLbl');
+  if (uploadImg) {
+    uploadImg.src = dataUrl; uploadImg.classList.remove('hidden');
+    uploadImg.style.cursor = 'zoom-in';
+    if (!uploadImg.dataset.lbWired) {
+      uploadImg.dataset.lbWired = '1';
+      uploadImg.addEventListener('click', () => openLightbox(uploadImg.src, '加密后图像'));
+    }
+  }
+  if (uploadNoise) uploadNoise.classList.add('hidden');
+  if (uploadNoiseLbl) uploadNoiseLbl.classList.add('hidden');
+
+  // ── Result card: show it and populate images ──
+  const resultCard = document.getElementById('encryptResult');
+  if (resultCard) resultCard.classList.remove('hidden');
+
+  // Update "after" image in before/after comparison
+  const afterDiv = document.getElementById('encryptedAfterDiv');
+  if (afterDiv) {
+    afterDiv.style.backgroundImage = dataUrl ? `url('${dataUrl}')` : '';
+    afterDiv.style.backgroundSize = 'cover';
+    afterDiv.style.backgroundPosition = 'center';
+    afterDiv.style.cursor = 'zoom-in';
+    // hide the simulated noise overlay
+    const noise = afterDiv.querySelector('.absolute.inset-0');
+    if (noise) noise.classList.add('hidden');
+    if (!afterDiv.dataset.lbWired) {
+      afterDiv.dataset.lbWired = '1';
+      afterDiv.addEventListener('click', () => {
+        if (lastEncryptedB64) openLightbox(`data:image/png;base64,${lastEncryptedB64}`, '加密图像（混沌噪声）');
+      });
+    }
+  }
+
+  // Update "before" original image in before/after comparison
+  if (selectedFile) {
+    const origDiv = document.getElementById('resultOrigDiv');
+    if (origDiv) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        origDiv.style.backgroundImage = `url('${ev.target.result}')`;
+        origDiv.style.backgroundSize = 'cover';
+        origDiv.style.backgroundPosition = 'center';
+        origDiv.style.cursor = 'zoom-in';
+        const placeholder = origDiv.querySelector('.grid');
+        if (placeholder) placeholder.classList.add('hidden');
+        if (!origDiv.dataset.lbWired) {
+          origDiv.dataset.lbWired = '1';
+          origDiv.addEventListener('click', () => openLightbox(ev.target.result, '原始图像（加密前）'));
+        }
+      };
+      reader.readAsDataURL(selectedFile);
+    }
+  }
+
+  // Update metrics
+  const m = data.metrics;
+  const metricEls = document.querySelectorAll('.bg-emerald-50 p.text-base');
+  if (metricEls[0]) metricEls[0].textContent = m.entropy_encrypted?.toFixed(4) ?? '--';
+  if (metricEls[1]) metricEls[1].textContent = (m.npcr?.toFixed(2) ?? '--') + '%';
+  if (metricEls[2]) metricEls[2].textContent = (m.uaci?.toFixed(2) ?? '--') + '%';
+
+  // Update upload-preview filename/meta
+  const nameEl = document.getElementById('encryptedUploadName');
+  const metaEl = document.getElementById('encryptedUploadMeta');
+  if (nameEl) nameEl.textContent = 'secret_encrypted.png';
+  if (metaEl && data.size_kb) metaEl.textContent = `已加密 · ${data.size_kb} KB · PNG`;
+
+  // Scroll result into view
+  if (resultCard) resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Pass encrypted image to encode page.
+  // Use server-side session store to avoid sessionStorage 5 MB quota limit.
+  (async () => {
+    let transferred = false;
+    try {
+      const sessResp = await fetch(`${API}/api/session/store`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stego_image: data.encrypted_image, stego_key: JSON.stringify(data.key) }),
+      });
+      if (sessResp.ok) {
+        const sessData = await sessResp.json();
+        sessionStorage.setItem('encryptedToken', sessData.token);
+        sessionStorage.removeItem('encryptedImage');
+        sessionStorage.removeItem('chaosKey');
+        transferred = true;
+      }
+    } catch (_) {}
+    if (!transferred) {
+      try {
+        sessionStorage.setItem('encryptedImage', data.encrypted_image);
+        sessionStorage.setItem('chaosKey', JSON.stringify(data.key));
+        sessionStorage.removeItem('encryptedToken');
+      } catch (_) {
+        showToast('图像较大，无法自动传递至隐写编码页面，请下载后手动上传', 'error');
+      }
+    }
+  })();
+}
+
+// ── Save encrypted image button ────────────────────────────
+const btnSaveEncrypted = document.getElementById('btnSaveEncrypted');
+if (btnSaveEncrypted) {
+  btnSaveEncrypted.addEventListener('click', () => {
+    if (!lastEncryptedB64) { alert('请先执行加密！'); return; }
+    const a = document.createElement('a');
+    a.href = 'data:image/png;base64,' + lastEncryptedB64;
+    a.download = 'secret_encrypted.png';
+    a.click();
+    if (lastKey) {
+      const kb = document.createElement('a');
+      kb.href = 'data:application/json;charset=utf-8,' +
+                encodeURIComponent(JSON.stringify(lastKey, null, 2));
+      kb.download = 'chaos_key.json';
+      setTimeout(() => kb.click(), 300);
+    }
+  });
+}
+
+// ── Save key file button ────────────────────────────────────
+const btnSaveKey = document.getElementById('btnSaveKey');
+if (btnSaveKey) {
+  btnSaveKey.addEventListener('click', async () => {
+    if (!lastKey) { showToast('请先执行加密以生成密钥！', 'error'); return; }
+    const chkFile = document.getElementById('chkSaveKeyFile');
+    const chkHash = document.getElementById('chkSaveKeyHash');
+    let downloaded = false;
+    if (!chkFile || chkFile.checked) {
+      const kb = document.createElement('a');
+      kb.href = 'data:application/json;charset=utf-8,' +
+                encodeURIComponent(JSON.stringify(lastKey, null, 2));
+      kb.download = 'chaos_key.json';
+      kb.click();
+      downloaded = true;
+    }
+    if (chkHash && chkHash.checked) {
+      const keyText = JSON.stringify(lastKey, null, 2);
+      const encoded = new TextEncoder().encode(keyText);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+      const hashHex = Array.from(new Uint8Array(hashBuffer))
+        .map(b => b.toString(16).padStart(2, '0')).join('');
+      const ha = document.createElement('a');
+      ha.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(hashHex + '  chaos_key.json\n');
+      ha.download = 'chaos_key.sha256';
+      // Stagger second download to avoid browser blocking simultaneous downloads
+      setTimeout(() => ha.click(), 300);
+      downloaded = true;
+    }
+    if (downloaded) showToast('密钥文件已下载 ✓', 'success');
+    else showToast('请勾选至少一项保存选项', 'error');
+  });
+}
+
+
+const btnGoEncode = document.getElementById('btnGoEncode');
+if (btnGoEncode) {
+  btnGoEncode.addEventListener('click', () => {
+    window.location.href = '/encode.html';
+  });
+}
+
+// ── Random key generation ──────────────────────────────────
+document.querySelectorAll('button').forEach(btn => {
+  if (btn.textContent.includes('随机生成密钥')) {
+    btn.addEventListener('click', () => {
+      const sliders = document.querySelectorAll('input[type=range]');
+      if (sliders[0]) { // r: chaos range 3.57–4.0
+        sliders[0].value = (3.57 + Math.random() * 0.43).toFixed(4);
+        sliders[0].dispatchEvent(new Event('input'));
+      }
+      if (sliders[1]) { // x0: initial value 0.01–0.99
+        sliders[1].value = (0.01 + Math.random() * 0.98).toFixed(5);
+        sliders[1].dispatchEvent(new Event('input'));
+      }
+      if (sliders[2]) { // n0: warmup steps 100–1000
+        sliders[2].value = Math.floor(100 + Math.random() * 900);
+        sliders[2].dispatchEvent(new Event('input'));
+      }
+      showToast('密钥已随机生成 ✓', 'success');
+    });
+  }
+  if (btn.textContent.includes('导入密钥文件')) {
+    btn.addEventListener('click', () => {
+      const inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = '.json,application/json';
+      inp.onchange = e => {
+        const f = e.target.files[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          try {
+            const key = JSON.parse(ev.target.result);
+            const sliders = document.querySelectorAll('input[type=range]');
+            if (key.r  !== undefined && sliders[0]) { sliders[0].value = key.r;  sliders[0].dispatchEvent(new Event('input')); }
+            if (key.x0 !== undefined && sliders[1]) { sliders[1].value = key.x0; sliders[1].dispatchEvent(new Event('input')); }
+            if (key.n0 !== undefined && sliders[2]) { sliders[2].value = key.n0; sliders[2].dispatchEvent(new Event('input')); }
+            lastKey = key;
+            showToast('密钥文件已导入 ✓', 'success');
+          } catch { showToast('密钥文件格式错误', 'error'); }
+        };
+        reader.readAsText(f);
+      };
+      inp.click();
+    });
+  }
+});
+
+// ── Reset button ───────────────────────────────────────────
+document.querySelectorAll('button').forEach(btn => {
+  if (btn.textContent.trim() === '重置' || btn.textContent.includes('重置')) {
+    if (btn.classList.contains('text-slate-600')) {
+      btn.addEventListener('click', () => {
+        selectedFile = null; lastEncryptedB64 = null; lastKey = null;
+        const resultCard = document.getElementById('encryptResult');
+        if (resultCard) resultCard.classList.add('hidden');
+        const uploadImg = document.getElementById('encryptedUploadImg');
+        const uploadNoise = document.getElementById('encryptedUploadNoise');
+        const uploadNoiseLbl = document.getElementById('encryptedUploadNoiseLbl');
+        if (uploadImg) { uploadImg.src = ''; uploadImg.classList.add('hidden'); }
+        if (uploadNoise) uploadNoise.classList.remove('hidden');
+        if (uploadNoiseLbl) uploadNoiseLbl.classList.remove('hidden');
+        if (secretZone) {
+          const inner = secretZone.querySelector('div');
+          if (inner) {
+            inner.style.backgroundImage = '';
+            inner.style.backgroundSize = '';
+            inner.style.backgroundRepeat = '';
+            inner.style.backgroundPosition = '';
+          }
+          const label = secretZone.querySelector('p.text-sm');
+          if (label) label.textContent = '点击上传或拖拽图像至此';
+          const sub = secretZone.querySelector('p.text-xs');
+          if (sub) sub.textContent = 'PNG / JPEG / BMP · 最大 20MB';
+        }
+        advanceStep(0);
+        showToast('已重置', 'success');
+      });
+    }
+  }
+});
+
+// ── Lightbox (click-to-zoom) ────────────────────────────────
+let _lbTrigger = null;   // element that opened lightbox (for focus restore)
+
+function openLightbox(src, caption) {
+  const overlay = document.getElementById('lbOverlay');
+  const img     = document.getElementById('lbImg');
+  const cap     = document.getElementById('lbCaption');
+  const closeBtn = document.getElementById('lbClose');
+  if (!overlay || !img || !src) return;
+  _lbTrigger = document.activeElement;
+  img.src = src;
+  if (cap) cap.textContent = caption || '';
+  overlay.classList.remove('hidden');
+  if (closeBtn) closeBtn.focus();
+}
+function closeLightbox() {
+  const overlay = document.getElementById('lbOverlay');
+  if (overlay) overlay.classList.add('hidden');
+  if (_lbTrigger && typeof _lbTrigger.focus === 'function') _lbTrigger.focus();
+  _lbTrigger = null;
+}
+(function wireLightboxClose() {
+  const overlay  = document.getElementById('lbOverlay');
+  const closeBtn = document.getElementById('lbClose');
+  if (overlay)  overlay.addEventListener('click', e => { if (e.target === overlay || e.target === closeBtn) closeLightbox(); });
+  document.addEventListener('keydown', e => {
+    const ov = document.getElementById('lbOverlay');
+    if (e.key === 'Escape' && ov && !ov.classList.contains('hidden')) closeLightbox();
+  });
+})();
+
+// ── Helpers ────────────────────────────────────────────────
+function setLoading(btn, loading, label) {
+  btn.disabled = loading;
+  btn.innerHTML = loading
+    ? '<i class="fa-solid fa-spinner fa-spin mr-2"></i>' + label
+    : '<i class="fa-solid fa-bolt mr-2"></i>' + label;
+}
+
+function showToast(msg, type) {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;
+    border-radius:12px;font-size:0.85rem;font-weight:600;color:white;
+    background:${type==='success'?'#10b981':'#ef4444'};
+    box-shadow:0 4px 16px rgba(0,0,0,0.15);transition:opacity 0.4s`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(), 400); }, 3000);
+}
+</script>
+</body>
+</html>

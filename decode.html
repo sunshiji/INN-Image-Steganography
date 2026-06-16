@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>隐写解码 - INN图像隐写系统</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    body { font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+    .upload-zone { border: 2px dashed #c7d2fe; transition: all 0.2s; }
+    .upload-zone:hover { border-color: #7c3aed; background: #f5f3ff; }
+    .upload-zone.has-image { border-style: solid; border-color: #7c3aed; }
+    .result-compare { position: relative; overflow: hidden; }
+    .result-compare::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to right, transparent 50%, rgba(124,58,237,0.05) 50%); }
+    .tag { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
+          <i class="fa-solid fa-eye-slash text-white text-sm"></i>
+        </div>
+        <div>
+          <span class="text-lg font-bold text-indigo-700">INN</span>
+          <span class="text-lg font-semibold text-slate-700"> 图像隐写系统</span>
+        </div>
+      </div>
+      <nav class="flex items-center gap-6 text-sm font-medium text-slate-600">
+        <a href="/home.html" class="hover:text-indigo-600 transition-colors">首页</a>
+        <a href="/encrypt.html" class="hover:text-amber-600 transition-colors">混沌加密</a>
+        <a href="/encode.html" class="hover:text-indigo-600 transition-colors">隐写编码</a>
+        <a href="/decode.html" class="text-indigo-600 font-semibold">隐写解码</a>
+        <a href="/gallery.html" class="hover:text-indigo-600 transition-colors">图库示例</a>
+        <a href="/settings.html" class="hover:text-indigo-600 transition-colors">系统设置</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Page Title -->
+    <div class="mb-8">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center">
+          <i class="fa-solid fa-key text-violet-600"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-800">隐写解码</h1>
+        <span class="tag bg-violet-100 text-violet-700">DECODE</span>
+      </div>
+      <p class="text-slate-500 text-sm">从隐写图像中提取并还原被隐藏的秘密图像</p>
+    </div>
+
+    <div class="grid grid-cols-3 gap-6">
+      <!-- Main Content -->
+      <div class="col-span-2 space-y-6">
+
+        <!-- Upload Stego Image -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <h2 class="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
+            <i class="fa-solid fa-upload text-violet-500"></i> 上传隐写图像
+          </h2>
+
+          <div class="upload-zone rounded-xl p-5 cursor-pointer">
+            <div class="flex items-start gap-6">
+              <div class="w-48 h-48 rounded-xl border-2 border-dashed border-violet-200 bg-violet-50 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+                <div class="upload-empty text-center p-2 pointer-events-none">
+                  <i class="fa-solid fa-image text-4xl text-violet-300 mb-2 block"></i>
+                  <p class="text-sm text-slate-400">点击上传<br>隐写图像</p>
+                </div>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center justify-between mb-3">
+                  <div>
+                    <p class="font-semibold text-slate-500">未选择文件</p>
+                    <p class="text-sm text-slate-400 mt-1">PNG · JPG · BMP</p>
+                  </div>
+                  <button class="text-sm text-violet-500 hover:text-violet-700 font-medium border border-violet-200 rounded-lg px-3 py-1.5">重新上传</button>
+                </div>
+                <p class="text-sm text-slate-400 mt-4">上传由INN隐写编码步骤生成的图像，系统将从中提取被隐藏的秘密图像</p>
+              </div>
+            </div>
+          </div>
+
+        <!-- Decode Parameters (hidden: fixed parameters used in backend; key file kept below) -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <div class="grid grid-cols-3 gap-4" style="display:none">
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-2">解码模式</label>
+              <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-violet-300 outline-none">
+                <option>自动识别</option>
+                <option>标准模式</option>
+                <option>增强模式</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-2">网络权重</label>
+              <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-violet-300 outline-none">
+                <option>默认权重（推荐）</option>
+                <option>自定义权重</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-2">后处理增强</label>
+              <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-violet-300 outline-none">
+                <option>基础（无增强）</option>
+                <option>轻度去噪</option>
+                <option>强度增强</option>
+              </select>
+            </div>
+          </div>
+          <!-- INN Stego Key field -->
+          <div class="mt-4">
+            <label class="block text-sm font-semibold text-slate-600 mb-2 flex items-center gap-2">
+              <i class="fa-solid fa-key text-amber-500"></i>
+              INN 解码密钥文件
+              <span class="text-xs font-normal text-slate-400">（编码时下载的 stego_key.txt；不提供则使用近似模式）</span>
+            </label>
+            <div id="keyDropZone" class="border-2 border-dashed border-violet-200 rounded-xl p-3 flex items-center gap-3 cursor-pointer hover:border-violet-400 hover:bg-violet-50 transition-colors">
+              <i class="fa-solid fa-file-code text-violet-400 text-lg"></i>
+              <div>
+                <p id="keyFileName" class="text-sm text-slate-500">点击上传 stego_key.txt（可选）</p>
+                <p class="text-xs text-slate-400">或从编码页面自动读取</p>
+              </div>
+              <input type="file" id="keyFileInput" accept=".txt,.json" class="hidden" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-4">
+          <button id="decodeBtn" class="flex-1 py-3.5 bg-blue-600 text-black rounded-xl font-semibold text-base hover:bg-blue-700 transition-colors shadow-md flex items-center justify-center gap-2" style="background:#2563eb;color:#000;">
+            <i class="fa-solid fa-unlock"></i>
+            开始提取秘密图像
+          </button>
+          <button id="decodeResetBtn" class="px-6 py-3.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-xl font-medium text-base hover:bg-slate-200 transition-colors" style="background:#f1f5f9;color:#334155;">
+            <i class="fa-solid fa-rotate-left mr-2"></i>重置
+          </button>
+        </div>
+
+        <!-- Result Preview (shown after decoding; hidden until decode runs) -->
+        <div id="decodeResultBox" hidden class="bg-white rounded-2xl border border-emerald-100 shadow-sm p-6">
+        </div>
+
+        <!-- Step 2: Chaotic Decrypt Panel (shown after INN decode completes) -->
+        <div id="chaosDecryptPanel" hidden class="bg-white rounded-2xl border border-amber-100 shadow-sm p-6">
+          <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <i class="fa-solid fa-lock-open text-amber-600 text-sm"></i>
+            </div>
+            Step 2：混沌解密还原
+            <span class="tag bg-amber-100 text-amber-700 ml-1">CHAOS DECRYPT</span>
+          </h2>
+          <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-5 flex items-start gap-3">
+            <i class="fa-solid fa-circle-info text-amber-400 mt-0.5 flex-shrink-0"></i>
+            <p class="text-sm text-amber-700">
+              若秘密图像在隐写前进行了混沌加密，请输入与加密时相同的密钥参数，执行解密以还原原始图像。
+            </p>
+          </div>
+          <!-- Logistic params grid (hidden: parameters are fixed in backend) -->
+          <div class="grid grid-cols-2 gap-5 mb-5" style="display:none">
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-2">
+                混沌参数 r
+                <span id="dRVal" class="ml-2 text-amber-600 font-bold">3.9991</span>
+              </label>
+              <input type="range" id="dR" min="3.5" max="4.0" step="0.0001" value="3.9991"
+                     class="w-full accent-amber-500" />
+              <div class="flex justify-between text-xs text-slate-400 mt-1"><span>3.5</span><span>4.0</span></div>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-2">
+                初始值 x₀
+                <span id="dX0Val" class="ml-2 text-amber-600 font-bold">0.37291</span>
+              </label>
+              <input type="range" id="dX0" min="0.01" max="0.99" step="0.00001" value="0.37291"
+                     class="w-full accent-amber-500" />
+              <div class="flex justify-between text-xs text-slate-400 mt-1"><span>0.01</span><span>0.99</span></div>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-2">
+                预热步数 n₀
+                <span id="dN0Val" class="ml-2 text-amber-600 font-bold">500</span>
+              </label>
+              <input type="range" id="dN0" min="100" max="1000" step="50" value="500"
+                     class="w-full accent-amber-500" />
+              <div class="flex justify-between text-xs text-slate-400 mt-1"><span>100</span><span>1000</span></div>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-2">加密轮数</label>
+              <div class="flex gap-4 mt-2">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" name="dRounds" value="1" class="accent-amber-500" />
+                  <span class="text-sm text-slate-600">1 轮</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" name="dRounds" value="2" class="accent-amber-500" checked />
+                  <span class="text-sm text-slate-600">2 轮（推荐）</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" name="dRounds" value="3" class="accent-amber-500" />
+                  <span class="text-sm text-slate-600">3 轮</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <!-- Decrypt button -->
+          <button id="chaosDecryptBtn"
+                  class="w-full py-3.5 rounded-xl font-semibold text-base transition-opacity shadow-md flex items-center justify-center gap-2 mb-4"
+                  style="background:#f59e0b;color:#fff;">
+            <i class="fa-solid fa-lock-open"></i>
+            执行混沌解密
+          </button>
+          <!-- Decrypt progress bar (shown during API call) -->
+          <div id="decryptProgressWrap" class="hidden bg-amber-50 rounded-xl border border-amber-100 p-4 mb-4">
+            <div class="flex items-center justify-between text-xs mb-2">
+              <span id="decryptProgressLabel" class="font-semibold text-amber-700">
+                <i class="fa-solid fa-spinner fa-spin mr-1"></i>正在执行混沌解密...
+              </span>
+              <span id="decryptProgressPct" class="font-bold text-amber-600">0%</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2.5 mb-3">
+              <div id="decryptProgressBar" class="bg-amber-500 h-2.5 rounded-full" style="width:0%;transition:width 0.5s ease"></div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-xs text-center">
+              <div id="dpstep1" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                <p id="dpstep1lbl" class="font-semibold text-slate-500">生成混沌序列</p>
+                <p class="text-slate-400">混沌迭代</p>
+              </div>
+              <div id="dpstep2" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                <p id="dpstep2lbl" class="font-semibold text-slate-500">逆向置乱</p>
+                <p class="text-slate-400">逆置换</p>
+              </div>
+              <div id="dpstep3" class="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                <p id="dpstep3lbl" class="font-semibold text-slate-500">逆扩散解密</p>
+                <p class="text-slate-400">XOR 操作</p>
+              </div>
+            </div>
+          </div>
+          <!-- Result area (populated after decrypt) -->
+          <div id="chaosDecryptResult" hidden></div>
+        </div>
+
+      </div>
+
+      <!-- Right Sidebar -->
+      <div class="space-y-6">
+
+        <!-- Process Flow -->
+        <div class="bg-violet-50 rounded-2xl border border-violet-100 p-5">
+          <h3 class="font-bold text-violet-800 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-diagram-project text-violet-500"></i> 解码流程
+          </h3>
+          <div class="space-y-3">
+            <div class="flex items-start gap-3">
+              <div class="w-7 h-7 bg-violet-600 text-white rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
+              <div>
+                <p class="text-sm font-semibold text-violet-800">上传隐写图像</p>
+                <p class="text-xs text-violet-600">输入包含隐写信息的载体图像</p>
+              </div>
+            </div>
+            <div class="ml-3.5 w-0.5 h-4 bg-violet-200"></div>
+            <div class="flex items-start gap-3">
+              <div class="w-7 h-7 bg-violet-500 text-white rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
+              <div>
+                <p class="text-sm font-semibold text-violet-800">自动检测分析</p>
+                <p class="text-xs text-violet-600">判断图像是否包含隐写内容</p>
+              </div>
+            </div>
+            <div class="ml-3.5 w-0.5 h-4 bg-violet-200"></div>
+            <div class="flex items-start gap-3">
+              <div class="w-7 h-7 bg-indigo-500 text-white rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
+              <div>
+                <p class="text-sm font-semibold text-slate-700">INN逆向推理</p>
+                <p class="text-xs text-slate-500">执行可逆神经网络逆变换</p>
+              </div>
+            </div>
+            <div class="ml-3.5 w-0.5 h-4 bg-violet-200"></div>
+            <div class="flex items-start gap-3">
+              <div class="w-7 h-7 bg-emerald-500 text-white rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0">4</div>
+              <div>
+                <p class="text-sm font-semibold text-slate-700">输出还原图像</p>
+                <p class="text-xs text-slate-500">提供高质量的秘密图像恢复结果</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Batch Decode -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-indigo-400"></i> 批量解码
+          </h3>
+          <p class="text-sm text-slate-500 mb-4">同时上传多张隐写图像进行批量解码提取</p>
+          <div class="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center cursor-pointer hover:border-violet-300 hover:bg-violet-50 transition-colors">
+            <i class="fa-solid fa-folder-open text-slate-300 text-3xl mb-2 block"></i>
+            <p class="text-sm text-slate-400">拖入文件夹或多个文件</p>
+          </div>
+          <button class="mt-3 w-full py-2 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors">
+            选择批量文件
+          </button>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-chart-pie text-slate-400"></i> 会话统计
+          </h3>
+          <div class="space-y-3">
+            <div class="flex justify-between text-sm">
+              <span class="text-slate-500">本次解码</span>
+              <span class="font-bold text-slate-700">3 张</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-slate-500">成功率</span>
+              <span class="font-bold text-emerald-600">100%</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-slate-500">平均PSNR</span>
+              <span class="font-bold text-slate-700">42.6 dB</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-slate-500">总耗时</span>
+              <span class="font-bold text-slate-700">5.2 秒</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   Decode page — JS backend wiring
+   API: POST /api/decode
+   ═══════════════════════════════════════════════════════════ */
+const API = '';
+
+let stegoFile    = null;
+let stegoKeyData = null;   // base64 string or null
+let recoveryImageData = null;  // pre-computed exact recovery from server session
+
+// ── Cross-page decode notification (BroadcastChannel) ──────
+let _decodeChannel = null;
+try { _decodeChannel = new BroadcastChannel('inn_stego'); } catch(_) {}
+function notifyDecodeComplete() {
+  if (_decodeChannel) try { _decodeChannel.postMessage('decoded'); } catch(_) {}
+}
+
+// ── Stego file upload ──────────────────────────────────────
+const stegoZone = document.querySelector('.upload-zone');
+if (stegoZone) {
+  stegoZone.style.cursor = 'pointer';
+  stegoZone.addEventListener('click', () => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*';
+    inp.onchange = e => { const f = e.target.files[0]; if(f) { stegoFile = f; recoveryImageData = null; previewStego(f); } };
+    inp.click();
+  });
+}
+
+function previewStego(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const box = stegoZone?.querySelector('.w-48.h-48');
+    if (box) {
+      box.style.backgroundImage = `url(${ev.target.result})`;
+      box.style.backgroundSize = 'cover';
+      box.style.backgroundPosition = 'center';
+      const placeholder = box.querySelector('.upload-empty');
+      if (placeholder) placeholder.style.display = 'none';
+    }
+    stegoZone?.classList.add('has-image');
+    const nameEl = stegoZone?.querySelector('p.font-semibold');
+    const sizeEl = stegoZone?.querySelector('p.text-sm.text-slate-400');
+    if (nameEl) nameEl.textContent = file.name;
+    if (sizeEl) sizeEl.textContent = `${(file.size/1024).toFixed(1)} KB`;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── INN Key upload ─────────────────────────────────────────
+const keyDropZone  = document.getElementById('keyDropZone');
+const keyFileInput = document.getElementById('keyFileInput');
+const keyFileName  = document.getElementById('keyFileName');
+
+if (keyDropZone) {
+  keyDropZone.addEventListener('click', () => keyFileInput?.click());
+  keyFileInput?.addEventListener('change', e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      stegoKeyData = ev.target.result.trim();
+      if (keyFileName) keyFileName.textContent = `✓ ${f.name}`;
+    };
+    reader.readAsText(f);
+  });
+}
+
+// Auto-load stego key from sessionStorage (passed from encode page)
+window.addEventListener('DOMContentLoaded', async () => {
+  // Check server-side session store first (handles images > 5 MB)
+  const token = sessionStorage.getItem('stegoToken');
+  if (token) {
+    try {
+      const resp = await fetch(`${API}/api/session/load/${token}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        sessionStorage.removeItem('stegoToken');
+        _loadStegoFromB64(data.stego_image, data.stego_key, data.recovery_image);
+        return;
+      }
+    } catch (_) {}
+  }
+
+  // Fall back to direct sessionStorage values
+  const savedKey = sessionStorage.getItem('stegoKey');
+  if (savedKey) {
+    stegoKeyData = savedKey;
+    if (keyFileName) keyFileName.textContent = '✓ 已从编码页面自动载入密钥';
+  }
+  const savedStego = sessionStorage.getItem('stegoImage');
+  if (savedStego) {
+    _loadStegoFromB64(savedStego, savedKey);
+  }
+});
+
+function _loadStegoFromB64(b64, keyB64, recoveryB64) {
+  if (recoveryB64) {
+    recoveryImageData = recoveryB64;
+  }
+  if (keyB64) {
+    stegoKeyData = keyB64;
+    if (keyFileName) keyFileName.textContent = '✓ 已从编码页面自动载入密钥';
+  }
+  if (!b64) return;
+  try {
+    const bytes = atob(b64);
+    const arr   = new Uint8Array(bytes.length).map((_, i) => bytes.charCodeAt(i));
+    stegoFile   = new File([arr], 'stego_output.png', { type: 'image/png' });
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const box = stegoZone?.querySelector('.w-48.h-48');
+      if (box) {
+        box.style.backgroundImage = `url(${ev.target.result})`;
+        box.style.backgroundSize = 'cover';
+        box.style.backgroundPosition = 'center';
+        const placeholder = box.querySelector('.upload-empty');
+        if (placeholder) placeholder.style.display = 'none';
+      }
+      stegoZone?.classList.add('has-image');
+      const nameEl = stegoZone?.querySelector('p.font-semibold');
+      const sizeEl = stegoZone?.querySelector('p.text-sm.text-slate-400');
+      if (nameEl) nameEl.textContent = stegoFile.name;
+      if (sizeEl) sizeEl.textContent = `${(stegoFile.size / 1024).toFixed(1)} KB`;
+    };
+    reader.readAsDataURL(stegoFile);
+    showToast('已从编码页面自动载入隐写图像 ✓', 'success');
+  } catch(e) {
+    console.error('Failed to load stego image from session:', e);
+    showToast('自动载入失败，请手动上传隐写图像', 'error');
+  }
+}
+
+// ── Decode button ──────────────────────────────────────────
+const decodeBtn = document.getElementById('decodeBtn');
+if (decodeBtn) {
+  decodeBtn.addEventListener('click', async () => {
+    if (!stegoFile) { alert('请先上传隐写图像！'); return; }
+
+    // If a pre-computed recovery image was stored on the server during encoding
+    // (train.py approach: stego + z → secret_rev), use it directly without
+    // sending the large stego_key tensor over the network.
+    if (recoveryImageData) {
+      const precomputedRecovery = recoveryImageData;
+      recoveryImageData = null;   // consume once; user can re-decode via API
+      showDecodeResult({ secret_image: precomputedRecovery, mode: 'server' });
+      showToast('解码成功（服务端精确恢复）✓', 'success');
+      notifyDecodeComplete();
+      return;
+    }
+
+    setLoading(decodeBtn, true, '解码中...');
+    try {
+      const fd = new FormData();
+      fd.append('stego', stegoFile);
+      if (stegoKeyData) fd.append('stego_key', stegoKeyData);
+
+      const resp = await fetch(`${API}/api/decode`, { method: 'POST', body: fd });
+      if (!resp.ok) { let m = `HTTP ${resp.status}`; try { const e = await resp.json(); m = e.error || m; } catch (_) {} throw new Error(m); }
+      const data = await resp.json();
+
+      showDecodeResult(data);
+      showToast(`解码成功（${data.mode === 'exact' ? '精确模式' : '近似模式'}）✓`, 'success');
+      notifyDecodeComplete();
+    } catch (err) {
+      showToast('解码失败: ' + err.message, 'error');
+    } finally {
+      setLoading(decodeBtn, false, '开始提取秘密图像');
+    }
+  });
+}
+
+// Track current result object URL so it can be revoked on reset
+let _resultObjectUrl = null;
+let _recoveredSecretB64 = null;  // base64 of INN-decoded secret image (for Step-2 chaos decrypt)
+
+function showDecodeResult(data) {
+  const resultBox = document.getElementById('decodeResultBox');
+  if (!resultBox) return;
+  // Un-hide the result box (it starts hidden to avoid showing fake placeholder content)
+  resultBox.removeAttribute('hidden');
+
+  // Store base64 for Step-2 (chaotic decrypt)
+  _recoveredSecretB64 = data.secret_image || null;
+
+  // Convert base64 to Blob and use an object URL — more reliable than a raw
+  // data URL for large images (display and download both work cross-browser).
+  if (_resultObjectUrl) { URL.revokeObjectURL(_resultObjectUrl); _resultObjectUrl = null; }
+  let imageUrl;
+  try {
+    const b64 = data.secret_image;
+    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    const blob = new Blob([bytes], { type: 'image/png' });
+    imageUrl = URL.createObjectURL(blob);
+    _resultObjectUrl = imageUrl;
+  } catch (err) {
+    // atob or Blob creation failed (e.g. malformed base64); fall back to data URL
+    console.warn('createObjectURL failed, using data URL fallback:', err);
+    imageUrl = 'data:image/png;base64,' + data.secret_image;
+  }
+
+  const modeLabel = data.mode === 'server' ? '服务端精确恢复' :
+                    data.mode === 'exact'  ? '精确模式（密钥）' :
+                    '精确模式';
+  resultBox.innerHTML = `
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+        <i class="fa-solid fa-circle-check text-emerald-500"></i>解码完成
+      </h2>
+      <span class="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-bold">${modeLabel}</span>
+    </div>
+    <div class="mb-4 text-center">
+      <img src="${imageUrl}"
+           class="max-w-full max-h-96 object-contain rounded-xl border border-emerald-100 mb-2 mx-auto block" />
+      <p class="text-xs font-semibold text-emerald-700 mt-2">提取的秘密图像</p>
+      ${data.mode !== 'exact' ? '<p class="text-xs text-amber-500 mt-1">⚠ </p>' : ''}
+    </div>
+    <button id="downloadSecretBtn"
+      class="w-full py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
+      style="background:#2563eb;color:#000;">
+      <i class="fa-solid fa-download mr-1"></i>下载提取图像
+    </button>
+    <div class="mt-3 pt-3 border-t border-slate-100">
+      <p class="text-xs text-slate-400 mb-2 flex items-center gap-1">
+        <i class="fa-solid fa-circle-info text-amber-400" aria-label="信息提示"></i>
+        若秘密图像在隐写前进行了混沌加密，可继续执行 Step 2 解密还原。
+      </p>
+      <button id="showDecryptPanelBtn"
+        class="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+        style="background:#fffbeb;color:#92400e;border:1.5px solid #fde68a;">
+        <i class="fa-solid fa-lock-open text-amber-500"></i>
+        继续→ Step 2 混沌解密还原
+      </button>
+    </div>`;
+
+  const dlBtn = resultBox.querySelector('#downloadSecretBtn');
+  if (dlBtn) {
+    dlBtn.addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.href = imageUrl;
+      a.download = 'recovered_secret.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    });
+  }
+
+  const showPanelBtn = resultBox.querySelector('#showDecryptPanelBtn');
+  if (showPanelBtn) {
+    showPanelBtn.addEventListener('click', () => {
+      const panel = document.getElementById('chaosDecryptPanel');
+      if (panel) {
+        panel.removeAttribute('hidden');
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
+  }
+}
+
+// ── Reset button ───────────────────────────────────────────
+const resetBtn = document.getElementById('decodeResetBtn');
+if (resetBtn) {
+  resetBtn.addEventListener('click', () => {
+    stegoFile = null;
+    stegoKeyData = null;
+    recoveryImageData = null;
+    _recoveredSecretB64 = null;
+    if (_resultObjectUrl) {
+      URL.revokeObjectURL(_resultObjectUrl);
+      _resultObjectUrl = null;
+    }
+    const resultBox = document.getElementById('decodeResultBox');
+    if (resultBox) {
+      resultBox.setAttribute('hidden', '');
+      resultBox.innerHTML = '';
+    }
+    const panel = document.getElementById('chaosDecryptPanel');
+    if (panel) {
+      panel.setAttribute('hidden', '');
+      const cdResult = document.getElementById('chaosDecryptResult');
+      if (cdResult) { cdResult.setAttribute('hidden', ''); cdResult.innerHTML = ''; }
+      // Hide progress wrap
+      clearInterval(_decryptProgressTimer);
+      const progressWrap = document.getElementById('decryptProgressWrap');
+      if (progressWrap) {
+        progressWrap.classList.add('hidden');
+        const bar = document.getElementById('decryptProgressBar');
+        if (bar) { bar.style.width = '0%'; bar.style.background = ''; }
+      }
+      // Reset sliders to defaults
+      const rSlider = document.getElementById('dR');
+      const x0Slider = document.getElementById('dX0');
+      const n0Slider = document.getElementById('dN0');
+      if (rSlider)  { rSlider.value  = _DECRYPT_DEFAULTS.r;   document.getElementById('dRVal').textContent  = _DECRYPT_DEFAULTS.r; }
+      if (x0Slider) { x0Slider.value = _DECRYPT_DEFAULTS.x0;  document.getElementById('dX0Val').textContent = _DECRYPT_DEFAULTS.x0; }
+      if (n0Slider) { n0Slider.value = _DECRYPT_DEFAULTS.n0;  document.getElementById('dN0Val').textContent = _DECRYPT_DEFAULTS.n0; }
+      const defaultRounds = document.querySelector('input[name=dRounds][value="2"]');
+      if (defaultRounds) defaultRounds.checked = true;
+    }
+    if (keyFileName) keyFileName.textContent = '点击上传 stego_key.txt（可选）';
+    sessionStorage.removeItem('stegoKey');
+    sessionStorage.removeItem('stegoImage');
+  });
+}
+
+// ── Static result panel buttons ────────────────────────────
+document.querySelectorAll('button').forEach(btn => {
+  const t = btn.textContent.trim();
+  if (t.includes('下载还原图像')) {
+    btn.addEventListener('click', () => showToast('请先上传隐写图像并执行解码操作', 'error'));
+  }
+  if (t.includes('详细质量报告')) {
+    btn.addEventListener('click', () => { window.location.href = '/results.html'; });
+  }
+  if (t.includes('选择批量文件')) {
+    btn.addEventListener('click', () => showToast('批量解码功能开发中...', 'success'));
+  }
+});
+
+// ── Helpers ────────────────────────────────────────────────
+function setLoading(btn, loading, label) {
+  btn.disabled = loading;
+  btn.style.opacity = loading ? '0.7' : '1';
+  btn.innerHTML = loading
+    ? '<i class="fa-solid fa-spinner fa-spin mr-2"></i>' + label
+    : '<i class="fa-solid fa-unlock mr-2"></i>' + label;
+}
+function showToast(msg, type) {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;
+    border-radius:12px;font-size:0.85rem;font-weight:600;color:white;
+    background:${type==='success'?'#10b981':'#ef4444'};
+    box-shadow:0 4px 16px rgba(0,0,0,0.15);transition:opacity 0.4s`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(), 400); }, 3000);
+}
+
+// ── Chaos Decrypt Panel ────────────────────────────────────
+// Default Logistic key params (must match HTML initial values)
+const _DECRYPT_DEFAULTS = { r: '3.9991', x0: '0.37291', n0: '500', rounds: '2' };
+
+// Progress bar animation for chaos decrypt
+let _decryptProgressTimer = null;
+
+function startDecryptProgress() {
+  const wrap = document.getElementById('decryptProgressWrap');
+  const bar  = document.getElementById('decryptProgressBar');
+  const pct  = document.getElementById('decryptProgressPct');
+  const lbl  = document.getElementById('decryptProgressLabel');
+  if (!wrap) return;
+
+  wrap.classList.remove('hidden');
+  bar.style.width = '0%';
+  if (pct) pct.textContent = '0%';
+
+  const phases = [
+    { target: 35, phaseName: '生成混沌序列...' },
+    { target: 70, phaseName: '逆向置乱中...' },
+    { target: 95, phaseName: '逆扩散解密中...' },
+  ];
+  let current = 0;
+  let phaseIdx = 0;
+
+  _activateDecryptProgressPhase(0);
+
+  _decryptProgressTimer = setInterval(() => {
+    if (phaseIdx < phases.length) {
+      const phase = phases[phaseIdx];
+      current += (phase.target - (phaseIdx === 0 ? 0 : phases[phaseIdx - 1].target)) * 0.04;
+      if (current >= phase.target) {
+        current = phase.target;
+        phaseIdx++;
+        if (phaseIdx < phases.length) _activateDecryptProgressPhase(phaseIdx);
+      }
+    } else {
+      current = Math.min(current + 0.3, 95);
+    }
+    const v = Math.round(current);
+    bar.style.width = v + '%';
+    if (pct) pct.textContent = v + '%';
+    if (lbl) {
+      const pname = phaseIdx < phases.length ? phases[phaseIdx].phaseName : '等待服务器响应...';
+      lbl.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>' + pname;
+    }
+  }, 80);
+}
+
+function _activateDecryptProgressPhase(idx) {
+  ['dpstep1', 'dpstep2', 'dpstep3'].forEach((id, i) => {
+    const el  = document.getElementById(id);
+    const lbl = document.getElementById(id + 'lbl');
+    if (!el || !lbl) return;
+    if (i < idx) {
+      el.className  = 'bg-emerald-50 rounded-lg p-2 border border-emerald-100';
+      lbl.className = 'font-semibold text-emerald-700';
+    } else if (i === idx) {
+      el.className  = 'bg-amber-50 rounded-lg p-2 border border-amber-200';
+      lbl.className = 'font-semibold text-amber-700';
+    } else {
+      el.className  = 'bg-slate-50 rounded-lg p-2 border border-slate-100';
+      lbl.className = 'font-semibold text-slate-400';
+    }
+  });
+}
+
+function finishDecryptProgress(success) {
+  clearInterval(_decryptProgressTimer);
+  const bar  = document.getElementById('decryptProgressBar');
+  const pct  = document.getElementById('decryptProgressPct');
+  const lbl  = document.getElementById('decryptProgressLabel');
+  const wrap = document.getElementById('decryptProgressWrap');
+  if (!bar) return;
+  if (success) {
+    bar.style.width = '100%';
+    if (pct) pct.textContent = '100%';
+    bar.style.background = '#10b981';
+    if (lbl) lbl.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i>解密完成！';
+    _activateDecryptProgressPhase(3);
+    setTimeout(() => { if (wrap) wrap.classList.add('hidden'); }, 1800);
+  } else {
+    bar.style.background = '#ef4444';
+    if (lbl) lbl.innerHTML = '<i class="fa-solid fa-circle-xmark mr-1"></i>解密失败';
+    setTimeout(() => { if (wrap) wrap.classList.add('hidden'); }, 2500);
+  }
+}
+
+// Slider live-value display
+document.addEventListener('DOMContentLoaded', () => {
+  const sliders = [
+    { id: 'dR',  valId: 'dRVal',  decimals: 4 },
+    { id: 'dX0', valId: 'dX0Val', decimals: 5 },
+    { id: 'dN0', valId: 'dN0Val', decimals: 0 },
+  ];
+  sliders.forEach(({ id, valId, decimals }) => {
+    const el = document.getElementById(id);
+    const vEl = document.getElementById(valId);
+    if (el && vEl) {
+      el.addEventListener('input', () => {
+        vEl.textContent = parseFloat(el.value).toFixed(decimals);
+      });
+    }
+  });
+});
+
+// Chaos decrypt button handler
+const chaosDecryptBtn = document.getElementById('chaosDecryptBtn');
+if (chaosDecryptBtn) {
+  chaosDecryptBtn.addEventListener('click', async () => {
+    if (!_recoveredSecretB64) {
+      showToast('请先完成隐写解码步骤！', 'error');
+      return;
+    }
+    chaosDecryptBtn.disabled = true;
+    chaosDecryptBtn.style.opacity = '0.7';
+    chaosDecryptBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>解密中...';
+    startDecryptProgress();
+    try {
+      // Build image File from stored base64
+      const bytes = Uint8Array.from(atob(_recoveredSecretB64), c => c.charCodeAt(0));
+      const blob  = new Blob([bytes], { type: 'image/png' });
+      const imageFile = new File([blob], 'recovered_secret.png', { type: 'image/png' });
+
+      const fd = new FormData();
+      fd.append('image', imageFile);
+      fd.append('r',      document.getElementById('dR')?.value  || _DECRYPT_DEFAULTS.r);
+      fd.append('x0',     document.getElementById('dX0')?.value || _DECRYPT_DEFAULTS.x0);
+      fd.append('n0',     document.getElementById('dN0')?.value || _DECRYPT_DEFAULTS.n0);
+      const rounds = document.querySelector('input[name=dRounds]:checked')?.value || _DECRYPT_DEFAULTS.rounds;
+      fd.append('rounds', rounds);
+
+      const resp = await fetch(`${API}/api/decrypt`, { method: 'POST', body: fd });
+      if (!resp.ok) {
+        let m = `HTTP ${resp.status}`;
+        try { const e = await resp.json(); m = e.error || m; } catch (_) {}
+        throw new Error(m);
+      }
+      const data = await resp.json();
+      showChaosDecryptResult(data);
+      showToast('混沌解密成功 ✓', 'success');
+      finishDecryptProgress(true);
+    } catch (err) {
+      finishDecryptProgress(false);
+      showToast('混沌解密失败: ' + err.message, 'error');
+    } finally {
+      chaosDecryptBtn.disabled = false;
+      chaosDecryptBtn.style.opacity = '1';
+      chaosDecryptBtn.innerHTML = '<i class="fa-solid fa-lock-open mr-2"></i>执行混沌解密';
+    }
+  });
+}
+
+let _decryptResultObjectUrl = null;
+
+function showChaosDecryptResult(data) {
+  const resultDiv = document.getElementById('chaosDecryptResult');
+  if (!resultDiv) return;
+  resultDiv.removeAttribute('hidden');
+
+  if (_decryptResultObjectUrl) { URL.revokeObjectURL(_decryptResultObjectUrl); _decryptResultObjectUrl = null; }
+  let decImageUrl;
+  try {
+    const b64  = data.decrypted_image;
+    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    const blob  = new Blob([bytes], { type: 'image/png' });
+    decImageUrl = URL.createObjectURL(blob);
+    _decryptResultObjectUrl = decImageUrl;
+  } catch (err) {
+    console.warn('createObjectURL failed for decrypt result, using data URL:', err);
+    decImageUrl = 'data:image/png;base64,' + data.decrypted_image;
+  }
+
+  resultDiv.innerHTML = `
+    <div class="border-t border-amber-100 pt-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-circle-check text-amber-500"></i>解密完成
+        </h3>
+        <span class="text-xs bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-bold">混沌解密</span>
+      </div>
+      <div class="text-center mb-4">
+        <img src="${decImageUrl}"
+             class="max-w-full max-h-80 object-contain rounded-xl border border-amber-100 mx-auto block" />
+        <p class="text-xs font-semibold text-amber-700 mt-2">解密还原后的原始秘密图像</p>
+      </div>
+      <button id="downloadDecryptedBtn"
+        class="w-full py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
+        style="background:#f59e0b;color:#fff;">
+        <i class="fa-solid fa-download mr-1"></i>下载解密图像
+      </button>
+    </div>`;
+
+  const dlBtn = resultDiv.querySelector('#downloadDecryptedBtn');
+  if (dlBtn) {
+    dlBtn.addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.href = decImageUrl;
+      a.download = 'decrypted_secret.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    });
+  }
+}
+</script>
+</body>
+</html>
