@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>图库示例 - INN图像隐写系统</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    body { font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+    .gallery-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(249,115,22,0.12); }
+    .gallery-card { transition: all 0.25s ease; }
+    .filter-btn.active { background: #ea580c; color: white; }
+    .tag { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
+    .badge-quality-excellent { background: #ecfdf5; color: #065f46; }
+    .badge-quality-good { background: #eff6ff; color: #1e40af; }
+    .compare-label { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-orange-600 flex items-center justify-center">
+          <i class="fa-solid fa-eye-slash text-white text-sm"></i>
+        </div>
+        <div>
+          <span class="text-lg font-bold text-orange-700">INN</span>
+          <span class="text-lg font-semibold text-slate-700"> 图像隐写系统</span>
+        </div>
+      </div>
+      <nav class="flex items-center gap-6 text-sm font-medium text-slate-600">
+        <a href="/home.html" class="hover:text-orange-600 transition-colors">首页</a>
+        <a href="/encrypt.html" class="hover:text-amber-600 transition-colors">混沌加密</a>
+        <a href="/encode.html" class="hover:text-orange-600 transition-colors">隐写编码</a>
+        <a href="/decode.html" class="hover:text-orange-600 transition-colors">隐写解码</a>
+        <a href="/gallery.html" class="text-orange-600 font-semibold">图库示例</a>
+        <a href="/settings.html" class="hover:text-orange-600 transition-colors">系统设置</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Page Title -->
+    <div class="mb-8 flex items-start justify-between">
+      <div>
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+            <i class="fa-solid fa-images text-amber-600"></i>
+          </div>
+          <h1 class="text-2xl font-bold text-slate-800">图库示例</h1>
+          <span class="tag bg-amber-100 text-amber-700">GALLERY</span>
+        </div>
+        <p class="text-slate-500 text-sm">典型图像隐写案例展示，直观呈现系统处理效果</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input type="text" placeholder="搜索示例..." class="pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-orange-200 outline-none w-52" />
+        </div>
+        <select class="border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-orange-200 outline-none">
+          <option>按PSNR排序</option>
+          <option>按时间排序</option>
+          <option>按图像类型</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="flex items-center gap-3 mb-8 flex-wrap">
+      <button class="filter-btn active px-4 py-2 rounded-xl text-sm font-medium border border-orange-300 transition-colors">
+        全部示例 <span class="ml-1 text-xs opacity-75">(24)</span>
+      </button>
+      <button class="filter-btn px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:border-orange-300 transition-colors">
+        自然风景
+      </button>
+      <button class="filter-btn px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:border-orange-300 transition-colors">
+        人物图像
+      </button>
+      <button class="filter-btn px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:border-orange-300 transition-colors">
+        文档/文字
+      </button>
+      <button class="filter-btn px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:border-orange-300 transition-colors">
+        抽象图案
+      </button>
+      <button class="filter-btn px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:border-orange-300 transition-colors">
+        医学图像
+      </button>
+      <button class="filter-btn px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:border-orange-300 transition-colors">
+        <i class="fa-solid fa-star text-amber-400 mr-1"></i>精选
+      </button>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-4 gap-4 mb-8">
+      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex items-center gap-4">
+        <div class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+          <i class="fa-solid fa-images text-orange-600"></i>
+        </div>
+        <div>
+          <p class="text-xl font-extrabold text-slate-800">24</p>
+          <p class="text-xs text-slate-400">示例案例</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex items-center gap-4">
+        <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+          <i class="fa-solid fa-chart-line text-emerald-600"></i>
+        </div>
+        <div>
+          <p class="text-xl font-extrabold text-slate-800">41.6 dB</p>
+          <p class="text-xs text-slate-400">平均PSNR</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex items-center gap-4">
+        <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+          <i class="fa-solid fa-layer-group text-amber-600"></i>
+        </div>
+        <div>
+          <p class="text-xl font-extrabold text-slate-800">0.994</p>
+          <p class="text-xs text-slate-400">平均SSIM</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex items-center gap-4">
+        <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+          <i class="fa-solid fa-trophy text-amber-600"></i>
+        </div>
+        <div>
+          <p class="text-xl font-extrabold text-slate-800">100%</p>
+          <p class="text-xs text-slate-400">成功率</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gallery Grid -->
+    <div class="grid grid-cols-3 gap-6">
+
+      <!-- Card 1 -->
+      <div class="gallery-card bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <!-- Image Comparison Strip -->
+        <div class="grid grid-cols-3 h-40">
+          <div class="relative overflow-hidden">
+            <img src="https://picsum.photos/seed/landscape1/200/160" alt="载体图像" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#bfdbfe,#93c5fd)'"/>
+            <div class="absolute bottom-1 left-1 compare-label bg-blue-600 text-white">载体</div>
+          </div>
+          <div class="relative overflow-hidden">
+            <img src="https://picsum.photos/seed/landscape2/200/160" alt="隐写图像" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#c7d2fe,#a5b4fc)'"/>
+            <div class="absolute bottom-1 left-1 compare-label bg-orange-600 text-white">隐写</div>
+          </div>
+          <div class="relative overflow-hidden">
+            <img src="https://picsum.photos/seed/mountain1/200/160" alt="还原图像" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#a7f3d0,#6ee7b7)'"/>
+            <div class="absolute bottom-1 left-1 compare-label bg-emerald-600 text-white">还原</div>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <p class="font-bold text-slate-800 text-sm">自然风景 × 山脉图像</p>
+              <p class="text-xs text-slate-400 mt-0.5">landscape.jpg → mountain.jpg</p>
+            </div>
+            <span class="tag badge-quality-excellent">
+              <i class="fa-solid fa-star mr-1"></i>优秀
+            </span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 mt-3">
+            <div class="bg-orange-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-orange-500">PSNR</p>
+              <p class="text-sm font-extrabold text-orange-700">43.5dB</p>
+            </div>
+            <div class="bg-emerald-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-emerald-500">SSIM</p>
+              <p class="text-sm font-extrabold text-emerald-700">0.997</p>
+            </div>
+            <div class="bg-slate-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-slate-400">大小</p>
+              <p class="text-sm font-extrabold text-slate-700">512²</p>
+            </div>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button class="flex-1 py-2 bg-orange-50 text-orange-600 rounded-lg text-xs font-semibold hover:bg-orange-100 transition-colors">
+              <i class="fa-solid fa-eye mr-1"></i>查看详情
+            </button>
+            <button class="flex-1 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-100 transition-colors">
+              <i class="fa-solid fa-copy mr-1"></i>复用参数
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="gallery-card bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div class="grid grid-cols-3 h-40">
+          <div class="relative overflow-hidden">
+            <img src="https://picsum.photos/seed/portrait1/200/160" alt="载体图像" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#fecdd3,#fda4af)'"/>
+            <div class="absolute bottom-1 left-1 compare-label bg-rose-600 text-white">载体</div>
+          </div>
+          <div class="relative overflow-hidden">
+            <img src="https://picsum.photos/seed/portrait2/200/160" alt="隐写图像" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#fbcfe8,#f9a8d4)'"/>
+            <div class="absolute bottom-1 left-1 compare-label bg-pink-600 text-white">隐写</div>
+          </div>
+          <div class="relative overflow-hidden">
+            <img src="https://picsum.photos/seed/portrait3/200/160" alt="还原图像" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#fed7aa,#fdba74)'"/>
+            <div class="absolute bottom-1 left-1 compare-label bg-amber-600 text-white">还原</div>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <p class="font-bold text-slate-800 text-sm">人物肖像 × 签名图</p>
+              <p class="text-xs text-slate-400 mt-0.5">portrait.png → signature.png</p>
+            </div>
+            <span class="tag badge-quality-excellent">
+              <i class="fa-solid fa-star mr-1"></i>优秀
+            </span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 mt-3">
+            <div class="bg-orange-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-orange-500">PSNR</p>
+              <p class="text-sm font-extrabold text-orange-700">42.1dB</p>
+            </div>
+            <div class="bg-emerald-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-emerald-500">SSIM</p>
+              <p class="text-sm font-extrabold text-emerald-700">0.996</p>
+            </div>
+            <div class="bg-slate-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-slate-400">大小</p>
+              <p class="text-sm font-extrabold text-slate-700">256²</p>
+            </div>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button class="flex-1 py-2 bg-orange-50 text-orange-600 rounded-lg text-xs font-semibold hover:bg-orange-100 transition-colors">
+              <i class="fa-solid fa-eye mr-1"></i>查看详情
+            </button>
+            <button class="flex-1 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-100 transition-colors">
+              <i class="fa-solid fa-copy mr-1"></i>复用参数
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="gallery-card bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div class="grid grid-cols-3 h-40">
+          <div class="relative overflow-hidden">
+            <img src="https://picsum.photos/seed/city1/200/160" alt="载体图像" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#e2e8f0,#cbd5e1)'"/>
+            <div class="absolute bottom-1 left-1 compare-label bg-slate-600 text-white">载体</div>
+          </div>
+          <div class="relative overflow-hidden">
+            <img src="https://picsum.photos/seed/city2/200/160" alt="隐写图像" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#e2e8f0,#cbd5e1)'"/>
+            <div class="absolute bottom-1 left-1 compare-label bg-slate-700 text-white">隐写</div>
+          </div>
+          <div class="relative overflow-hidden">
+            <img src="https://picsum.photos/seed/qrcode1/200/160" alt="还原图像" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#cffafe,#a5f3fc)'"/>
+            <div class="absolute bottom-1 left-1 compare-label bg-cyan-600 text-white">还原</div>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <p class="font-bold text-slate-800 text-sm">文档图像 × 二维码</p>
+              <p class="text-xs text-slate-400 mt-0.5">document.png → qrcode.png</p>
+            </div>
+            <span class="tag badge-quality-good">
+              <i class="fa-solid fa-circle-check mr-1"></i>良好
+            </span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 mt-3">
+            <div class="bg-orange-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-orange-500">PSNR</p>
+              <p class="text-sm font-extrabold text-orange-700">40.3dB</p>
+            </div>
+            <div class="bg-emerald-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-emerald-500">SSIM</p>
+              <p class="text-sm font-extrabold text-emerald-700">0.993</p>
+            </div>
+            <div class="bg-slate-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-slate-400">大小</p>
+              <p class="text-sm font-extrabold text-slate-700">512²</p>
+            </div>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button class="flex-1 py-2 bg-orange-50 text-orange-600 rounded-lg text-xs font-semibold hover:bg-orange-100 transition-colors">
+              <i class="fa-solid fa-eye mr-1"></i>查看详情
+            </button>
+            <button class="flex-1 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-100 transition-colors">
+              <i class="fa-solid fa-copy mr-1"></i>复用参数
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="gallery-card bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div class="grid grid-cols-3 h-40">
+          <div class="relative overflow-hidden">
+            <img src="https://picsum.photos/seed/abstract1/200/160" alt="载体图像" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#ede9fe,#ddd6fe)'"/>
+            <div class="absolute bottom-1 left-1 compare-label bg-amber-600 text-white">载体</div>
+          </div>
+          <div class="relative overflow-hidden">
+            <img src="https://picsum.photos/seed/abstract2/200/160" alt="隐写图像" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#fce7f3,#fbcfe8)'"/>
+            <div class="absolute bottom-1 left-1 compare-label bg-fuchsia-600 text-white">隐写</div>
+          </div>
+          <div class="relative overflow-hidden">
+            <img src="https://picsum.photos/seed/watermark1/200/160" alt="还原图像" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#d9f99d,#bbf7d0)'"/>
+            <div class="absolute bottom-1 left-1 compare-label bg-green-600 text-white">还原</div>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <p class="font-bold text-slate-800 text-sm">抽象艺术 × 版权水印</p>
+              <p class="text-xs text-slate-400 mt-0.5">abstract.png → watermark.png</p>
+            </div>
+            <span class="tag badge-quality-excellent">
+              <i class="fa-solid fa-star mr-1"></i>优秀
+            </span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 mt-3">
+            <div class="bg-orange-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-orange-500">PSNR</p>
+              <p class="text-sm font-extrabold text-orange-700">44.2dB</p>
+            </div>
+            <div class="bg-emerald-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-emerald-500">SSIM</p>
+              <p class="text-sm font-extrabold text-emerald-700">0.998</p>
+            </div>
+            <div class="bg-slate-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-slate-400">大小</p>
+              <p class="text-sm font-extrabold text-slate-700">1024²</p>
+            </div>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button class="flex-1 py-2 bg-orange-50 text-orange-600 rounded-lg text-xs font-semibold hover:bg-orange-100 transition-colors">
+              <i class="fa-solid fa-eye mr-1"></i>查看详情
+            </button>
+            <button class="flex-1 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-100 transition-colors">
+              <i class="fa-solid fa-copy mr-1"></i>复用参数
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="gallery-card bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div class="grid grid-cols-3 h-40">
+          <div class="relative overflow-hidden">
+            <img src="https://picsum.photos/seed/medical1/200/160" alt="载体图像" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#f1f5f9,#e2e8f0)'"/>
+            <div class="absolute bottom-1 left-1 compare-label bg-slate-600 text-white">载体</div>
+          </div>
+          <div class="relative overflow-hidden">
+            <img src="https://picsum.photos/seed/medical2/200/160" alt="隐写图像" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#f1f5f9,#e2e8f0)'"/>
+            <div class="absolute bottom-1 left-1 compare-label bg-slate-700 text-white">隐写</div>
+          </div>
+          <div class="relative overflow-hidden">
+            <img src="https://picsum.photos/seed/medical3/200/160" alt="还原图像" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#eff6ff,#dbeafe)'"/>
+            <div class="absolute bottom-1 left-1 compare-label bg-blue-600 text-white">还原</div>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <p class="font-bold text-slate-800 text-sm">医学影像 × 诊断报告</p>
+              <p class="text-xs text-slate-400 mt-0.5">xray.dcm → diagnosis.png</p>
+            </div>
+            <span class="tag badge-quality-good">
+              <i class="fa-solid fa-circle-check mr-1"></i>良好
+            </span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 mt-3">
+            <div class="bg-orange-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-orange-500">PSNR</p>
+              <p class="text-sm font-extrabold text-orange-700">39.8dB</p>
+            </div>
+            <div class="bg-emerald-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-emerald-500">SSIM</p>
+              <p class="text-sm font-extrabold text-emerald-700">0.991</p>
+            </div>
+            <div class="bg-slate-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-slate-400">大小</p>
+              <p class="text-sm font-extrabold text-slate-700">256²</p>
+            </div>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button class="flex-1 py-2 bg-orange-50 text-orange-600 rounded-lg text-xs font-semibold hover:bg-orange-100 transition-colors">
+              <i class="fa-solid fa-eye mr-1"></i>查看详情
+            </button>
+            <button class="flex-1 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-100 transition-colors">
+              <i class="fa-solid fa-copy mr-1"></i>复用参数
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 6 -->
+      <div class="gallery-card bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden ring-2 ring-amber-200">
+        <div class="bg-amber-50 px-4 py-2 flex items-center gap-2 border-b border-amber-100">
+          <i class="fa-solid fa-star text-amber-500 text-xs"></i>
+          <span class="text-xs font-bold text-amber-700">精选示例 · 最高质量</span>
+        </div>
+        <div class="grid grid-cols-3 h-36">
+          <div class="relative overflow-hidden">
+            <img src="https://picsum.photos/seed/forest1/200/144" alt="载体图像" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#ccfbf1,#99f6e4)'"/>
+            <div class="absolute bottom-1 left-1 compare-label bg-teal-600 text-white">载体</div>
+          </div>
+          <div class="relative overflow-hidden">
+            <img src="https://picsum.photos/seed/forest2/200/144" alt="隐写图像" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#ccfbf1,#99f6e4)'"/>
+            <div class="absolute bottom-1 left-1 compare-label bg-teal-700 text-white">隐写</div>
+          </div>
+          <div class="relative overflow-hidden">
+            <img src="https://picsum.photos/seed/sunset1/200/144" alt="还原图像" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#fef9c3,#fde68a)'"/>
+            <div class="absolute bottom-1 left-1 compare-label bg-amber-600 text-white">还原</div>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <p class="font-bold text-slate-800 text-sm">森林风景 × 日落图像</p>
+              <p class="text-xs text-slate-400 mt-0.5">forest.jpg → sunset.jpg</p>
+            </div>
+            <span class="tag badge-quality-excellent">
+              <i class="fa-solid fa-trophy mr-1 text-amber-500"></i>最优
+            </span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 mt-3">
+            <div class="bg-amber-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-amber-600">PSNR</p>
+              <p class="text-sm font-extrabold text-amber-700">46.1dB</p>
+            </div>
+            <div class="bg-amber-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-amber-600">SSIM</p>
+              <p class="text-sm font-extrabold text-amber-700">0.999</p>
+            </div>
+            <div class="bg-slate-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-slate-400">大小</p>
+              <p class="text-sm font-extrabold text-slate-700">1024²</p>
+            </div>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button class="flex-1 py-2 bg-amber-50 text-amber-700 rounded-lg text-xs font-semibold hover:bg-amber-100 transition-colors">
+              <i class="fa-solid fa-eye mr-1"></i>查看详情
+            </button>
+            <button class="flex-1 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-100 transition-colors">
+              <i class="fa-solid fa-copy mr-1"></i>复用参数
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex items-center justify-center gap-2 mt-10">
+      <button class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 hover:border-orange-300 hover:text-orange-600 transition-colors">
+        <i class="fa-solid fa-chevron-left text-sm"></i>
+      </button>
+      <button class="w-9 h-9 flex items-center justify-center rounded-xl bg-orange-600 text-white font-semibold text-sm">1</button>
+      <button class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:border-orange-300 transition-colors text-sm">2</button>
+      <button class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:border-orange-300 transition-colors text-sm">3</button>
+      <button class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:border-orange-300 transition-colors text-sm">4</button>
+      <button class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 hover:border-orange-300 hover:text-orange-600 transition-colors">
+        <i class="fa-solid fa-chevron-right text-sm"></i>
+      </button>
+    </div>
+  </div>
+
+<script>
+// ── Gallery page interactions ──────────────────────────────
+function showToast(msg, type) {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;
+    border-radius:12px;font-size:0.85rem;font-weight:600;color:white;
+    background:${type==='success'?'#10b981':'#ef4444'};
+    box-shadow:0 4px 16px rgba(0,0,0,0.15);transition:opacity 0.4s`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(), 400); }, 3000);
+}
+
+// ── Gallery image fallback ─────────────────────────────────
+function imgFallback(img, gradient) {
+  img.style.display = 'none';
+  img.parentElement.style.background = gradient;
+}
+
+// Apply fallback handler to all gallery images after DOM ready
+document.querySelectorAll('.gallery-card img').forEach(img => {
+  const fallbackGrad = img.getAttribute('onerror')?.match(/background='([^']+)'/)?.[1];
+  if (fallbackGrad) {
+    img.removeAttribute('onerror');
+    img.addEventListener('error', () => imgFallback(img, fallbackGrad));
+  }
+});
+
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.classList.remove('active', 'bg-orange-600', 'text-white', 'border-orange-300');
+      b.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+    });
+    btn.classList.add('active');
+    btn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+  });
+});
+
+// ── Gallery card buttons ───────────────────────────────────
+document.querySelectorAll('.gallery-card button').forEach(btn => {
+  const t = btn.textContent.trim();
+  if (t.includes('查看详情')) {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      // Find card title
+      const card = btn.closest('.gallery-card');
+      const title = card?.querySelector('p.font-bold.text-slate-800.text-sm')?.textContent || '示例详情';
+      showToast('正在查看：' + title, 'success');
+    });
+  }
+  if (t.includes('复用参数')) {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      window.location.href = '/encode.html';
+    });
+  }
+});
+
+// ── Pagination ─────────────────────────────────────────────
+const pageBtns = document.querySelectorAll('.flex.items-center.justify-center.gap-2 button');
+pageBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    // Remove active from all numeric page buttons
+    pageBtns.forEach(b => {
+      if (/^\d+$/.test(b.textContent.trim())) {
+        b.classList.remove('bg-orange-600', 'text-white', 'font-semibold');
+        b.classList.add('border', 'border-slate-200', 'bg-white', 'text-slate-600');
+      }
+    });
+    if (/^\d+$/.test(btn.textContent.trim())) {
+      btn.classList.add('bg-orange-600', 'text-white', 'font-semibold');
+      btn.classList.remove('border', 'border-slate-200', 'bg-white', 'text-slate-600');
+      showToast('图库仅展示示例数据', 'success');
+    }
+  });
+});
+</script>
+</body>
+</html>

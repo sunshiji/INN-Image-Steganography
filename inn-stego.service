@@ -1,0 +1,59 @@
+# ---------------------------------------------------------------------------
+# inn-stego.service - systemd user service
+#
+# Uses %h (home directory) for portability.
+# Credentials loaded from EnvironmentFile (~/.inn-stego.env).
+#
+# Install:
+#   cp .env.example ~/.inn-stego.env
+#   nano ~/.inn-stego.env          # set SECRET_KEY and ADMIN_PASSWORD
+#   chmod 600 ~/.inn-stego.env
+#
+#   mkdir -p ~/.config/systemd/user
+#   cp inn-stego.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable inn-stego
+#   systemctl --user start  inn-stego
+#   sudo loginctl enable-linger $USER   # survive SSH logout, run once as root
+#
+#   systemctl --user status inn-stego
+#   journalctl --user -u inn-stego -f
+# ---------------------------------------------------------------------------
+
+[Unit]
+Description=INN Image Steganography System
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/sys/INN-Image-Steganography/backend
+
+# Load credentials (SECRET_KEY, ADMIN_PASSWORD, PORT, etc.)
+EnvironmentFile=-%h/.inn-stego.env
+
+# --- Option A: conda inn-stego env (recommended) ---
+# Set CONDA_PREFIX so start.sh finds the right gunicorn; replace 'anaconda3'
+# with 'miniconda3' if that is your installation.
+Environment=CONDA_PREFIX=%h/anaconda3/envs/inn-stego
+ExecStart=/bin/bash %h/sys/INN-Image-Steganography/start.sh
+
+# --- Option B: conda pris env ---
+# Comment out Option A above, then uncomment these two lines:
+# Environment=CONDA_PREFIX=%h/anaconda3/envs/pris
+# ExecStart=/bin/bash %h/sys/INN-Image-Steganography/start.sh
+
+# --- Option C: project venv (./venv/) ---
+# Comment out Option A above, then uncomment:
+# ExecStart=%h/sys/INN-Image-Steganography/venv/bin/gunicorn \
+#     --config %h/sys/INN-Image-Steganography/backend/gunicorn.conf.py \
+#     app:app
+
+Restart=on-failure
+RestartSec=5
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=inn-stego
+
+[Install]
+WantedBy=default.target
