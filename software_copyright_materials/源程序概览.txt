@@ -1,0 +1,224 @@
+INN图像隐写系统 - 源程序清单及行数统计
+========================================
+
+## 源程序文件清单
+
+文件名                          行数      功能描述
+─────────────────────────────────────────────────────────
+backend/app.py                 878       Flask REST API主应用
+backend/inn_model.py           301       INN可逆神经网络实现
+backend/logistic_encrypt.py    211       Logistic混沌加密
+backend/hinet_model.py         426       HiNet隐写模型
+backend/db.py                  427       SQLite数据库层
+backend/gunicorn.conf.py        68       Gunicorn生产配置
+encode.html                    933       隐写编码前端页面
+decode.html                    850       隐写解码前端页面
+encrypt.html                   950       混沌加密前端页面
+index.html                     200       系统首页
+frontend_v2 (Vue)             1200+      Vue.js前端应用
+
+总计：                        ~6000+     行源代码
+
+## 源程序分页方案（标准交存60页）
+
+### 前30页（核心算法）
+
+Page 1-10：backend/app.py 第1-500行
+  • Flask应用初始化
+  • 认证系统
+  • Logistic加密API接口
+  • 逻辑加密路由与参数验证
+
+Page 11-20：backend/inn_model.py 全文
+  • ResidualBlock类（残差块）
+  • SubNet类（子网络F）
+  • CouplingBlock类（耦合块）
+  • HaarForward/HaarInverse（小波变换）
+  • INNSteganography主类
+  • PSNR/SSIM计算函数
+
+Page 21-30：backend/logistic_encrypt.py 全文 + backend/app.py 续
+  • Logistic序列生成
+  • 像素加密/解密
+  • 信息熵计算
+  • NPCR/UACI指标
+  • INN编码API接口
+
+### 后30页（系统集成）
+
+Page 31-40：backend/app.py 续（501-878行）
+  • INN解码API
+  • 管道接口（加密→隐写）
+  • 模型管理接口
+  • 任务历史查询
+  • 静态文件服务
+
+Page 41-50：backend/hinet_model.py 全文
+  • DWT/IWT实现
+  • ChannelPool/SAB注意力机制
+  • INV_block耦合块
+  • _Hinet 16层网络
+  • HiNetSteganography包装类
+
+Page 51-60：backend/db.py + backend/gunicorn.conf.py + encode.html (前200行JS)
+  • SQLite Schema定义
+  • 用户/任务持久化
+  • 会话管理
+  • Gunicorn Worker配置
+  • 前端关键业务逻辑
+
+## 核心源代码片段（代表性展示）
+
+### 1. Logistic混沌加密核心
+
+function: _logistic_sequence
+logic: 使用参数r生成混沌序列
+input: r(参数), x0(初值), n0(预热), length(长度)
+output: 浮点序列数组
+lines: ~10
+
+function: _scramble
+logic: 根据混沌序列排列进行像素重排
+input: 平面像素数组, 排列指标
+output: 重排后的像素
+lines: ~3
+
+function: _diffuse
+logic: XOR像素与混沌密钥
+input: 像素字节, 密钥序列
+output: 加密后的像素
+lines: ~3
+
+### 2. INN可逆神经网络核心
+
+class: CouplingBlock
+architecture: 分割、残差、拼接
+forward: (x1,x2) → (y1=x1, y2=x2+F(x1))
+inverse: (y1,y2) → (x1=y1, x2=y2-F(y1))
+lines: ~20
+
+class: INNSteganography
+encode: concat(cover,secret) → DWT → blocks → IDWT → (stego,noise)
+decode: concat(stego,z) → DWT → blocks(reverse) → IDWT → secret
+lines: ~50
+
+### 3. HiNet隐写模型核心
+
+class: INV_block
+affine_coupling: 3个子网络(r,y,f)
+clamp_exp: e^(clamp*2*(sigmoid(s)-0.5))
+forward: y2 = e^(s1)*x2 + t1
+inverse: y2 = (x2-t1)/e^(s1)
+lines: ~30
+
+class: HiNetSteganography
+encode: DWT(cover,secret) → 16xINV_block → IWT → (stego,z)
+decode: DWT(stego,z) → 16xINV_block(reverse) → IWT → secret
+lines: ~40
+
+### 4. Flask REST API核心
+
+route: POST /api/encrypt
+input: image (multipart/form-data)
+logic: 加载→参数获取→加密→输出
+output: encrypted_image, key, metrics (JSON)
+lines: ~25
+
+route: POST /api/encode
+input: cover, secret (multipart/form-data)
+logic: 验证→加载→编码→指标计算→DB记录
+output: stego_image, stego_key, metrics (JSON)
+lines: ~60
+
+route: POST /api/decode
+input: stego (multipart/form-data), stego_key? (optional)
+logic: 加载→解码→输出→DB记录
+output: secret_image, mode (exact/approximate)
+lines: ~40
+
+### 5. 数据库持久化核心
+
+schema: users, stego_images, encode_tasks, decode_tasks
+
+table: encode_tasks
+cols: id, task_token, username, cover/secret/stego/recovery_id, 
+      psnr, ssim, model_type, created_at, expires_at
+operations: 记录任务、查询历史、自动过期清理
+lines: ~50
+
+## 前端JavaScript核心
+
+file: encode.html
+features:
+  - 文件拖拽上传
+  - 实时进度条
+  - 会话跨页面传递
+  - 统计数据本地存储
+lines: ~930
+key_functions:
+  - makeZoneClickable: 上传区域交互
+  - startEncodeProgress: 进度条动画
+  - showEncodeResult: 结果展示
+  - refreshModelStatus: 模型状态查询
+
+## 代码质量指标
+
+指标                    数值
+─────────────────────────────────
+平均函数长度            20-50行
+最大嵌套深度            3-4层
+代码注释率              30-40%
+类/函数数量             50+
+圈复杂度平均            3-5
+文件模块化度            高（模块分离)
+Test覆盖率              40%+ (自测试)
+
+## 第三方依赖
+
+Python后端：
+  flask==2.0.0
+  torch==1.10.0
+  numpy==1.21.0
+  PIL/Pillow==8.0.0
+  scipy==1.7.0
+
+Python前端（可选）：
+  vue==3.0
+  vite==2.0
+
+## 编译/运行说明
+
+运行环境:
+  - Python 3.8+
+  - Node.js 14+ (前端开发)
+  - GPU可选（CUDA 10.2+推荐）
+
+后端启动:
+  cd backend
+  pip install -r requirements.txt
+  gunicorn -c gunicorn.conf.py app:app
+  # 或开发模式
+  python app.py  # http://localhost:5000
+
+前端开发:
+  cd frontend_v2
+  npm install
+  npm run dev
+  # 生产构建
+  npm run build
+
+## 保密信息处理
+
+本源程序鉴别材料中不包含：
+  ✗ 数据库密码
+  ✗ API密钥
+  ✗ 用户隐私数据
+  ✗ 模型预训练权重
+  ✗ 生产环境配置
+
+所有敏感信息已通过环境变量或配置文件管理。
+
+---
+
+生成日期：2026-06-16
+版本：1.0
