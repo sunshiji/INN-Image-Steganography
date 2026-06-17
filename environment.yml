@@ -1,0 +1,46 @@
+# ---------------------------------------------------------------------------
+# environment.yml - inn conda environment
+#
+# Creates a complete Python 3.10 environment for INN-Image-Steganography.
+# Most packages are installed via conda (tsinghua mirrors).
+# PyTorch + torchvision are installed via pip using the tsinghua pytorch-wheels
+# mirror so that the CUDA build is available without needing the nvidia channel
+# (whose libcublas packages are not mirrored by tsinghua and cause solver failures).
+#
+# Requirements:
+#   An NVIDIA GPU with driver >= 525.  nvcc / full CUDA toolkit is NOT
+#   required — the driver alone (detectable via nvidia-smi) is sufficient.
+#
+# Usage:
+#   conda env create -f environment.yml   # one-time: creates env + installs everything
+#   conda activate inn
+#   bash start.sh                         # start the service
+#
+# Update an existing env after code changes:
+#   conda env update -f environment.yml --prune
+# ---------------------------------------------------------------------------
+
+name: inn
+
+channels:
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+  - defaults
+
+dependencies:
+  - python=3.10
+  # Scientific stack
+  - numpy=1.26
+  - scipy=1.13
+  - pillow=10.4
+  # Web framework
+  - flask>=3.0
+  - flask-cors>=4.0
+  - gunicorn>=20.0
+  - pip
+  # GPU PyTorch — installed via pip from the tsinghua pytorch-wheels mirror
+  # to avoid libcublas/nvidia-channel dependency resolution failures.
+  - pip:
+    - --extra-index-url https://mirrors.tuna.tsinghua.edu.cn/pytorch-wheels/cu121
+    - torch==2.1.0+cu121
+    - torchvision==0.16.0+cu121
