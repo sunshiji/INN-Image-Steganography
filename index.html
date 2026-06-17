@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>INN 图像隐写系统 — 控制台</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: #f1f5f9;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ===== Top Banner ===== */
+    .index-banner {
+      background: linear-gradient(135deg, #f97316 0%, #c2410c 100%);
+      color: white;
+      padding: 36px 48px;
+      text-align: center;
+    }
+    .index-banner h1 { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
+    .index-banner p { font-size: 0.95rem; opacity: 0.85; max-width: 640px; margin: 0 auto; }
+
+    /* ===== Sticky Nav ===== */
+    .page-nav {
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 12px 32px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      flex-wrap: wrap;
+    }
+    .page-nav a {
+      padding: 6px 16px;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border: 1.5px solid #fed7aa;
+      color: #ea580c;
+      background: #fff7ed;
+      text-decoration: none;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .page-nav a:hover { background: #ea580c; color: white; border-color: #ea580c; }
+    .page-nav .label { font-size: 0.78rem; color: #94a3b8; font-weight: 500; margin-right: 4px; }
+
+    /* ===== Card Grid ===== */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+      padding: 40px 40px 60px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    .feature-card {
+      background: white;
+      border-radius: 18px;
+      border: 1.5px solid #fed7aa;
+      box-shadow: 0 2px 12px rgba(249,115,22,0.07);
+      overflow: hidden;
+      transition: box-shadow 0.2s, transform 0.2s;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+    }
+    .feature-card:hover {
+      box-shadow: 0 8px 32px rgba(249,115,22,0.15);
+      transform: translateY(-3px);
+    }
+    .card-header {
+      padding: 24px 24px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    .card-body {
+      padding: 0 24px 20px;
+      flex: 1;
+    }
+    .card-title { font-size: 1.05rem; font-weight: 700; color: #1e293b; margin-bottom: 6px; }
+    .card-desc  { font-size: 0.82rem; color: #64748b; line-height: 1.6; }
+    .card-footer {
+      padding: 14px 24px;
+      border-top: 1px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.78rem;
+    }
+    .card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+    .card-arrow {
+      color: #fed7aa;
+      font-size: 0.82rem;
+      font-weight: 600;
+      transition: color 0.15s, transform 0.15s;
+    }
+    .feature-card:hover .card-arrow { color: #ea580c; transform: translateX(4px); }
+
+    /* ===== Footer ===== */
+    .index-footer {
+      background: #1e293b;
+      color: #94a3b8;
+      text-align: center;
+      padding: 24px;
+      font-size: 0.82rem;
+    }
+    .index-footer strong { color: #e2e8f0; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Banner -->
+  <div class="index-banner">
+    <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <div style="width:44px;height:44px;background:rgba(255,255,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+        <i class="fa-solid fa-eye-slash" style="font-size:1.2rem;"></i>
+      </div>
+    </div>
+    <h1>INN 图像隐写系统</h1>
+    <p>基于可逆神经网络（Invertible Neural Network）的图像信息隐写系统，点击下方功能卡片进入对应页面</p>
+    <div style="display:flex;gap:12px;justify-content:center;margin-top:18px;flex-wrap:wrap;">
+      <span id="user-badge" style="background:rgba(255,255,255,0.2);padding:5px 14px;border-radius:9999px;font-size:0.78rem;font-weight:600;">
+        <i class="fa-solid fa-circle-user" style="margin-right:5px;"></i><span id="user-badge-name">…</span>
+      </span>
+      <span style="background:rgba(255,255,255,0.15);padding:5px 14px;border-radius:9999px;font-size:0.78rem;font-weight:600;">
+        <i class="fa-solid fa-palette" style="margin-right:5px;"></i>亮色系 · 适合论文打印
+      </span>
+      <span style="background:rgba(255,255,255,0.15);padding:5px 14px;border-radius:9999px;font-size:0.78rem;font-weight:600;">
+        <i class="fa-brands fa-css3-alt" style="margin-right:5px;"></i>Tailwind CSS + FontAwesome
+      </span>
+    </div>
+  </div>
+
+  <!-- Sticky Navigation -->
+  <nav class="page-nav">
+    <span class="label">快速导航：</span>
+    <a href="/home.html"><i class="fa-solid fa-house" style="margin-right:5px;"></i>首页</a>
+    <a href="/encrypt.html"><i class="fa-solid fa-dice-d6" style="margin-right:5px;"></i>混沌加密</a>
+    <a href="/encode.html"><i class="fa-solid fa-file-image" style="margin-right:5px;"></i>隐写编码</a>
+    <a href="/decode.html"><i class="fa-solid fa-key" style="margin-right:5px;"></i>隐写解码</a>
+    <a href="/results.html"><i class="fa-solid fa-chart-bar" style="margin-right:5px;"></i>结果分析</a>
+    <a href="/gallery.html"><i class="fa-solid fa-images" style="margin-right:5px;"></i>图库示例</a>
+    <a href="/settings.html"><i class="fa-solid fa-gear" style="margin-right:5px;"></i>系统设置</a>
+    <button onclick="doLogout()" style="margin-left:auto;padding:6px 16px;border-radius:9999px;font-size:0.82rem;font-weight:600;border:1.5px solid #fee2e2;color:#dc2626;background:#fef2f2;cursor:pointer;">
+      <i class="fa-solid fa-right-from-bracket" style="margin-right:4px;"></i>退出登录
+    </button>
+  </nav>
+
+  <!-- Feature Card Grid -->
+  <div class="card-grid">
+
+    <!-- 1. Home -->
+    <a href="/home.html" class="feature-card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#fff7ed;">
+          <i class="fa-solid fa-house" style="color:#ea580c;"></i>
+        </div>
+        <div>
+          <div class="card-title">系统首页</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-desc">系统概览、功能介绍、INN 工作原理展示，作为用户进入系统的第一个页面。</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-badge" style="background:#fff7ed;color:#ea580c;">home.html</span>
+        <span class="card-arrow">进入 <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
+    </a>
+
+    <!-- 2. Encrypt -->
+    <a href="/encrypt.html" class="feature-card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#fffbeb;">
+          <i class="fa-solid fa-dice-d6" style="color:#d97706;"></i>
+        </div>
+        <div>
+          <div class="card-title">混沌加密</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-desc">对秘密图像进行混沌映射加密（置乱 + 扩散），使其呈噪声外观后再送入隐写。</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-badge" style="background:#fffbeb;color:#d97706;">encrypt.html</span>
+        <span class="card-arrow">进入 <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
+    </a>
+
+    <!-- 3. Encode -->
+    <a href="/encode.html" class="feature-card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#fff7ed;">
+          <i class="fa-solid fa-file-image" style="color:#ea580c;"></i>
+        </div>
+        <div>
+          <div class="card-title">INN 隐写编码</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-desc">将加密后的秘密图像嵌入载体图像，通过 INN 前向传播生成隐写图像，视觉不可分辨。</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-badge" style="background:#fff7ed;color:#ea580c;">encode.html</span>
+        <span class="card-arrow">进入 <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
+    </a>
+
+    <!-- 4. Decode -->
+    <a href="/decode.html" class="feature-card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#fff7ed;">
+          <i class="fa-solid fa-key" style="color:#ea580c;"></i>
+        </div>
+        <div>
+          <div class="card-title">隐写解码</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-desc">上传隐写图像，自动检测隐写内容，执行 INN 逆向推理还原加密秘密图像。</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-badge" style="background:#fff7ed;color:#ea580c;">decode.html</span>
+        <span class="card-arrow">进入 <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
+    </a>
+
+    <!-- 5. Results -->
+    <a href="/results.html" class="feature-card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#fffbeb;">
+          <i class="fa-solid fa-chart-bar" style="color:#d97706;"></i>
+        </div>
+        <div>
+          <div class="card-title">结果分析</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-desc">四图对比（原始载体、隐写图像、原始秘密、还原秘密）+ PSNR / SSIM 指标 + 误差图分析。</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-badge" style="background:#fffbeb;color:#d97706;">results.html</span>
+        <span class="card-arrow">进入 <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
+    </a>
+
+    <!-- 6. Gallery -->
+    <a href="/gallery.html" class="feature-card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#fff7ed;">
+          <i class="fa-solid fa-images" style="color:#ea580c;"></i>
+        </div>
+        <div>
+          <div class="card-title">图库示例</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-desc">典型隐写案例展示，多种图像类型对比，含筛选、排序、分页功能。</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-badge" style="background:#fff7ed;color:#ea580c;">gallery.html</span>
+        <span class="card-arrow">进入 <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
+    </a>
+
+    <!-- 7. Settings -->
+    <a href="/settings.html" class="feature-card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#fffbeb;">
+          <i class="fa-solid fa-gear" style="color:#d97706;"></i>
+        </div>
+        <div>
+          <div class="card-title">系统设置</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-desc">模型选择、运行环境、超参数配置、存储路径、性能调优等全局系统设置。</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-badge" style="background:#fffbeb;color:#d97706;">settings.html</span>
+        <span class="card-arrow">进入 <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="index-footer">
+    <p>
+      <strong>INN 图像隐写系统</strong> · 基于可逆神经网络的图像信息隐写技术研究<br/>
+      <span style="font-size:0.75rem;">使用 Tailwind CSS + FontAwesome · 亮色系设计 · 适合学术论文展示与系统开发参考</span>
+    </p>
+    <div style="display:flex;gap:24px;justify-content:center;margin-top:12px;font-size:0.75rem;">
+      <span><i class="fa-solid fa-file-code" style="margin-right:4px;"></i>7 个页面文件</span>
+      <span><i class="fa-solid fa-eye-slash" style="margin-right:4px;"></i>隐写编码 / 解码 / 分析</span>
+      <span><i class="fa-solid fa-palette" style="margin-right:4px;"></i>亮色系 · 清晰打印</span>
+    </div>
+  </div>
+
+  <script>
+    // Display logged-in username in banner
+    (async () => {
+      try {
+        const resp = await fetch('/api/auth/status', { credentials: 'same-origin' });
+        if (resp.ok) {
+          const data = await resp.json();
+          document.getElementById('user-badge-name').textContent = data.username || '用户';
+        }
+      } catch (e) {}
+    })();
+
+    async function doLogout() {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+      window.location.href = '/login';
+    }
+  </script>
+
+</body>
+</html>
